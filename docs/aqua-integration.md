@@ -1,10 +1,30 @@
 # Aqua integration: Arbitrum WETH / native USDC
 
-> This document describes the Graph research boundary. The implemented Aqua caller, Aave financing, Privy connection and local execution are documented in the [position integration guide](1inch/integration.md). The research response itself remains informational.
+> This document specifies the **Graph research request/response contract consumed by Noria Aqua**. The implemented financing and execution caller is described in the [position integration guide](1inch/integration.md), with [official-contract fork evidence](1inch/evidence/README.md). `executionReady: false` describes this research response; the caller separately constructs and validates its execution plan.
 
-Noria provides the **informational strategy selection** step in the combined The Graph + Aqua product. The Aqua application initiates the flow, sends a USDC inventory budget and objective, and receives an inspected Uniswap v3 reference pool, price range, target inventory and source evidence. Aqua execution and Aave debt management remain separate work.
+The Aqua application initiates the flow, sends a USDC inventory budget and objective, and receives an inspected Uniswap v3 reference pool, price range, target inventory and source evidence. The [implemented Aqua module](../integrations/aqua) owns Aave financing, inventory preparation, official Aqua/SwapVM execution and debt accounting. Execution is demonstrated on isolated local Arbitrum forks; public Aqua deployment and aggregator route admission remain unvalidated.
 
-The full multi-network demonstration remains at `/`. The focused preview is at `/aqua`. Both use the same Graph, price, canonical-state and range calculation modules. The focused integration never asks the caller to select a pool.
+## Where this contract fits
+
+| Surface                                  | Input and responsibility                                                                                                                                                                                                         |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                                      | Full multi-network Graph discovery and analysis.                                                                                                                                                                                 |
+| `/aqua` and `POST /api/aqua/v1/position` | ETH or USDC collateral amount and safety/comfortable health factors. Reads Aave, sizes a USDC loan, consumes the Graph contract below and returns an unsigned position plan or refusal.                                          |
+| `POST /api/aqua/v1/recommendation`       | The Graph boundary documented here: an available native-USDC inventory budget, objective and review interval. Returns research and source evidence.                                                                              |
+| `/api/aqua/v1/local-rehearsal`           | Opt-in loopback runner for a passing position plan and public owner address. Executes official contracts on an owned fork and produces an operation report.                                                                      |
+| `/reserve`                               | Separate Privy-wallet USDC supply/withdrawal into Aave. This wallet reserve does not automatically become collateral in the Aqua `PositionAccount`; real Privy acceptance remains pending in the [Privy guide](privy/README.md). |
+
+The financed USDC path is **supply USDC as Aave collateral → borrow USDC → prepare the WETH/USDC inventory selected through Graph → ship the Aqua strategy**. The position planner sends `financing.loanUSDCUnits` as `funding.amountRaw`; the collateral amount stays in the financing layer. ETH collateral follows the same loan-funded inventory path after wrapping ETH to WETH.
+
+For that full product entry point, use the [position request examples](../examples/aqua/position-request.usdc.json) and [position OpenAPI](../public/aqua/position-openapi.json):
+
+```sh
+curl --request POST http://127.0.0.1:3100/api/aqua/v1/position \
+  --header 'Content-Type: application/json' \
+  --data-binary @examples/aqua/position-request.usdc.json
+```
+
+The Graph contract remains independently usable by other callers. Both product surfaces use the same Graph, price, canonical-state and range calculation modules. The integration selects the reference automatically; no caller-selected pool is accepted.
 
 ## Calling contract
 
@@ -15,7 +35,7 @@ The full multi-network demonstration remains at `/`. The focused preview is at `
 - [Request example](../examples/aqua/request.json) and [typed client example](../examples/aqua/client.ts).
 - `GET` on the endpoint returns capabilities and an example without contacting market providers.
 
-The server-to-server endpoint is public and read-only. Call it from the Aqua backend; the demo does not configure cross-origin browser access or authenticate a wallet. Never send private keys, signatures, RPC credentials or loan approvals. Put deployment access controls and provider quotas at the hosting boundary when connecting a production caller.
+The recommendation endpoint is public and read-only. External Aqua backends can call it over HTTP; the integrated position service invokes the same recommendation service in-process. This endpoint does not configure cross-origin browser access or authenticate a wallet. Wallet login belongs to the product UI. Never send private keys, signatures, RPC credentials or loan approvals. Put deployment access controls and provider quotas at the hosting boundary when connecting a production caller.
 
 ```json
 {
@@ -52,7 +72,7 @@ curl --request POST http://127.0.0.1:3100/api/aqua/v1/recommendation \
   --data-binary @examples/aqua/request.json
 ```
 
-For a planned ETH purchase, set `objective` to `buy-eth` and optionally add `discountBps`. The exact pair is WETH token0 and USDC token1, so the range starts entirely in USDC below spot. Conversion can reverse while the position remains open.
+For a planned ETH purchase through this research API, set `objective` to `buy-eth` and optionally add `discountBps`. The exact pair is WETH token0 and USDC token1, so the range starts entirely in USDC below spot. Conversion can reverse while the position remains open. The current `/position` caller requests `earn-fees` and requires an active two-token position; waiting or single-token research is preserved but refused for its Aqua rehearsal.
 
 ## What Noria does
 
@@ -107,19 +127,19 @@ Responses use `Cache-Control: no-store`. Discovery has a short internal source c
 
 ## Responsibilities after the handoff
 
-The Aqua application must:
+The research consumer owns the following responsibilities. Noria's current implementation is mapped in the [position integration guide](1inch/integration.md) and [accounting architecture](1inch/architecture.md):
 
-1. Assess the Aave loan and user exposure before using the reference. WETH collateral and WETH in LP both count toward total ETH exposure. Keep collateral supply yield separate from LP results.
-2. Translate the **economic price range and target inventory** into its actual supported Aqua strategy. A Uniswap pool address, ticks, liquidity integer and fee tier are not directly executable Aqua parameters. Select and validate the Aqua strategy contract, maker setup, fee rules and fills independently.
-3. Obtain executable USDC → WETH preparation quotes where required. Include swap fees, slippage limits and price impact in sizing. If the quote cannot acquire the target inventory within the available budget, reduce the _request budget explicitly_ and ask Noria again; do not describe the original inventory as executable.
-4. Keep gas/operating funds in the separate account and count their economic cost. Noria's `report.costs.estimatedCycleGasUsd` is a Uniswap reference estimate, **not an Aqua, Aave or Arbitrum total**. Aqua operations, L1 data charges, preparation/exit swaps, slippage, price impact and borrowing interest remain unpriced here; no fixed reserve is withheld.
-5. Re-check current prices, inventory, capacity and execution constraints immediately before user authorization. An informational recommendation is never a signing payload.
-6. Maintain realized versus unrealized P&L, maker/taker/group accounting, interest, prior-loss recovery, operational provisions and the eligible 50/50 allocation. Deteriorating debt health overrides reinvestment. The owner-authorized checkpoint and bounded collateral-sale authorization remain responsibilities of the execution product.
+1. Assess the Aave loan and user exposure before using the reference. The position planner sizes the loan from current Aave terms and the comfortable health limit. WETH collateral and WETH in LP both contribute to ETH exposure. Collateral supply yield remains separate from LP results.
+2. Translate the **economic price range and target inventory** into a supported Aqua strategy. A Uniswap pool address, ticks, liquidity integer and fee tier are research inputs. The Aqua module builds the official SwapVM program separately and independently validates maker setup, fee rules and execution.
+3. Prepare the returned proportions using executable USDC → WETH swaps and output limits. The current rehearsal uses the canonical Uniswap 500-pip conversion path, independently of the selected reference pool's fee tier. It checks the resulting inventory against Graph's asymmetric targets. A direct research caller can explicitly change its inventory budget and request new research. In the financed product, change collateral or health limits and request a new position plan: the accepted Graph budget must equal the sized loan. Failed preparation cannot silently authorize a resized position.
+4. Account for preparation/exit costs, borrowing interest and wallet-paid gas. `report.costs.estimatedCycleGasUsd` is only a Uniswap reference estimate. The research response does not price the complete Aqua/Aave lifecycle or withhold a fixed reserve. Execution reports separately record actual local transactions and wallet costs; local Anvil gas does not predict Arbitrum's full data charges. Nonzero operational cost provisions are explicitly rejected by this release.
+5. Re-check source identity, current prices, target inventory and execution constraints before execution. The position service and fork runner independently verify the reference and retain the original expiry. An informational recommendation is never a signing payload. Official Aqua shipment also does not establish 1inch aggregator admission or independent taker demand.
+6. Reconcile principal, accrued/carried borrowing interest, prior LP losses and external flows before allocating eligible surplus. The owner-authorized inventory provenance checkpoint is implemented. Under the healthy policy while debt remains, allocation targets 50% of eligible LP surplus for debt amortization and 50% for next-cycle capital. Repayment is capped by outstanding debt; once debt reaches zero, the remainder becomes free cash and new cycles cannot reopen. Below comfortable health, allocation prioritizes debt; at/below safety health, ordinary allocation stops and defense takes priority. This release has no automated sale of Aave collateral. Its defense/exit path can realize wallet-held WETH inventory, accept owner USDC for repayment and release Aave collateral after debt reaches zero.
 
-The 50/50 allocation rule applies to eligible **realized net surplus**, not the starting WETH/USDC inventory ratio. The proposed downstream accounting and exit rules are documented in the [roadmap](roadmap.md).
+The 50/50 rule applies to **eligible realized LP surplus after borrowing interest and prior-loss recovery, before wallet-paid gas**. The opening WETH/USDC proportions come from Graph and can be asymmetric. Deposits, borrowing, donations and outside repayments are not LP revenue. Full-wallet and related-party group reports include additional costs and can show losses even when eligible LP surplus is positive. See the [recorded execution reports](1inch/evidence/README.md) and [remaining boundaries](roadmap.md).
 
 ## Validation and deployment
 
-The integration has deterministic service/HTTP tests, a replay across 1,000 / 5,000 / 10,000 USDC plus fractional funding, and browser coverage for selection, expiry, buy ranges, refusals, invalid input and mobile behavior. See [validation](validation.md) for actual results and dated live observations.
+The research contract has deterministic service/HTTP tests, a replay across 1,000 / 5,000 / 10,000 USDC plus fractional funding, and browser coverage for selection, expiry, buy ranges, refusals, invalid input and mobile behavior. See [Graph validation](validation.md) for these results and dated live observations. The [Aqua validation guide](1inch/validation.md) separately records the implemented financing, real Graph round trip, official-contract fork transactions and financial reconciliation.
 
 Deploy the same Next.js application with Node.js 22.9+ and sufficient request duration. The Graph MCP route works without a configured Graph API key; optional Graph gateway and RPC credentials remain server-side. The caller only needs the final origin, for example `https://your-noria-domain.example`, plus the versioned endpoint path. No deployment domain is hard-coded into the adapter.
