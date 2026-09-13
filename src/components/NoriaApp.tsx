@@ -38,6 +38,7 @@ export default function NoriaApp() {
           </a>
           <a href="#historical-case">Historical case</a>
           <a href="/aqua">Aqua positions</a>
+          <a href="/reserve">USDC reserve</a>
           <a href="#agent-toolkit">
             For agents <ArrowUpRight size={12} />
           </a>

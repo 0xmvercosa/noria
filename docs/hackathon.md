@@ -47,3 +47,7 @@ For 1inch judging, show the selected program, actual token-transfer receipts, he
 Official reference: [ETHOnline 2026 prize page](https://ethglobal.com/events/ethonline2026/prizes/#the-graph).
 
 1inch reference: [Build an Aqua App](https://ethglobal.com/events/ethonline2026/prizes/#1inch).
+
+## Privy — Best financial flow
+
+The third sponsor surface is [`/reserve`](privy/README.md): embedded-wallet creation, funding, direct Aave USDC supply/withdrawal and verifiable operation reports. Privy is the signer and funding UX, with no cards or guided product dependency. [Setup](privy/setup.md) and [validation](privy/validation.md) distinguish implemented behavior, protocol-only fork evidence and the still-required real Privy financial-flow demo. The reserve uses the wallet account; it does not silently move savings into the Aqua PositionAccount.

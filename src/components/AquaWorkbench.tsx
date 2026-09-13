@@ -17,6 +17,7 @@ import {
   type PositionRequest,
   type PositionPlanResponse,
 } from "../integrations/aqua/position-contract";
+import { parseUsdc } from "../integrations/privy/reserve";
 import { usd, number } from "./format";
 import base from "./NoriaApp.module.css";
 import s from "./AquaWorkbench.module.css";
@@ -91,6 +92,10 @@ export function AquaWorkbench() {
   const wallet = useNoriaWallet();
 
   useEffect(() => {
+    const fromReserve = new URLSearchParams(window.location.search).get(
+      "collateralUSDC",
+    );
+    if (fromReserve && parseUsdc(fromReserve)) setAmount(fromReserve);
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     const controller = new AbortController();
     void fetch("/api/aqua/v1/local-rehearsal", {
@@ -351,6 +356,7 @@ export function AquaWorkbench() {
         </a>
         <nav className={base.navigation} aria-label="Aqua navigation">
           <a href="/">Full discovery</a>
+          <a href="/reserve">USDC reserve</a>
           <a href="/aqua/openapi.json">Graph API</a>
         </nav>
         <div className={s.headerActions}>
@@ -837,7 +843,7 @@ export function AquaWorkbench() {
                 onClick={wallet.connect}
               >
                 {wallet.ready
-                  ? "Connect wallet for local rehearsal"
+                  ? "Open Privy wallet for local rehearsal"
                   : "Loading wallet…"}
               </button>
             )}

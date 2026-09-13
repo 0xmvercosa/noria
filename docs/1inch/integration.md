@@ -82,9 +82,9 @@ At/below safety health, ordinary investment and allocation stop; defense priorit
 
 ## Privy and local simulation
 
-Set the public `NEXT_PUBLIC_PRIVY_APP_ID` before building and allow local/deployed origins in Privy. The UI uses external-wallet connection, Arbitrum support, account display, network switching and disconnect. Embedded wallet creation is disabled. Connecting requests no signature and authorizes no public-chain transaction.
+Set the public `NEXT_PUBLIC_PRIVY_APP_ID` before building and allow local/deployed origins in Privy. The shared provider creates/opens a Privy embedded wallet with Arbitrum support, account display and sign-out. Wallet login may request an authentication signature. Aqua rehearsal only consumes the public address; it does not request an Aqua transaction signature. The separate [`/reserve` flow](../privy/README.md) offers user-confirmed public Aave savings operations.
 
-Without an App ID, the UI displays wallet connection as unavailable; research and plan downloads work. This state does not demonstrate a successfully tested real Privy connection. A real App ID and configured origins are needed for that acceptance check.
+Without an App ID, the UI displays wallet connection as unavailable; research and plan downloads work. This state does not demonstrate a successfully tested real Privy connection. A real App ID and configured origins are needed for that acceptance check. The current Privy scope and outstanding real financial-flow evidence are maintained in the [Privy guide](../privy/README.md).
 
 Install Foundry (`forge`/`anvil` on `PATH`) on macOS/Linux, set `NORIA_ENABLE_LOCAL_FORK=1` and bind the app to loopback. Vercel, native Windows and non-loopback hosts are refused. The UI requires a connected public address and unexpired plan. An owned local Anvil impersonates that address, gives it labeled fixture balances, executes official contracts and writes a report. No mutation is sent upstream. One job runs at a time; a four-minute deadline stops its private process group, with forced shutdown after ten more seconds if necessary. An interrupted server may leave `.runtime/aqua-rehearsals/active.lock`; remove it only after confirming its process has stopped.
 

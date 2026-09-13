@@ -1,0 +1,567 @@
+{
+  "schemaVersion": "noria.privy.protocol-check.v1",
+  "mode": "isolated-local-fork",
+  "privyWalletActionValidated": false,
+  "sourceCommit": "5fecb04b7521086e91a979555e38e6383bebf619",
+  "sourceDirty": false,
+  "forkBlock": "504611699",
+  "forkBlockHash": "0xa1d13f279fd16f0b4c15c4a1fc620104d7ad4d815193f4e2d9bb1b3e67f1e899",
+  "startedAt": "2026-09-13T03:48:26.492Z",
+  "owner": "0x00000000000000000000000000000000000a11ce",
+  "fixtures": [
+    {
+      "method": "anvil_impersonateAccount",
+      "params": [
+        "0x00000000000000000000000000000000000a11ce"
+      ],
+      "result": null
+    },
+    {
+      "method": "anvil_setBalance",
+      "params": [
+        "0x00000000000000000000000000000000000a11ce",
+        "0xde0b6b3a7640000"
+      ],
+      "result": null
+    },
+    {
+      "method": "anvil_impersonateAccount",
+      "params": [
+        "0x8aFf09e2259cacbF4Fc4e3E53F3bf799EfEEab36"
+      ],
+      "result": null
+    },
+    {
+      "method": "anvil_setBalance",
+      "params": [
+        "0x8aFf09e2259cacbF4Fc4e3E53F3bf799EfEEab36",
+        "0xde0b6b3a7640000"
+      ],
+      "result": null
+    },
+    {
+      "account": "0x8aFf09e2259cacbF4Fc4e3E53F3bf799EfEEab36",
+      "to": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+      "data": "0x4e44d95600000000000000000000000000000000000000000000000000000000000a11ce0000000000000000000000000000000000000000000000000000000000989680",
+      "hash": "0xb75a892fd4f227de6920534d4cec616c0868a436078707a2cbc910cab8ea138d",
+      "blockNumber": "504611700"
+    },
+    {
+      "account": "0x00000000000000000000000000000000000a11ce",
+      "to": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+      "data": "0x40c10f1900000000000000000000000000000000000000000000000000000000000a11ce0000000000000000000000000000000000000000000000000000000000989680",
+      "hash": "0xe31630ef78bdb9ec7fa8842e00990be4ecf8a2651485a25f7b4cd00843da571f",
+      "blockNumber": "504611701"
+    }
+  ],
+  "operations": [
+    {
+      "prepared": {
+        "action": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "kind": "approve",
+          "amountUnits": "10000000"
+        },
+        "before": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "chainId": 42161,
+          "blockNumber": "504611701",
+          "blockHash": "0x3f7f2a9a2c032cabedbe773f50f4844d18f99434bdd9899881d1af83b60d5724",
+          "blockTimestamp": 1789271307,
+          "usdcUnits": "10000000",
+          "aUsdcUnits": "0",
+          "nativeWei": "999998994812091220",
+          "allowanceUnits": "0",
+          "debtBase": "0",
+          "supplyAvailable": true,
+          "withdrawAvailable": true
+        },
+        "expiresAt": 1789271369811,
+        "estimatedGasWei": "67880893191530"
+      },
+      "verification": {
+        "schemaVersion": "noria.privy.operation.v1",
+        "action": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "kind": "approve",
+          "amountUnits": "10000000"
+        },
+        "hash": "0x092ecb79d6598cc9340cc8dc7e114ec39164429abdf840b83d4229b45ab20280",
+        "chainId": 42161,
+        "status": "verified",
+        "checkedAt": "2026-09-13T03:48:29.835Z",
+        "after": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "chainId": 42161,
+          "blockNumber": "504611702",
+          "blockHash": "0x627bac21288eecde139813318d5c3d47e922e16f464611282e925506b3514d9b",
+          "blockTimestamp": 1789271308,
+          "usdcUnits": "10000000",
+          "aUsdcUnits": "0",
+          "nativeWei": "999998251522884754",
+          "allowanceUnits": "10000000",
+          "debtBase": "0",
+          "supplyAvailable": true,
+          "withdrawAvailable": true
+        },
+        "networkFeeWei": "743289206466",
+        "transaction": {
+          "from": "0x00000000000000000000000000000000000a11ce",
+          "to": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+          "input": "0x095ea7b3000000000000000000000000794a61358d6845594f94dc1db02a252b5b4814ad0000000000000000000000000000000000000000000000000000000000989680",
+          "value": "0",
+          "nonce": 1
+        },
+        "receipt": {
+          "blockNumber": "504611702",
+          "blockHash": "0x627bac21288eecde139813318d5c3d47e922e16f464611282e925506b3514d9b",
+          "status": "success",
+          "gasUsed": "55437",
+          "effectiveGasPrice": "13407818",
+          "logs": [
+            {
+              "address": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+              "topics": [
+                "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+                "0x00000000000000000000000000000000000000000000000000000000000a11ce",
+                "0x000000000000000000000000794a61358d6845594f94dc1db02a252b5b4814ad"
+              ],
+              "data": "0x0000000000000000000000000000000000000000000000000000000000989680",
+              "logIndex": 0
+            }
+          ]
+        },
+        "finality": "Sequencer inclusion checked against current RPC; not Ethereum finality."
+      }
+    },
+    {
+      "prepared": {
+        "action": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "kind": "supply",
+          "amountUnits": "10000000"
+        },
+        "before": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "chainId": 42161,
+          "blockNumber": "504611702",
+          "blockHash": "0x627bac21288eecde139813318d5c3d47e922e16f464611282e925506b3514d9b",
+          "blockTimestamp": 1789271308,
+          "usdcUnits": "10000000",
+          "aUsdcUnits": "0",
+          "nativeWei": "999998251522884754",
+          "allowanceUnits": "10000000",
+          "debtBase": "0",
+          "supplyAvailable": true,
+          "withdrawAvailable": true
+        },
+        "expiresAt": 1789271372347,
+        "estimatedGasWei": "302491228056807"
+      },
+      "verification": {
+        "schemaVersion": "noria.privy.operation.v1",
+        "action": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "kind": "supply",
+          "amountUnits": "10000000"
+        },
+        "hash": "0x249d36693966bd33b4cf8cb756d102bc65f6a6e16d5807f87c726236f61c330d",
+        "chainId": 42161,
+        "status": "verified",
+        "checkedAt": "2026-09-13T03:48:33.825Z",
+        "after": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "chainId": 42161,
+          "blockNumber": "504611703",
+          "blockHash": "0x30e7f65a336c296c7e92e064ba9580b78d7822f856e69eeb736d0a8dbd05d4fd",
+          "blockTimestamp": 1789271311,
+          "usdcUnits": "0",
+          "aUsdcUnits": "9999999",
+          "nativeWei": "999995519763707904",
+          "allowanceUnits": "0",
+          "debtBase": "0",
+          "supplyAvailable": true,
+          "withdrawAvailable": true
+        },
+        "networkFeeWei": "2731759176850",
+        "transaction": {
+          "from": "0x00000000000000000000000000000000000a11ce",
+          "to": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
+          "input": "0x617ba037000000000000000000000000af88d065e77c8cc2239327c5edb3a432268e5831000000000000000000000000000000000000000000000000000000000098968000000000000000000000000000000000000000000000000000000000000a11ce0000000000000000000000000000000000000000000000000000000000000000",
+          "value": "0",
+          "nonce": 2
+        },
+        "receipt": {
+          "blockNumber": "504611703",
+          "blockHash": "0x30e7f65a336c296c7e92e064ba9580b78d7822f856e69eeb736d0a8dbd05d4fd",
+          "status": "success",
+          "gasUsed": "232850",
+          "effectiveGasPrice": "11731841",
+          "logs": [
+            {
+              "address": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
+              "topics": [
+                "0x804c9b842b2748a22bb64b345453a3de7ca54a6ca45ce00d415894979e22897a",
+                "0x000000000000000000000000af88d065e77c8cc2239327c5edb3a432268e5831"
+              ],
+              "data": "0x0000000000000000000000000000000000000000001709b1c43fd81671d63a9100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001ead3fb8b2e8313edb6bb4000000000000000000000000000000000000000003ce8e77042633a216fa9d09000000000000000000000000000000000000000004034419d30beecd39567932",
+              "logIndex": 0
+            },
+            {
+              "address": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+              "topics": [
+                "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                "0x00000000000000000000000000000000000000000000000000000000000a11ce",
+                "0x000000000000000000000000724dc807b04555b71ed48a6896b6f41593b8c637"
+              ],
+              "data": "0x0000000000000000000000000000000000000000000000000000000000989680",
+              "logIndex": 1
+            },
+            {
+              "address": "0x929ec64c34a17401f460460d4b9390518e5b473e",
+              "topics": [
+                "0x3303facd24627943a92e9dc87cfbb34b15c49b726eec3ad3487c16be9ab8efe8",
+                "0x000000000000000000000000724dc807b04555b71ed48a6896b6f41593b8c637",
+                "0x000000000000000000000000912ce59144191c1204e64559fe8253a0e49e6548",
+                "0x00000000000000000000000000000000000000000000000000000000000a11ce"
+              ],
+              "data": "0x0000000000000000000000000000000000000000000000000008c8630b7c7c550000000000000000000000000000000000000000000000000008c8630b7c7c550000000000000000000000000000000000000000000000000000000000000000",
+              "logIndex": 2
+            },
+            {
+              "address": "0x724dc807b04555b71ed48a6896b6f41593b8c637",
+              "topics": [
+                "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "0x00000000000000000000000000000000000000000000000000000000000a11ce"
+              ],
+              "data": "0x000000000000000000000000000000000000000000000000000000000098967f",
+              "logIndex": 3
+            },
+            {
+              "address": "0x724dc807b04555b71ed48a6896b6f41593b8c637",
+              "topics": [
+                "0x458f5fa412d0f69b08dd84872b0215675cc67bc1d5b6fd93300a1c3878b86196",
+                "0x00000000000000000000000000000000000000000000000000000000000a11ce",
+                "0x00000000000000000000000000000000000000000000000000000000000a11ce"
+              ],
+              "data": "0x000000000000000000000000000000000000000000000000000000000098967f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003ce8e77042633a216fa9d09",
+              "logIndex": 4
+            },
+            {
+              "address": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
+              "topics": [
+                "0x00058a56ea94653cdf4f152d227ace22d4c00ad99e2a43f58cb7d9e3feb295f2",
+                "0x000000000000000000000000af88d065e77c8cc2239327c5edb3a432268e5831",
+                "0x00000000000000000000000000000000000000000000000000000000000a11ce"
+              ],
+              "data": "0x",
+              "logIndex": 5
+            },
+            {
+              "address": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
+              "topics": [
+                "0x2b627736bca15cd5381dcf80b0bf11fd197d01a037c52b927a881a10fb73ba61",
+                "0x000000000000000000000000af88d065e77c8cc2239327c5edb3a432268e5831",
+                "0x00000000000000000000000000000000000000000000000000000000000a11ce",
+                "0x0000000000000000000000000000000000000000000000000000000000000000"
+              ],
+              "data": "0x00000000000000000000000000000000000000000000000000000000000a11ce0000000000000000000000000000000000000000000000000000000000989680",
+              "logIndex": 6
+            }
+          ]
+        },
+        "finality": "Sequencer inclusion checked against current RPC; not Ethereum finality."
+      }
+    },
+    {
+      "prepared": {
+        "action": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "kind": "withdraw",
+          "amountUnits": "9999999"
+        },
+        "before": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "chainId": 42161,
+          "blockNumber": "504611703",
+          "blockHash": "0x30e7f65a336c296c7e92e064ba9580b78d7822f856e69eeb736d0a8dbd05d4fd",
+          "blockTimestamp": 1789271311,
+          "usdcUnits": "0",
+          "aUsdcUnits": "9999999",
+          "nativeWei": "999995519763707904",
+          "allowanceUnits": "0",
+          "debtBase": "0",
+          "supplyAvailable": true,
+          "withdrawAvailable": true
+        },
+        "expiresAt": 1789271373852,
+        "estimatedGasWei": "249595755982515"
+      },
+      "verification": {
+        "schemaVersion": "noria.privy.operation.v1",
+        "action": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "kind": "withdraw",
+          "amountUnits": "9999999"
+        },
+        "hash": "0x97b4c598854af72de3e1ca1ab3aed530683da5a9cac454031a704097fb1a1ee6",
+        "chainId": 42161,
+        "status": "verified",
+        "checkedAt": "2026-09-13T03:48:33.878Z",
+        "after": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "chainId": 42161,
+          "blockNumber": "504611704",
+          "blockHash": "0x375fb232896a90521b84b6fc0bbce4d44558e18144c5295f94aa00ec7f90ad15",
+          "blockTimestamp": 1789271312,
+          "usdcUnits": "9999999",
+          "aUsdcUnits": "0",
+          "nativeWei": "999993507978789846",
+          "allowanceUnits": "0",
+          "debtBase": "0",
+          "supplyAvailable": true,
+          "withdrawAvailable": true
+        },
+        "networkFeeWei": "2011784918058",
+        "transaction": {
+          "from": "0x00000000000000000000000000000000000a11ce",
+          "to": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
+          "input": "0x69328dec000000000000000000000000af88d065e77c8cc2239327c5edb3a432268e5831000000000000000000000000000000000000000000000000000000000098967f00000000000000000000000000000000000000000000000000000000000a11ce",
+          "value": "0",
+          "nonce": 3
+        },
+        "receipt": {
+          "blockNumber": "504611704",
+          "blockHash": "0x375fb232896a90521b84b6fc0bbce4d44558e18144c5295f94aa00ec7f90ad15",
+          "status": "success",
+          "gasUsed": "195978",
+          "effectiveGasPrice": "10265361",
+          "logs": [
+            {
+              "address": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
+              "topics": [
+                "0x804c9b842b2748a22bb64b345453a3de7ca54a6ca45ce00d415894979e22897a",
+                "0x000000000000000000000000af88d065e77c8cc2239327c5edb3a432268e5831"
+              ],
+              "data": "0x0000000000000000000000000000000000000000001709b1f13806e447d4d4ac00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001ead3fd6a39c37aaab8b62000000000000000000000000000000000000000003ce8e771296ccbc87f3d844000000000000000000000000000000000000000004034419e7507938536b2191",
+              "logIndex": 0
+            },
+            {
+              "address": "0x724dc807b04555b71ed48a6896b6f41593b8c637",
+              "topics": [
+                "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                "0x00000000000000000000000000000000000000000000000000000000000a11ce",
+                "0x0000000000000000000000000000000000000000000000000000000000000000"
+              ],
+              "data": "0x000000000000000000000000000000000000000000000000000000000098967f",
+              "logIndex": 1
+            },
+            {
+              "address": "0x724dc807b04555b71ed48a6896b6f41593b8c637",
+              "topics": [
+                "0x4cf25bc1d991c17529c25213d3cc0cda295eeaad5f13f361969b12ea48015f90",
+                "0x00000000000000000000000000000000000000000000000000000000000a11ce",
+                "0x00000000000000000000000000000000000000000000000000000000000a11ce"
+              ],
+              "data": "0x000000000000000000000000000000000000000000000000000000000098967f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003ce8e771296ccbc87f3d844",
+              "logIndex": 2
+            },
+            {
+              "address": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+              "topics": [
+                "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                "0x000000000000000000000000724dc807b04555b71ed48a6896b6f41593b8c637",
+                "0x00000000000000000000000000000000000000000000000000000000000a11ce"
+              ],
+              "data": "0x000000000000000000000000000000000000000000000000000000000098967f",
+              "logIndex": 3
+            },
+            {
+              "address": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
+              "topics": [
+                "0x44c58d81365b66dd4b1a7f36c25aa97b8c71c361ee4937adc1a00000227db5dd",
+                "0x000000000000000000000000af88d065e77c8cc2239327c5edb3a432268e5831",
+                "0x00000000000000000000000000000000000000000000000000000000000a11ce"
+              ],
+              "data": "0x",
+              "logIndex": 4
+            },
+            {
+              "address": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
+              "topics": [
+                "0x3115d1449a7b732c986cba18244e897a450f61e1bb8d589cd2e69e6c8924f9f7",
+                "0x000000000000000000000000af88d065e77c8cc2239327c5edb3a432268e5831",
+                "0x00000000000000000000000000000000000000000000000000000000000a11ce",
+                "0x00000000000000000000000000000000000000000000000000000000000a11ce"
+              ],
+              "data": "0x000000000000000000000000000000000000000000000000000000000098967f",
+              "logIndex": 5
+            }
+          ]
+        },
+        "finality": "Sequencer inclusion checked against current RPC; not Ethereum finality."
+      }
+    },
+    {
+      "prepared": {
+        "action": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "kind": "approve",
+          "amountUnits": "1000000"
+        },
+        "before": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "chainId": 42161,
+          "blockNumber": "504611704",
+          "blockHash": "0x375fb232896a90521b84b6fc0bbce4d44558e18144c5295f94aa00ec7f90ad15",
+          "blockTimestamp": 1789271312,
+          "usdcUnits": "9999999",
+          "aUsdcUnits": "0",
+          "nativeWei": "999993507978789846",
+          "allowanceUnits": "0",
+          "debtBase": "0",
+          "supplyAvailable": true,
+          "withdrawAvailable": true
+        },
+        "expiresAt": 1789271373896,
+        "estimatedGasWei": "67584452303314"
+      },
+      "verification": {
+        "schemaVersion": "noria.privy.operation.v1",
+        "action": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "kind": "approve",
+          "amountUnits": "1000000"
+        },
+        "hash": "0xb12857c08bbc7eac6afa61d34f6c752e6215fffb0bb9df2401eee5de89f943c8",
+        "chainId": 42161,
+        "status": "verified",
+        "checkedAt": "2026-09-13T03:48:33.923Z",
+        "after": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "chainId": 42161,
+          "blockNumber": "504611705",
+          "blockHash": "0xcd7d2c7f4b8b5e39ccbb5ce594be0a5e3b2616bbc6597b5b6a24119eae9a7bc8",
+          "blockTimestamp": 1789271312,
+          "usdcUnits": "9999999",
+          "aUsdcUnits": "0",
+          "nativeWei": "999993010033067379",
+          "allowanceUnits": "1000000",
+          "debtBase": "0",
+          "supplyAvailable": true,
+          "withdrawAvailable": true
+        },
+        "networkFeeWei": "497945722467",
+        "transaction": {
+          "from": "0x00000000000000000000000000000000000a11ce",
+          "to": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+          "input": "0x095ea7b3000000000000000000000000794a61358d6845594f94dc1db02a252b5b4814ad00000000000000000000000000000000000000000000000000000000000f4240",
+          "value": "0",
+          "nonce": 4
+        },
+        "receipt": {
+          "blockNumber": "504611705",
+          "blockHash": "0xcd7d2c7f4b8b5e39ccbb5ce594be0a5e3b2616bbc6597b5b6a24119eae9a7bc8",
+          "status": "success",
+          "gasUsed": "55437",
+          "effectiveGasPrice": "8982191",
+          "logs": [
+            {
+              "address": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+              "topics": [
+                "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+                "0x00000000000000000000000000000000000000000000000000000000000a11ce",
+                "0x000000000000000000000000794a61358d6845594f94dc1db02a252b5b4814ad"
+              ],
+              "data": "0x00000000000000000000000000000000000000000000000000000000000f4240",
+              "logIndex": 0
+            }
+          ]
+        },
+        "finality": "Sequencer inclusion checked against current RPC; not Ethereum finality."
+      }
+    },
+    {
+      "prepared": {
+        "action": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "kind": "revoke",
+          "amountUnits": "0"
+        },
+        "before": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "chainId": 42161,
+          "blockNumber": "504611705",
+          "blockHash": "0xcd7d2c7f4b8b5e39ccbb5ce594be0a5e3b2616bbc6597b5b6a24119eae9a7bc8",
+          "blockTimestamp": 1789271312,
+          "usdcUnits": "9999999",
+          "aUsdcUnits": "0",
+          "nativeWei": "999993010033067379",
+          "allowanceUnits": "1000000",
+          "debtBase": "0",
+          "supplyAvailable": true,
+          "withdrawAvailable": true
+        },
+        "expiresAt": 1789271373939,
+        "estimatedGasWei": "46455465725757"
+      },
+      "verification": {
+        "schemaVersion": "noria.privy.operation.v1",
+        "action": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "kind": "revoke",
+          "amountUnits": "0"
+        },
+        "hash": "0x928d3ac5407544ecbe079158f4661d31cfb1e788add6014c7ae011f07f22bbae",
+        "chainId": 42161,
+        "status": "verified",
+        "checkedAt": "2026-09-13T03:48:33.958Z",
+        "after": {
+          "owner": "0x00000000000000000000000000000000000A11cE",
+          "chainId": 42161,
+          "blockNumber": "504611706",
+          "blockHash": "0x15daaada84d19a3e855313869fe6aa1be6fb32d01a1c193b2811902ba221e3e7",
+          "blockTimestamp": 1789271312,
+          "usdcUnits": "9999999",
+          "aUsdcUnits": "0",
+          "nativeWei": "999992746734704961",
+          "allowanceUnits": "0",
+          "debtBase": "0",
+          "supplyAvailable": true,
+          "withdrawAvailable": true
+        },
+        "networkFeeWei": "263298362418",
+        "transaction": {
+          "from": "0x00000000000000000000000000000000000a11ce",
+          "to": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+          "input": "0x095ea7b3000000000000000000000000794a61358d6845594f94dc1db02a252b5b4814ad0000000000000000000000000000000000000000000000000000000000000000",
+          "value": "0",
+          "nonce": 5
+        },
+        "receipt": {
+          "blockNumber": "504611706",
+          "blockHash": "0x15daaada84d19a3e855313869fe6aa1be6fb32d01a1c193b2811902ba221e3e7",
+          "status": "success",
+          "gasUsed": "33501",
+          "effectiveGasPrice": "7859418",
+          "logs": [
+            {
+              "address": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+              "topics": [
+                "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+                "0x00000000000000000000000000000000000000000000000000000000000a11ce",
+                "0x000000000000000000000000794a61358d6845594f94dc1db02a252b5b4814ad"
+              ],
+              "data": "0x0000000000000000000000000000000000000000000000000000000000000000",
+              "logIndex": 0
+            }
+          ]
+        },
+        "finality": "Sequencer inclusion checked against current RPC; not Ethereum finality."
+      }
+    }
+  ],
+  "completed": true,
+  "limitation": "All mutations target this process-owned Anvil. Synthetic funding and impersonation validate Aave integration, not Privy authentication, signatures, funding or live hackathon eligibility."
+}

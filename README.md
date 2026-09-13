@@ -6,18 +6,18 @@
 
 Noria gives people and AI agents a reviewable Uniswap v3 liquidity plan from live market data. Choose a network, capital and objective; inspect the suggested pool, range, required inventory, source evidence and capacity—or the reasons no candidate qualifies.
 
-Noria targets **ETHOnline 2026 · The Graph · Best AI Tooling or AI Use Case with The Graph (From Scratch)** and **1inch · Build an Aqua App**. The two sponsor entry points are `/` and `/aqua`, with separate evidence guides. The Graph supplies indexed pool discovery and price history through its Subgraph MCP. Canonical RPC reads and independent USD references support verification. The language model belongs to the external AI client; Noria provides six reusable, deterministic MCP tools.
+Noria targets **ETHOnline 2026 · The Graph · Best AI Tooling or AI Use Case with The Graph (From Scratch)**, **1inch · Build an Aqua App** and **Privy · Best financial flow**. Sponsor entry points are `/`, `/aqua` and `/reserve`, with separate evidence guides. The Graph supplies indexed pool discovery and price history through its Subgraph MCP. Canonical RPC reads and independent USD references support verification. The language model belongs to the external AI client; Noria provides six reusable, deterministic MCP tools.
 
-| Capability                                                         | Status                                                                        |
-| ------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
-| Live Uniswap v3 discovery on Ethereum, Base, Arbitrum and Unichain | Implemented; each request still depends on available, valid sources           |
-| Fee-exposure ranges and planned token1 → token0 conversion         | Implemented as informational calculations                                     |
-| Web interface, source evidence, downloads and six MCP tools        | Implemented                                                                   |
-| Arbitrum WETH/native-USDC product                                  | Real Aave financing → Graph selection → Aqua plan and local rehearsal         |
-| Dated historical simulation for accounting comparison              | Included as an example; never used as a live fallback                         |
-| Privy external-wallet connection                                   | Implemented; requires a public App ID and allowed origins; no signing         |
-| Aave ETH/USDC collateral, USDC borrowing and official Aqua/SwapVM  | Implemented and demonstrated on isolated Arbitrum forks                       |
-| Cycle accounting, debt repayment and next-cycle capital            | Implemented with owner provenance checkpoints; wallet gas reported separately |
+| Capability                                                         | Status                                                                                                     |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Live Uniswap v3 discovery on Ethereum, Base, Arbitrum and Unichain | Implemented; each request still depends on available, valid sources                                        |
+| Fee-exposure ranges and planned token1 → token0 conversion         | Implemented as informational calculations                                                                  |
+| Web interface, source evidence, downloads and six MCP tools        | Implemented                                                                                                |
+| Arbitrum WETH/native-USDC product                                  | Real Aave financing → Graph selection → Aqua plan and local rehearsal                                      |
+| Dated historical simulation for accounting comparison              | Included as an example; never used as a live fallback                                                      |
+| Privy wallet and USDC reserve                                      | Embedded wallet, funding, user-confirmed Aave supply/withdrawal and reports; real Privy acceptance pending |
+| Aave ETH/USDC collateral, USDC borrowing and official Aqua/SwapVM  | Implemented and demonstrated on isolated Arbitrum forks                                                    |
+| Cycle accounting, debt repayment and next-cycle capital            | Implemented with owner provenance checkpoints; wallet gas reported separately                              |
 
 ## For hackathon reviewers
 
@@ -25,8 +25,9 @@ Noria targets **ETHOnline 2026 · The Graph · Best AI Tooling or AI Use Case wi
 2. Use the [agent setup](docs/agent-setup.md) to connect the six MCP tools to an external AI client.
 3. Inspect the [The Graph integration](docs/the-graph.md), [methodology and architecture](docs/architecture.md), and [validation evidence](docs/validation.md).
 4. Open `/aqua` and the [1inch judge guide](docs/1inch/README.md) for collateral financing, real Graph pool/range selection, official Aqua/SwapVM execution and operation reports.
+5. Open `/reserve` and the [Privy judge guide](docs/privy/README.md) for wallet creation, funding, direct Aave savings and verified transaction reports. A configured real Privy session is still required for submission evidence.
 
-The Graph discovery remains informational. The Aqua module separately proves capital-moving behavior on local forks. Public-chain deployment, real Privy connection on a configured deployment and aggregator route admission are distinct acceptance checks; local related-party fills do not establish customer demand or profit.
+The Graph discovery remains informational. The Aqua module separately proves capital-moving behavior on local forks. Public Aqua deployment, a real Privy financial flow on a configured deployment and aggregator route admission are distinct acceptance checks; local related-party fills do not establish customer demand or profit.
 
 ## Run locally
 
@@ -48,7 +49,7 @@ npm run build
 npm start
 ```
 
-The same deployment serves `/` and `/aqua`. See [deployment](docs/deployment.md) for the judging domain, server-side settings and a signed-out access check.
+The same deployment serves `/`, `/aqua` and `/reserve`. See [deployment](docs/deployment.md) for the judging domain, server-side settings and a signed-out access check.
 
 ## Try the discovery flow
 
@@ -110,21 +111,27 @@ curl --request POST http://127.0.0.1:3100/api/aqua/v1/position \
   --data-binary @examples/aqua/position-request.usdc.json
 ```
 
-Set `NEXT_PUBLIC_PRIVY_APP_ID` before building and configure allowed origins in Privy. Connecting supplies an external wallet address; no signature or public-chain transaction is requested. With Foundry on `PATH`, enable `NORIA_ENABLE_LOCAL_FORK=1` on a loopback server to run the downloaded plan with local wallet impersonation and a complete operation report. Public deployments expose planning; the local runner is disabled on Vercel.
+Set `NEXT_PUBLIC_PRIVY_APP_ID` before building and configure allowed origins in Privy. Login creates/opens a Privy embedded wallet. `/aqua` uses its public address for the local fork; `/reserve` separately offers explicitly confirmed public Aave supply/withdrawal. With Foundry on `PATH`, enable `NORIA_ENABLE_LOCAL_FORK=1` on a loopback server to run the downloaded plan with local wallet impersonation and a complete operation report. Public deployments expose planning; the local runner is disabled on Vercel.
 
 Read the [product and integration specification](docs/1inch/integration.md), [rehearsal guide](docs/1inch/rehearsal.md), [OpenAPI](public/aqua/position-openapi.json), [financial policy](docs/1inch/architecture.md) and [recorded execution evidence](docs/1inch/evidence/README.md). Root `npm ci` installs the integrated app. Standalone pnpm installation belongs in a separate checkout.
 
+## Use the Privy reserve
+
+Open `/reserve`, create/open a Privy wallet and add native USDC plus ETH for fees on Arbitrum. Review an exact approval, then separately confirm the Aave deposit. Withdraw to the same wallet and download the operation report. This direct Aave savings flow does not borrow or automatically fund an Aqua account. The chosen amount can pre-fill the Aqua planner.
+
+See [Privy setup](docs/privy/setup.md), [judge guide](docs/privy/README.md) and [validation](docs/privy/validation.md). The public App ID and allowed origins are still needed to capture the real wallet demo. `npm run validate:privy-protocol` checks the official contracts on a local fork; impersonation is not Privy signing evidence.
+
 ## Technology
 
-| Layer                | Tools                                                                                                  |
-| -------------------- | ------------------------------------------------------------------------------------------------------ |
-| Web                  | Next.js 15, React 19, TypeScript, CSS modules and SVG                                                  |
-| Indexed market data  | The Graph Subgraph MCP; optional Graph gateway                                                         |
-| Independent checks   | viem RPC reads, DeFiLlama prices, exact-contract CoinGecko fallback                                    |
-| Position math        | Uniswap v3 SDK, SDK Core, Decimal.js and integer quantities                                            |
-| Contracts and agents | Solidity 0.8.30, official Aqua/SwapVM SDKs, Aave, Foundry, Zod, HTTP and read-only MCP over HTTP/stdio |
-| Wallet connection    | Privy external wallets, Arbitrum only in Aqua, no public transaction UI                                |
-| Verification         | Node test runner with tsx, Playwright, TypeScript, Prettier and GitHub Actions                         |
+| Layer                | Tools                                                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Web                  | Next.js 15, React 19, TypeScript, CSS modules and SVG                                                                     |
+| Indexed market data  | The Graph Subgraph MCP; optional Graph gateway                                                                            |
+| Independent checks   | viem RPC reads, DeFiLlama prices, exact-contract CoinGecko fallback                                                       |
+| Position math        | Uniswap v3 SDK, SDK Core, Decimal.js and integer quantities                                                               |
+| Contracts and agents | Solidity 0.8.30, official Aqua/SwapVM SDKs, Aave, Foundry, Zod, HTTP and read-only MCP over HTTP/stdio                    |
+| Wallet and reserve   | Privy embedded wallet, funding and confirmed Arbitrum USDC Aave supply/withdrawal; [scope and setup](docs/privy/setup.md) |
+| Verification         | Node test runner with tsx, Playwright, TypeScript, Prettier and GitHub Actions                                            |
 
 ## Why The Graph matters
 

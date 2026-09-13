@@ -1,6 +1,6 @@
 # Architecture
 
-Noria is an informational Uniswap v3 discovery and analysis application. The web interface and HTTP and local MCP servers share the same services. An external AI client supplies the language model; Noria contains no built-in LLM, wallet or execution loop.
+Noria's Graph surface is an informational Uniswap v3 discovery and analysis application. The web interface and HTTP and local MCP servers share the same services. An external AI client supplies the language model; the discovery service contains no built-in LLM or execution loop. The separate [Aqua integration](1inch/integration.md) and [Privy reserve](privy/README.md) own wallet and financial flows.
 
 ```mermaid
 flowchart TD
