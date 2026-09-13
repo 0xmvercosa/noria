@@ -58,9 +58,14 @@ export function NoriaWallet() {
         </details>
       )}
       {wallet.error && (
-        <p className={s.walletError} role="alert">
-          {wallet.error}
-        </p>
+        <div className={s.walletError} role="alert">
+          <p>{wallet.error}</p>
+          {!wallet.ready && (
+            <button type="button" onClick={wallet.retry}>
+              Retry wallet connection
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

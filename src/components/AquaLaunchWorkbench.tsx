@@ -9,8 +9,6 @@ import {
   LaunchAddressSchema,
   LaunchHashSchema,
   launchManifestHash,
-  launchRepaymentLimit,
-  launchPhases,
   launchTransaction,
   assertPreparedLaunch,
   type LaunchIntent,
@@ -35,7 +33,13 @@ import {
   launchReport,
   type LaunchRecord,
   type LaunchAttempt,
+  type LaunchVerification,
 } from "../integrations/aqua/launch-client";
+import {
+  describeLaunchJourney,
+  describeRepayment,
+  newWalletWeth,
+} from "./aqua-launch-presentation";
 import {
   readWalletPending,
   saveWalletPending,
@@ -55,7 +59,7 @@ const equal = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 const labels: Record<LaunchRequest["kind"], string> = {
   create: "Create position account",
   wrap: "Wrap ETH for collateral",
-  unwrap: "Unwrap returned WETH",
+  unwrap: "Unwrap WETH to ETH",
   "approve-collateral": "Approve exact collateral",
   "revoke-collateral": "Remove collateral allowance",
   open: "Supply collateral and borrow USDC",
@@ -97,6 +101,8 @@ export function AquaLaunchWorkbench({
   const [acknowledged, setAcknowledged] = useState(false);
   const [repaymentAmount, setRepaymentAmount] = useState("");
   const [unwrapAmount, setUnwrapAmount] = useState("");
+  const unwrapEdited = useRef(false);
+  const suggestedExit = useRef<string | null>(null);
   const [now, setNow] = useState(Date.now());
   const activeOwner = useRef(wallet.address);
   activeOwner.current = wallet.address;
@@ -135,6 +141,30 @@ export function AquaLaunchWorkbench({
         ? plan.intent
         : undefined))
     : plan?.intent;
+  const journey =
+    position && live
+      ? describeLaunchJourney(position, live.wallet, originalIntent)
+      : null;
+  const matchingPlan =
+    !!validPlan &&
+    !!plan &&
+    !!wallet.address &&
+    (!position ||
+      (launchManifestHash(wallet.address, plan.intent) ===
+        position.manifestHash &&
+        (position.phase === 0 ||
+          plan.financing.loanUSDCUnits === position.principal)));
+  const nextNeedsPlan =
+    !!journey?.next && ["open", "convert", "ship"].includes(journey.next);
+  const needsResearch = nextNeedsPlan && !matchingPlan;
+  const belowComfortable =
+    journey?.next === "ship" &&
+    !!position &&
+    BigInt(position.healthFactor) < BigInt(position.comfortableHF);
+  const repayment =
+    position && live
+      ? describeRepayment(position.debtUSDCUnits, live.wallet.usdcUnits)
+      : null;
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -143,6 +173,12 @@ export function AquaLaunchWorkbench({
   useEffect(() => {
     setPrepared(null);
   }, [plan]);
+  useEffect(() => {
+    setRepaymentAmount("");
+    setUnwrapAmount("");
+    unwrapEdited.current = false;
+    suggestedExit.current = null;
+  }, [wallet.address, position?.address]);
   useEffect(() => {
     setSnapshot(null);
     setRecords([]);
@@ -315,6 +351,7 @@ export function AquaLaunchWorkbench({
       selectedAccount.current = result.after.position.address;
       setAccountInput(result.after.position.address);
     }
+    suggestUnwrap(entry, result);
     setNotice(
       result.status === "verified"
         ? "The exact onchain operation was verified. Review the next step when ready."
@@ -323,6 +360,27 @@ export function AquaLaunchWorkbench({
           : "A receipt exists, but the expected effect is unverified. Inspect it before continuing.",
     );
     await refresh();
+  }
+  function suggestUnwrap(entry: LaunchRecord, result: LaunchVerification) {
+    const request = entry.prepared.request;
+    if (
+      request.kind !== "exit" ||
+      result.status !== "verified" ||
+      !current(request.owner) ||
+      !position ||
+      !equal(position.address, request.account) ||
+      unwrapEdited.current ||
+      suggestedExit.current === entry.hash
+    )
+      return;
+    const received = newWalletWeth(
+      entry.prepared.before.wallet.wethUnits,
+      result.after.wallet.wethUnits,
+    );
+    if (BigInt(received) > 0n) {
+      setUnwrapAmount(units(received, 18));
+      suggestedExit.current = entry.hash;
+    }
   }
   async function review(request: LaunchRequest) {
     if (!canAct) return;
@@ -453,6 +511,7 @@ export function AquaLaunchWorkbench({
         );
       clearAttempt(owner);
       if (verification.status !== "effect-unverified") release(owner, id);
+      suggestUnwrap(entry, verification);
       setNotice(
         "The original request was matched to this receipt. Inspect its status below.",
       );
@@ -505,6 +564,10 @@ export function AquaLaunchWorkbench({
       throw new Error(
         "Enter the original collateral and health policy above to refresh this account's research.",
       );
+    if (!journey?.canRefreshResearch)
+      throw new Error(
+        "Research is available only before opening or while launch inventory remains ready.",
+      );
     const result = await refreshLaunchPlan(
       wallet.address,
       position.address,
@@ -536,19 +599,196 @@ export function AquaLaunchWorkbench({
     kind: Exclude<LaunchRequest["kind"], "create">,
     enabled = true,
     amountUnits?: string,
+    secondary = false,
+    label = labels[kind],
   ) => (
     <button
       key={kind}
-      disabled={!canAct || !enabled}
+      className={secondary || prepared ? s.secondary : undefined}
+      disabled={
+        !canAct ||
+        !enabled ||
+        !!prepared ||
+        !live ||
+        BigInt(live.wallet.nativeWei) === 0n
+      }
       onClick={() => forAccount(kind, amountUnits)}
     >
-      {labels[kind]}
+      {label}
     </button>
   );
   const request = prepared?.request;
   const tx = prepared ? launchTransaction(prepared) : null;
   const repaymentUnits = parseTransferAmount(repaymentAmount, "USDC");
   const unwrapUnits = parseTransferAmount(unwrapAmount, "ETH");
+  const repaymentFits =
+    !!repaymentUnits &&
+    !!repayment &&
+    BigInt(repaymentUnits) <= BigInt(repayment.availableUnits);
+  const partialRepayment =
+    !!repaymentUnits &&
+    !!position &&
+    BigInt(repaymentUnits) < BigInt(position.debtUSDCUnits);
+  const gatingReason = !historyReady
+    ? "Checking saved wallet activity before enabling position operations."
+    : attempt
+      ? "Resolve the earlier position request below before continuing."
+      : pending
+        ? "An earlier wallet operation needs attention. Check its receipt or recovery details before continuing."
+        : unsettled
+          ? "Check saved position receipts below before another operation."
+          : records.length >= 100
+            ? "Download and clear checked position history below before continuing."
+            : live && BigInt(live.wallet.nativeWei) === 0n
+              ? "Add ETH on Arbitrum to pay network fees before any position operation."
+              : !wallet.ready
+                ? "Waiting for your wallet to become ready."
+                : null;
+  const collateralBalance =
+    position && live
+      ? equal(position.collateral, LAUNCH.weth)
+        ? live.wallet.wethUnits
+        : live.wallet.usdcUnits
+      : "0";
+  const missingCollateral =
+    position?.phase === 0 &&
+    originalIntent &&
+    BigInt(collateralBalance) < BigInt(originalIntent.collateralAmountUnits);
+  const createPositionButton = (secondary = false) => (
+    <button
+      className={secondary || prepared ? s.secondary : undefined}
+      disabled={
+        !canAct ||
+        !validPlan ||
+        !!prepared ||
+        !live ||
+        BigInt(live.wallet.nativeWei) === 0n
+      }
+      onClick={() => {
+        if (owner && plan)
+          void task(() =>
+            review({
+              owner,
+              kind: "create",
+              id: toHex(crypto.getRandomValues(new Uint8Array(32))),
+              intent: plan.intent,
+            }),
+          );
+      }}
+    >
+      {secondary
+        ? "Create another position account"
+        : "Create position account"}
+    </button>
+  );
+  const repaymentPanel = (secondary = false) =>
+    position &&
+    live &&
+    repayment && (
+      <div className={r.review}>
+        <strong>Repay with wallet USDC</strong>
+        <dl className={s.metrics}>
+          <div>
+            <dt>Current debt</dt>
+            <dd>{units(position.debtUSDCUnits)} USDC</dd>
+          </div>
+          <div>
+            <dt>Wallet available</dt>
+            <dd>{units(live.wallet.usdcUnits)} USDC</dd>
+          </div>
+          <div>
+            <dt>Full repayment with interest headroom</dt>
+            <dd>{units(repayment.limitUnits)} USDC</dd>
+          </div>
+          <div>
+            <dt>Extra wallet USDC needed for that amount</dt>
+            <dd>{units(repayment.shortfallUnits)} USDC</dd>
+          </div>
+        </dl>
+        <p>
+          The full suggested amount includes 0.1% interest headroom plus
+          0.000001 USDC. Unused cash stays in the position and returns on exit.
+          Interest continues until the debt is cleared, and collateral cannot
+          leave while debt remains.
+        </p>
+        {!repayment.fullyFunded && (
+          <p className={s.inputError}>
+            {BigInt(live.wallet.usdcUnits) < BigInt(position.debtUSDCUnits)
+              ? "Your wallet cannot cover the current debt. An available partial payment reduces debt but leaves a balance. "
+              : "Your wallet covers the displayed debt, but not the full interest headroom. Interest before confirmation may leave a small balance. "}
+            You can{" "}
+            <a href="/reserve#fund-heading">add USDC on the wallet page</a>
+            {BigInt(live.wallet.aUsdcUnits) > 0n &&
+              ", or withdraw USDC from your separate Aave reserve"}
+            .
+            {BigInt(position.wethUnits) > 0n &&
+              " Selling the position's WETH is also available above."}
+          </p>
+        )}
+        <label htmlFor="aqua-repayment">USDC to repay</label>
+        <AmountInput
+          id="aqua-repayment"
+          decimals={6}
+          value={repaymentAmount}
+          disabled={busy || !!prepared}
+          aria-invalid={Boolean(repaymentAmount) && !repaymentFits}
+          onValueChange={(value) => {
+            setRepaymentAmount(value);
+            setPrepared(null);
+          }}
+        />
+        {repaymentAmount && !repaymentFits && (
+          <p className={s.inputError}>
+            Enter a positive USDC amount with at most 6 decimals, up to{" "}
+            {units(repayment.availableUnits)} USDC available for this payment.
+          </p>
+        )}
+        {repaymentFits && (
+          <p className={s.note}>
+            {partialRepayment
+              ? "This is a partial payment. Debt and interest will remain after it; repay the remainder before returning collateral."
+              : BigInt(repaymentUnits!) < BigInt(repayment.limitUnits)
+                ? "This covers the displayed debt without the full interest headroom. Interest before confirmation may leave a small balance."
+                : "This includes the suggested interest headroom. Check the verified debt balance after repayment before returning collateral."}
+          </p>
+        )}
+        <button
+          className={s.secondary}
+          disabled={
+            busy || !!prepared || BigInt(repayment.availableUnits) === 0n
+          }
+          onClick={() => {
+            setRepaymentAmount(units(repayment.availableUnits));
+            setPrepared(null);
+          }}
+        >
+          {repayment.fullyFunded
+            ? "Use full debt plus interest headroom"
+            : BigInt(repayment.availableUnits) < BigInt(position.debtUSDCUnits)
+              ? "Use available wallet USDC · partial payment"
+              : "Use available wallet USDC · reduced headroom"}
+        </button>
+        {repaymentUnits && position.repaymentAllowanceUnits === repaymentUnits
+          ? button(
+              "repay",
+              repaymentFits,
+              repaymentUnits,
+              secondary,
+              partialRepayment
+                ? "Review partial repayment"
+                : "Review wallet repayment",
+            )
+          : button(
+              "approve-repayment",
+              repaymentFits,
+              repaymentUnits ?? undefined,
+              secondary,
+              partialRepayment
+                ? "Approve exact partial payment"
+                : "Approve exact repayment amount",
+            )}
+      </div>
+    );
 
   return (
     <section
@@ -577,12 +817,15 @@ export function AquaLaunchWorkbench({
       )}
       {snapshot?.status === "deployment-required" && (
         <div className={r.review} role="status">
-          <strong>Public deployment required</strong>
-          <p>{snapshot.message}</p>
+          <strong>Public launch is not available yet</strong>
           <p>
             The plan remains available above. A real position can be launched
             after the reviewed contracts are deployed and configured.
           </p>
+          <details className={s.details}>
+            <summary>Deployment details for reviewers</summary>
+            <p>{snapshot.message}</p>
+          </details>
         </div>
       )}
       {pending?.route === "reserve" && (
@@ -623,35 +866,53 @@ export function AquaLaunchWorkbench({
           <p className={s.note}>
             Arbitrum block {live.blockNumber} ·{" "}
             {new Date(live.blockTimestamp * 1000).toLocaleString()}.{" "}
-            <a href="/reserve">Fund in euros or transfer funds</a>.
+            <a href="/reserve#fund-heading">Fund in euros or transfer funds</a>.
           </p>
-          {(!position || position.phase === 6) && (
+          {gatingReason && (
+            <p className={s.inputError} role="status">
+              {gatingReason}
+            </p>
+          )}
+          {!position && (
             <>
               <p className={s.note}>
-                A passing, fresh plan is required to create the next position.
-                Creation deploys your account; collateral is moved only at the
-                later supply step.
+                {validPlan
+                  ? "Your next step is to create your position account. This transaction deploys the account; collateral stays in your wallet until the later supply-and-borrow step."
+                  : "Find a passing pool and range above to continue. A fresh plan is required before creating your position account."}
               </p>
-              <button
-                disabled={!canAct || !validPlan}
-                onClick={() => {
-                  if (owner && plan)
-                    void task(() =>
-                      review({
-                        owner,
-                        kind: "create",
-                        id: toHex(crypto.getRandomValues(new Uint8Array(32))),
-                        intent: plan.intent,
-                      }),
-                    );
-                }}
-              >
-                Create position account
-              </button>
+              {!prepared && createPositionButton()}
             </>
           )}
-          {position && (
+          {position && journey && (
             <>
+              <div className={r.review}>
+                <strong>{journey.title}</strong>
+                <p>{journey.description}</p>
+                <ol
+                  className={s.exclusions}
+                  aria-label={
+                    journey.closing
+                      ? "Position closing progress"
+                      : "Position launch progress"
+                  }
+                >
+                  {journey.steps.map((step) => (
+                    <li
+                      key={step.label}
+                      aria-current={
+                        step.status === "current" ? "step" : undefined
+                      }
+                    >
+                      {step.status === "complete"
+                        ? "Done"
+                        : step.status === "current"
+                          ? "Next"
+                          : "Later"}{" "}
+                      · {step.label}
+                    </li>
+                  ))}
+                </ol>
+              </div>
               <p className={s.address}>
                 <a
                   href={`https://arbiscan.io/address/${position.address}`}
@@ -663,10 +924,6 @@ export function AquaLaunchWorkbench({
               </p>
               <dl className={s.metrics}>
                 <div>
-                  <dt>Position state</dt>
-                  <dd>{launchPhases[position.phase]}</dd>
-                </div>
-                <div>
                   <dt>Aave collateral</dt>
                   <dd>
                     {units(
@@ -676,6 +933,13 @@ export function AquaLaunchWorkbench({
                     {equal(position.collateral, LAUNCH.weth)
                       ? "aWETH"
                       : "aUSDC"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Your safety / comfortable health factors</dt>
+                  <dd>
+                    {units(position.safetyHF, 18)} /{" "}
+                    {units(position.comfortableHF, 18)}
                   </dd>
                 </div>
                 <div>
@@ -700,15 +964,24 @@ export function AquaLaunchWorkbench({
                 </div>
               </dl>
               {position.phase !== 6 && (
+                <p className={s.note}>
+                  Borrowing interest accrues even without trades. Collateral can
+                  be liquidated if Aave&apos;s health factor falls below 1. Your
+                  safety threshold is a signal to act; Noria does not
+                  automatically stop or repay this position. Each operation
+                  requires your confirmation.
+                </p>
+              )}
+              {journey.canRefreshResearch && !needsResearch && (
                 <button
                   className={s.secondary}
-                  disabled={busy || !originalIntent}
+                  disabled={busy || !!prepared || !originalIntent}
                   onClick={() => void task(refreshResearch)}
                 >
                   Refresh research for this position
                 </button>
               )}
-              {position.phase !== 6 && !originalIntent && (
+              {journey.canRefreshResearch && !originalIntent && (
                 <p className={s.note}>
                   Enter this account&apos;s original collateral and health
                   policy above to refresh its research. Closing controls remain
@@ -728,32 +1001,38 @@ export function AquaLaunchWorkbench({
                       ? "USDC is supplied as collateral before USDC is borrowed for liquidity."
                       : "ETH is wrapped, then WETH is supplied as collateral."}
                   </p>
-                  {originalIntent.fundingAsset === "ETH" &&
-                    BigInt(live.wallet.wethUnits) <
-                      BigInt(originalIntent.collateralAmountUnits) &&
-                    button(
-                      "wrap",
-                      true,
-                      String(
-                        BigInt(originalIntent.collateralAmountUnits) -
-                          BigInt(live.wallet.wethUnits),
-                      ),
-                    )}
-                  {position.collateralAllowanceUnits !==
-                  originalIntent.collateralAmountUnits
-                    ? button(
-                        "approve-collateral",
-                        true,
-                        originalIntent.collateralAmountUnits,
-                      )
-                    : button("open", !!validPlan)}
-                </>
-              )}
-              {[1, 4].includes(position.phase) && (
-                <>
-                  {BigInt(position.lpWethUnits) === 0n
-                    ? button("convert", !!validPlan)
-                    : button("ship", !!validPlan)}
+                  {missingCollateral && journey.next !== "wrap" && (
+                    <p className={s.inputError}>
+                      Add{" "}
+                      {units(
+                        String(
+                          BigInt(originalIntent.collateralAmountUnits) -
+                            BigInt(collateralBalance),
+                        ),
+                        originalIntent.fundingAsset === "ETH" ? 18 : 6,
+                      )}{" "}
+                      {originalIntent.fundingAsset} to your wallet before
+                      supplying collateral.{" "}
+                      <a href="/reserve#fund-heading">Fund your wallet</a>.
+                    </p>
+                  )}
+                  {journey.next === "wrap" && (
+                    <p className={s.note}>
+                      Wrap only the missing {units(journey.amountUnits!, 18)}{" "}
+                      ETH. Keep additional ETH in your wallet for Arbitrum
+                      network fees.
+                      {BigInt(journey.amountUnits!) >=
+                        BigInt(live.wallet.nativeWei) && (
+                        <>
+                          {" "}
+                          <a href="/reserve#fund-heading">
+                            Add ETH to cover this amount and fees
+                          </a>
+                          .
+                        </>
+                      )}
+                    </p>
+                  )}
                 </>
               )}
               {position.phase === 2 && (
@@ -767,77 +1046,93 @@ export function AquaLaunchWorkbench({
                     not establish aggregator routing or earnings.
                   </p>
                   <p>
-                    Cycle accounting uses owner provenance checkpoints. This
-                    wallet interface offers the stop-and-repay exit; it does not
-                    run an unattended reinvestment service.
+                    This wallet interface offers a manual stop-and-repay exit.
+                    Check the health factor and debt while the position is open.
                   </p>
                 </div>
               )}
-              {position.phase !== 0 && position.phase !== 6 && button("defend")}
-              {position.phase === 5 && (
-                <>
-                  {BigInt(position.wethUnits) > 0n && button("realize-defense")}
-                  {BigInt(position.debtUSDCUnits) > 0n && (
-                    <div className={r.review}>
-                      <strong>Repay remaining debt</strong>
-                      <p>
-                        Use wallet USDC for a shortfall. The suggested amount
-                        includes 0.1% interest headroom; unused cash remains in
-                        the position and returns on exit. Collateral cannot
-                        leave while debt remains.
-                      </p>
-                      <label htmlFor="aqua-repayment">USDC to repay</label>
-                      <AmountInput
-                        id="aqua-repayment"
-                        decimals={6}
-                        value={repaymentAmount}
-                        disabled={busy}
-                        aria-invalid={
-                          Boolean(repaymentAmount) && !repaymentUnits
-                        }
-                        onValueChange={(value) => {
-                          setRepaymentAmount(value);
-                          setPrepared(null);
-                        }}
-                      />
-                      <button
-                        className={s.secondary}
-                        disabled={busy}
-                        onClick={() => {
-                          setRepaymentAmount(
-                            units(
-                              BigInt(
-                                launchRepaymentLimit(position.debtUSDCUnits),
-                              ) < BigInt(live.wallet.usdcUnits)
-                                ? launchRepaymentLimit(position.debtUSDCUnits)
-                                : live.wallet.usdcUnits,
-                            ),
-                          );
-                          setPrepared(null);
-                        }}
-                      >
-                        Use debt amount plus interest headroom
-                      </button>
-                      {repaymentUnits &&
-                      position.repaymentAllowanceUnits === repaymentUnits
-                        ? button("repay", true, repaymentUnits)
-                        : button(
-                            "approve-repayment",
-                            !!repaymentUnits,
-                            repaymentUnits ?? undefined,
-                          )}
-                    </div>
-                  )}
-                </>
+              {belowComfortable && (
+                <p className={s.inputError}>
+                  Launching needs a health factor of at least{" "}
+                  {units(position.comfortableHF, 18)}. Refresh balances to check
+                  again, or stop and close this position below.
+                </p>
               )}
-              {[4, 5].includes(position.phase) &&
-                BigInt(position.debtUSDCUnits) === 0n &&
-                button("exit")}
-              {BigInt(position.collateralAllowanceUnits) > 0n &&
-                button("revoke-collateral")}
-              {!equal(position.collateral, LAUNCH.usdc) &&
-                BigInt(position.repaymentAllowanceUnits) > 0n &&
-                button("revoke-repayment")}
+              {!prepared && needsResearch && (
+                <div>
+                  <p className={s.note}>
+                    Refresh research for this position&apos;s original
+                    collateral, health policy and existing loan before
+                    continuing.
+                  </p>
+                  <button
+                    disabled={
+                      busy || !originalIntent || !journey.canRefreshResearch
+                    }
+                    onClick={() => void task(refreshResearch)}
+                  >
+                    Refresh research to continue
+                  </button>
+                </div>
+              )}
+              {!prepared &&
+                !needsResearch &&
+                journey.next &&
+                journey.next !== "repayment" &&
+                journey.next !== "unwrap" &&
+                button(
+                  journey.next,
+                  !belowComfortable &&
+                    !(missingCollateral && journey.next !== "wrap") &&
+                    !(
+                      journey.next === "wrap" &&
+                      BigInt(journey.amountUnits!) >=
+                        BigInt(live.wallet.nativeWei)
+                    ),
+                  journey.amountUnits,
+                  false,
+                  position.phase === 5 && journey.next === "defend"
+                    ? "Repay available position USDC"
+                    : labels[journey.next],
+                )}
+              {!prepared &&
+                journey.canStop &&
+                journey.next !== "defend" &&
+                journey.next !== "exit" &&
+                button(
+                  "defend",
+                  true,
+                  undefined,
+                  true,
+                  "Stop and close instead",
+                )}
+              {position.phase === 5 &&
+                BigInt(position.debtUSDCUnits) > 0n &&
+                (journey.next === "repayment" ? (
+                  repaymentPanel()
+                ) : (
+                  <details className={s.details}>
+                    <summary>Use wallet USDC instead</summary>
+                    {repaymentPanel(true)}
+                  </details>
+                ))}
+              {(BigInt(position.collateralAllowanceUnits) > 0n ||
+                (!equal(position.collateral, LAUNCH.usdc) &&
+                  BigInt(position.repaymentAllowanceUnits) > 0n)) && (
+                <details className={s.details}>
+                  <summary>Manage wallet allowances</summary>
+                  <p className={s.note}>
+                    Remove unused approvals with a separate wallet confirmation.
+                    Removing an approval does not stop the strategy or repay
+                    debt.
+                  </p>
+                  {BigInt(position.collateralAllowanceUnits) > 0n &&
+                    button("revoke-collateral", true, undefined, true)}
+                  {!equal(position.collateral, LAUNCH.usdc) &&
+                    BigInt(position.repaymentAllowanceUnits) > 0n &&
+                    button("revoke-repayment", true, undefined, true)}
+                </details>
+              )}
               {position.phase === 6 && (
                 <>
                   <p className={s.note}>
@@ -848,27 +1143,71 @@ export function AquaLaunchWorkbench({
                   </p>
                   {BigInt(live.wallet.wethUnits) > 0n && (
                     <div className={r.review}>
-                      <label htmlFor="aqua-unwrap">
-                        Returned WETH to unwrap
-                      </label>
+                      <p>
+                        Keep WETH wrapped, or unwrap an amount to ETH before
+                        transferring it from the wallet page.
+                      </p>
+                      {suggestedExit.current && (
+                        <p className={s.note}>
+                          The suggested amount uses the wallet WETH increase
+                          from your verified exit. Review and edit it before
+                          confirming.
+                        </p>
+                      )}
+                      <label htmlFor="aqua-unwrap">Wallet WETH to unwrap</label>
                       <AmountInput
                         id="aqua-unwrap"
                         decimals={18}
                         value={unwrapAmount}
-                        disabled={busy}
-                        aria-invalid={Boolean(unwrapAmount) && !unwrapUnits}
+                        disabled={busy || !!prepared}
+                        aria-invalid={
+                          Boolean(unwrapAmount) &&
+                          (!unwrapUnits ||
+                            BigInt(unwrapUnits) > BigInt(live.wallet.wethUnits))
+                        }
                         onValueChange={(value) => {
+                          unwrapEdited.current = true;
                           setUnwrapAmount(value);
                           setPrepared(null);
                         }}
                       />
+                      <button
+                        className={s.secondary}
+                        disabled={busy || !!prepared}
+                        onClick={() => {
+                          unwrapEdited.current = true;
+                          setUnwrapAmount(units(live.wallet.wethUnits, 18));
+                          setPrepared(null);
+                        }}
+                      >
+                        Use available wallet WETH
+                      </button>
+                      {unwrapAmount &&
+                        (!unwrapUnits ||
+                          BigInt(unwrapUnits) >
+                            BigInt(live.wallet.wethUnits)) && (
+                          <p className={s.inputError}>
+                            Enter an amount up to{" "}
+                            {units(live.wallet.wethUnits, 18)} WETH with at most
+                            18 decimals.
+                          </p>
+                        )}
                       {button(
                         "unwrap",
-                        !!unwrapUnits,
+                        !!unwrapUnits &&
+                          BigInt(unwrapUnits) <= BigInt(live.wallet.wethUnits),
                         unwrapUnits ?? undefined,
                       )}
                     </div>
                   )}
+                  <details className={s.details}>
+                    <summary>Start another position</summary>
+                    <p className={s.note}>
+                      Find a fresh pool and range above, then create a separate
+                      account for the next position.
+                    </p>
+                    {createPositionButton(true)}
+                  </details>
                 </>
               )}
             </>
@@ -958,6 +1297,17 @@ export function AquaLaunchWorkbench({
               the position.
             </p>
           )}
+          {["approve-repayment", "repay"].includes(request.kind) &&
+            "amountUnits" in request && (
+              <p>
+                {BigInt(request.amountUnits) <
+                BigInt(prepared.before.position!.debtUSDCUnits)
+                  ? "This is a partial payment. Remaining debt must still be cleared before returning collateral."
+                  : "Check the verified debt balance after repayment. Interest may accrue before confirmation, and unused USDC returns with your collateral on exit."}
+                {request.kind === "approve-repayment" &&
+                  " This approval allows the exact amount; the later repayment confirmation moves USDC."}
+              </p>
+            )}
           {prepared.quote && (
             <p>
               Convert{" "}
@@ -988,7 +1338,8 @@ export function AquaLaunchWorkbench({
             <p>
               Stop any active strategy and apply available position USDC to
               debt. If debt remains, sell WETH or repay the shortfall before
-              withdrawing collateral.
+              withdrawing collateral. This ends this position&apos;s strategy;
+              launching again requires a new position account.
             </p>
           )}
           {request.kind === "exit" && (

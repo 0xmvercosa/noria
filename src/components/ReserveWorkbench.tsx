@@ -772,9 +772,9 @@ export function ReserveWorkbench() {
             <span>Ready for your next move.</span>
           </h1>
           <p>
-            Fund your wallet in euros, deposit USDC into Aave, or send funds to
-            another wallet. See your current balances and a receipt for each
-            operation before continuing to an Aqua position.
+            Add USDC with euros or another wallet, keep track of your money, and
+            choose what to do next: open an Aqua position, save in Aave, or
+            transfer funds out.
           </p>
           <p className={s.note}>
             This flow uses real USDC and ETH on Arbitrum One. Aave carries
@@ -793,18 +793,31 @@ export function ReserveWorkbench() {
           <li>
             <span>02</span>
             <div>
-              <strong>Build your reserve</strong>
-              <small>Approve the exact amount, then deposit</small>
+              <strong>Choose how to use it</strong>
+              <small>Aqua liquidity or optional Aave savings</small>
             </div>
           </li>
           <li>
             <span>03</span>
             <div>
               <strong>Keep control</strong>
-              <small>Withdraw and inspect every operation</small>
+              <small>Transfer out · inspect balances and receipts</small>
             </div>
           </li>
         </ol>
+        <nav className={r.sections} aria-label="Wallet actions">
+          <a href="#fund-heading">Add funds</a>
+          <a href="/aqua">Review an Aqua position</a>
+          <a href="#reserve-heading">Optional Aave savings</a>
+          <a href="#transfer-heading">Transfer out</a>
+          <a href="#history-heading">Operation history</a>
+        </nav>
+        <p className={s.note}>
+          Opening an Aqua position? Keep its collateral in your wallet. The
+          launch flow deposits it into Aave through a separate position account.
+          Savings below are optional and must be withdrawn before using that
+          same USDC for Aqua.
+        </p>
         {sharedPending?.route === "aqua" && (
           <p className={s.inputError} role="alert">
             An Aqua wallet operation needs attention.{" "}
@@ -824,8 +837,8 @@ export function ReserveWorkbench() {
             ) : !wallet.address ? (
               <>
                 <p>
-                  Sign in with email or a wallet. Privy creates your Noria
-                  wallet, so no browser extension is required.
+                  Sign in with Google, email or a wallet. Privy creates your
+                  Noria wallet, so no browser extension is required.
                 </p>
                 <button disabled={!wallet.ready} onClick={wallet.connect}>
                   {wallet.ready
@@ -848,6 +861,15 @@ export function ReserveWorkbench() {
                     </dd>
                   </div>
                 </dl>
+                {snapshot && (
+                  <p className={s.note}>
+                    Wallet balances at Arbitrum block {snapshot.blockNumber}.
+                    {BigInt(snapshot.nativeWei) === 0n &&
+                      " Add ETH before signing transactions; USDC cannot pay the network fee here."}
+                    {BigInt(snapshot.usdcUnits) === 0n &&
+                      " Add USDC to deposit, transfer or use USDC collateral."}
+                  </p>
+                )}
                 <label htmlFor="fund-eur">Pay in euros (EUR)</label>
                 <AmountInput
                   id="fund-eur"
@@ -877,10 +899,11 @@ export function ReserveWorkbench() {
                   identity checks depend on the provider and your location.
                 </p>
                 <button
+                  className={s.secondary}
                   disabled={busy}
                   onClick={() => void task(() => fund("USDC"))}
                 >
-                  Add USDC with Privy
+                  Transfer USDC from another wallet
                 </button>
                 <button
                   className={s.secondary}
@@ -899,12 +922,17 @@ export function ReserveWorkbench() {
                 <p className={s.note}>
                   Use native USDC on Arbitrum, not bridged USDC.e. Funding
                   methods shown depend on your Privy configuration and location.
+                  You can also send to the full wallet address above. A payment
+                  request is only complete when its funds arrive.
                 </p>
+                <a className={s.reportLink} href="/aqua">
+                  Continue to Aqua <ArrowUpRight size={14} />
+                </a>
               </>
             )}
           </section>
           <section className={s.panel} aria-labelledby="reserve-heading">
-            <span className={s.eyebrow}>02 · Aave savings</span>
+            <span className={s.eyebrow}>Optional · Aave savings</span>
             <h2 id="reserve-heading">Your USDC reserve</h2>
             <div className={s.loan}>
               <span>
@@ -970,6 +998,13 @@ export function ReserveWorkbench() {
             <p className={s.note} id="reserve-amount-help">
               Up to 1,000 USDC per operation, with at most six decimal places.
             </p>
+            {direction === "supply" && amountUnits && snapshot && (
+              <p className={s.note}>
+                {BigInt(snapshot.allowanceUnits) === BigInt(amountUnits)
+                  ? "The exact approval is already in place. Next, review the deposit to move your USDC into Aave."
+                  : "Two confirmations: first approve this exact amount, then review and confirm the deposit. Approval alone does not move funds."}
+              </p>
+            )}
             {!prepared || isTransferAction(prepared.action) ? (
               <button
                 disabled={!canAct || !amountUnits}
@@ -1012,6 +1047,10 @@ export function ReserveWorkbench() {
           <p>
             Send available wallet funds on Arbitrum One. To send USDC held in
             your Aave reserve, withdraw it to this wallet first.
+          </p>
+          <p className={s.note}>
+            This sends crypto to another wallet or an exchange deposit address.
+            It does not convert funds to euros or withdraw to a bank account.
           </p>
           <div className={s.fieldRow}>
             <div>
@@ -1106,6 +1145,39 @@ export function ReserveWorkbench() {
             approvals and transfers. Current balances come from Arbitrum and can
             include funds received elsewhere.
           </p>
+          {wallet.address && (
+            <p className={s.note}>
+              <a
+                href={`https://arbiscan.io/address/${wallet.address}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View all wallet activity on Arbiscan
+              </a>
+              . Aqua position receipts have their own{" "}
+              <a href="/aqua#launch-heading">position report</a>.
+            </p>
+          )}
+          {unsettled && (
+            <button
+              className={s.secondary}
+              disabled={busy || !historyReady}
+              onClick={() =>
+                void task(async () => {
+                  for (const entry of [...recordRef.current]) {
+                    if (!current(entry.prepared.action.owner)) break;
+                    if (
+                      !entry.verification ||
+                      entry.verification.status === "effect-unverified"
+                    )
+                      await check(entry);
+                  }
+                })
+              }
+            >
+              Check outstanding receipts
+            </button>
+          )}
           {attempt && (
             <div className={r.review} role="alert">
               <strong>Resolve the earlier wallet request</strong>
