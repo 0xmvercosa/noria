@@ -326,8 +326,11 @@ test("unconfigured Privy stays honest and cannot start a local run even with a r
   await mockPosition(page, []);
   await page.goto("/aqua");
   await expect(
-    page.getByText("Wallet unavailable", { exact: true }),
+    page.getByRole("banner").getByText("Wallet unavailable", { exact: true }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Wallet unavailable", exact: true }),
+  ).toBeDisabled();
   await expect(
     page.getByRole("button", { name: "Connect wallet", exact: true }),
   ).toHaveCount(0);

@@ -367,16 +367,16 @@ export function AquaLaunchWorkbench({
         attempt: next,
         save: (value) => {
           localStorage.setItem(launchAttemptKey(owner), JSON.stringify(value));
+          if (current(owner)) {
+            attemptRef.current = value;
+            setAttempt(value);
+          }
           saveWalletPending(localStorage, {
             id: value.id,
             owner: LaunchAddressSchema.parse(owner),
             route: "aqua",
             startedAt: value.startedAt,
           });
-          if (current(owner)) {
-            attemptRef.current = value;
-            setAttempt(value);
-          }
           window.dispatchEvent(new Event(walletOperationEvent));
         },
         send: () => wallet.sendLaunchAction(fresh, plan),

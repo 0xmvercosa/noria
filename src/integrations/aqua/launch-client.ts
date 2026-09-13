@@ -263,7 +263,15 @@ export function assertLaunchHistoryCurrent(
   savedAttempt: string | null,
   recovering = false,
 ) {
-  if (activeOwner?.toLowerCase() !== owner.toLowerCase())
+  if (
+    activeOwner?.toLowerCase() !== owner.toLowerCase() ||
+    records.some(
+      (record) =>
+        record.prepared.request.owner.toLowerCase() !== owner.toLowerCase(),
+    ) ||
+    (attempt &&
+      attempt.prepared.request.owner.toLowerCase() !== owner.toLowerCase())
+  )
     throw new Error("The wallet changed. Review again.");
   const disk = restoreLaunchRecords(saved, owner);
   const diskAttempt = restoreLaunchAttempt(savedAttempt, owner);

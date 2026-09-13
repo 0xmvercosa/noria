@@ -261,6 +261,11 @@ export function ReserveWorkbench() {
   function saveAttempt(owner: string, next: ReserveAttempt) {
     try {
       localStorage.setItem(attemptKey(owner), JSON.stringify(next));
+      if (current(owner)) {
+        attemptRef.current = next;
+        setAttempt(next);
+        setAcknowledgedNoSubmission(false);
+      }
       saveWalletPending(localStorage, {
         id: next.id,
         owner: OwnerSchema.parse(owner),
@@ -270,13 +275,8 @@ export function ReserveWorkbench() {
       window.dispatchEvent(new Event(walletOperationEvent));
     } catch {
       throw new Error(
-        "The wallet operation could not be saved before signing. No wallet request was sent; enable browser storage before continuing.",
+        "The wallet operation could not be fully saved before signing. No wallet request was sent; resolve any saved request below and enable browser storage before continuing.",
       );
-    }
-    if (current(owner)) {
-      attemptRef.current = next;
-      setAttempt(next);
-      setAcknowledgedNoSubmission(false);
     }
   }
   function clearAttempt(owner: string) {

@@ -201,3 +201,28 @@ test("saved success labels do not authorize another send and concurrent history 
     attempt().id,
   );
 });
+
+test("a changed wallet cannot recover another owner's in-memory intent or history when local storage is empty", () => {
+  const foreign = attempt();
+  foreign.prepared.request.owner = factory;
+  foreign.prepared.before.owner = factory;
+  assert.throws(
+    () =>
+      assertLaunchHistoryCurrent(owner, owner, [], null, foreign, null, true),
+    /wallet changed/i,
+  );
+  const foreignRecord = launchRecordFromAttempt(foreign, hash);
+  assert.throws(
+    () =>
+      assertLaunchHistoryCurrent(
+        owner,
+        owner,
+        [foreignRecord],
+        null,
+        attempt(),
+        null,
+        true,
+      ),
+    /wallet changed/i,
+  );
+});
