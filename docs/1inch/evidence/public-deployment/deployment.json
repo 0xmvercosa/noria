@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "noria.aqua.public-deployment.v1",
+  "mode": "public-arbitrum-deployment",
+  "chainId": 42161,
+  "deployer": "0xc365B6795443380eb76516dA0Cedd5a00B349d66",
+  "signing": "Owner-confirmed Rabby transactions",
+  "source": {
+    "repository": "https://github.com/rafaelzochling/noria",
+    "commit": "f4fc8f114ef4773736ff160912fa6dca7affe44c",
+    "compiler": "0.8.30",
+    "evmVersion": "cancun",
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    }
+  },
+  "verification": {
+    "checkedAt": "2026-09-13T13:47:36.623Z",
+    "blockNumber": "504753367",
+    "blockHash": "0x362078b7e2fd223200ce5ffbedb0ed654b087d21df289db022e1dd0912969ce1",
+    "method": "Read-only chain receipt, exact creation-input, deployed-runtime and official-protocol checks; launch-service deployment acceptance",
+    "creationReceipts": "success",
+    "constructorDataMatchesSource": true,
+    "runtimeMatchesSource": true,
+    "officialProtocolConfiguration": "verified",
+    "launchVerifierStatus": "ready",
+    "explorerSourcePublication": "not_checked"
+  },
+  "contracts": [
+    {
+      "name": "UniswapInventoryAdapter",
+      "address": "0x2117563619Fa050689EFfB059Ef7b879b1ff2231",
+      "transactionHash": "0x8ab04e8ea8aa82b1542ab8f8ea2eaa3e055b65fa44cb76c84e6f5276522d3ff5",
+      "receiptStatus": "success",
+      "blockNumber": "504752498",
+      "nonce": 42,
+      "gasUsed": "635342",
+      "networkFeeWei": "12814848140000",
+      "networkFeeEth": "0.00001281484814",
+      "networkFeeUsd": null,
+      "runtimeHash": "0x24319d23f33c8dc4a0157c0adb70e5d1450cf7ac3ccaf46271f276280a2dfb3b",
+      "constructorArgs": [
+        "0xe592427a0aece92de3edee1f18e0157c05861564",
+        "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+        "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+        500
+      ],
+      "explorerAddressUrl": "https://arbiscan.io/address/0x2117563619Fa050689EFfB059Ef7b879b1ff2231",
+      "explorerTransactionUrl": "https://arbiscan.io/tx/0x8ab04e8ea8aa82b1542ab8f8ea2eaa3e055b65fa44cb76c84e6f5276522d3ff5"
+    },
+    {
+      "name": "PositionFactory",
+      "address": "0x71f29e7828E138a6021cd99696A734D47D62b02F",
+      "transactionHash": "0xbf584ee33de7687aac987a56e404552607b16ddc660c990bba363b1181d0390d",
+      "receiptStatus": "success",
+      "blockNumber": "504752718",
+      "nonce": 43,
+      "gasUsed": "5237927",
+      "networkFeeWei": "104842346832000",
+      "networkFeeEth": "0.000104842346832",
+      "networkFeeUsd": null,
+      "runtimeHash": "0x586aa1c22a0c1ed378c122cfaf0311a48e8bf1cb51bb4d118695d19b84a63b3d",
+      "constructorArgs": [
+        {
+          "weth": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+          "usdc": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+          "aWeth": "0xe50fa9b3c56ffb159cb0fca61f5c9d750e8128c8",
+          "aUsdc": "0x724dc807b04555b71ed48a6896b6f41593b8c637",
+          "debtUSDC": "0xf611aeb5013fd2c0511c9cd55c7dc5c1140741a6",
+          "aave": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
+          "aqua": "0x1111113ccf1426a8e30e2bff5e005d929bf6a90a",
+          "swapVM": "0x111111338c5091e8440b67b168bae16a668ac0de",
+          "adapter": "0x2117563619Fa050689EFfB059Ef7b879b1ff2231"
+        }
+      ],
+      "explorerAddressUrl": "https://arbiscan.io/address/0x71f29e7828E138a6021cd99696A734D47D62b02F",
+      "explorerTransactionUrl": "https://arbiscan.io/tx/0xbf584ee33de7687aac987a56e404552607b16ddc660c990bba363b1181d0390d"
+    }
+  ],
+  "totalGasUsed": "5873269",
+  "totalNetworkFeeWei": "117657194972000",
+  "totalNetworkFeeEth": "0.000117657194972",
+  "totalNetworkFeeUsd": null,
+  "usdBasis": "Unavailable: no transaction-time ETH/USD reference was retained",
+  "acceptance": {
+    "publicContractDeployment": "verified",
+    "frontendConfiguration": "pending_at_verification_time",
+    "privyFinancialFlow": "pending",
+    "publicPositionExecution": "not_established_by_this_record",
+    "aquaFills": "not_established_by_this_record",
+    "aggregatorAdmission": "not_established",
+    "profitability": "not_established"
+  }
+}
