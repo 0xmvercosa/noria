@@ -9,6 +9,11 @@ import { useNoriaWallet } from "./NoriaWalletProvider";
 import {
   RESERVE,
   parseUsdc,
+  parseTransferAmount,
+  isTransferAction,
+  reserveActionDetails,
+  OwnerSchema,
+  type ReserveAction,
   type PreparedReserveAction,
   type ReserveSnapshot,
 } from "../integrations/privy/reserve";
@@ -27,6 +32,20 @@ import {
   type ReserveRecord,
   type ReserveAttempt,
 } from "../integrations/privy/client";
+import {
+  EuroAmountSchema,
+  fiatKey,
+  restoreFiatPurchases,
+  type FiatPurchase,
+} from "../integrations/privy/fiat";
+import {
+  readWalletPending,
+  saveWalletPending,
+  clearWalletPending,
+  walletPendingKey,
+  walletOperationEvent,
+  type WalletPending,
+} from "../integrations/privy/coordination";
 import base from "./NoriaApp.module.css";
 import s from "./AquaWorkbench.module.css";
 import r from "./ReserveWorkbench.module.css";
@@ -36,12 +55,24 @@ const key = (owner: string) =>
   `noria.privy.operations.v1:${owner.toLowerCase()}`;
 const attemptKey = (owner: string) =>
   `noria.privy.attempt.v1:${owner.toLowerCase()}`;
+const actionAmount = (action: ReserveAction) => {
+  const details = reserveActionDetails(action);
+  return `${units(action.amountUnits, details.decimals)} ${details.asset}`;
+};
 
 export function ReserveWorkbench() {
   const wallet = useNoriaWallet();
   const [snapshot, setSnapshot] = useState<ReserveSnapshot | null>(null);
   const [amount, setAmount] = useState("10");
   const [direction, setDirection] = useState<"supply" | "withdraw">("supply");
+  const [transferAsset, setTransferAsset] = useState<"USDC" | "ETH">("USDC");
+  const [transferAmount, setTransferAmount] = useState("");
+  const [transferRecipient, setTransferRecipient] = useState("");
+  const [euroAmount, setEuroAmount] = useState("50");
+  const [fiatPurchases, setFiatPurchases] = useState<FiatPurchase[]>([]);
+  const [sharedPending, setSharedPending] = useState<WalletPending | null>(
+    null,
+  );
   const [prepared, setPrepared] = useState<PreparedReserveAction | null>(null);
   const [records, setRecords] = useState<ReserveRecord[]>([]);
   const [attempt, setAttempt] = useState<ReserveAttempt | null>(null);
@@ -75,6 +106,7 @@ export function ReserveWorkbench() {
     !busy &&
     !unsettled &&
     !attempt &&
+    !sharedPending &&
     records.length < 100;
 
   useEffect(() => {
@@ -84,6 +116,8 @@ export function ReserveWorkbench() {
 
   useEffect(() => {
     setSnapshot(null);
+    setFiatPurchases([]);
+    setSharedPending(null);
     setPrepared(null);
     setRecords([]);
     setAttempt(null);
@@ -99,6 +133,10 @@ export function ReserveWorkbench() {
     const controller = new AbortController();
     try {
       setRecords(restoreRecords(localStorage.getItem(key(owner)), owner));
+      setFiatPurchases(
+        restoreFiatPurchases(localStorage.getItem(fiatKey(owner)), owner),
+      );
+      setSharedPending(readWalletPending(localStorage, owner));
       const restoredAttempt = restoreAttempt(
         localStorage.getItem(attemptKey(owner)),
         owner,
@@ -120,6 +158,20 @@ export function ReserveWorkbench() {
       });
     // Another tab invalidates this review. Submitted hashes are always reverified.
     const onStorage = (event: StorageEvent) => {
+      if (event.key === walletPendingKey(owner)) {
+        updateShared();
+        return;
+      }
+      if (event.key === fiatKey(owner)) {
+        try {
+          setFiatPurchases(restoreFiatPurchases(event.newValue, owner));
+        } catch {
+          setStorageWarning(
+            "Funding request history could not be read. Keep provider receipts and exported reports.",
+          );
+        }
+        return;
+      }
       if (event.key === attemptKey(owner)) {
         setPrepared(null);
         setAcknowledgedNoSubmission(false);
@@ -147,10 +199,44 @@ export function ReserveWorkbench() {
         );
       }
     };
+    const updateShared = () => {
+      try {
+        setSharedPending(readWalletPending(localStorage, owner));
+        setPrepared(null);
+      } catch {
+        setHistoryReady(false);
+        setError(
+          "The pending wallet operation could not be read. Inspect wallet activity before continuing.",
+        );
+      }
+    };
     window.addEventListener("storage", onStorage);
+    window.addEventListener(walletOperationEvent, updateShared);
     return () => {
       controller.abort();
       window.removeEventListener("storage", onStorage);
+      window.removeEventListener(walletOperationEvent, updateShared);
+    };
+  }, [wallet.address]);
+
+  useEffect(() => {
+    if (!wallet.address) return;
+    const owner = wallet.address;
+    const controller = new AbortController();
+    const update = () => {
+      if (document.visibilityState !== "visible") return;
+      void readReserve(owner, controller.signal)
+        .then((state) => {
+          if (!controller.signal.aborted && current(owner)) setSnapshot(state);
+        })
+        .catch(() => {}); // Keep the last timestamped observation; manual refresh exposes errors.
+    };
+    const timer = window.setInterval(update, 30_000);
+    window.addEventListener("focus", update);
+    return () => {
+      controller.abort();
+      window.clearInterval(timer);
+      window.removeEventListener("focus", update);
     };
   }, [wallet.address]);
 
@@ -175,6 +261,13 @@ export function ReserveWorkbench() {
   function saveAttempt(owner: string, next: ReserveAttempt) {
     try {
       localStorage.setItem(attemptKey(owner), JSON.stringify(next));
+      saveWalletPending(localStorage, {
+        id: next.id,
+        owner: OwnerSchema.parse(owner),
+        route: "reserve",
+        startedAt: next.startedAt,
+      });
+      window.dispatchEvent(new Event(walletOperationEvent));
     } catch {
       throw new Error(
         "The wallet operation could not be saved before signing. No wallet request was sent; enable browser storage before continuing.",
@@ -208,6 +301,7 @@ export function ReserveWorkbench() {
       saved: localStorage.getItem(key(owner)),
       attempt: attemptRef.current,
       savedAttempt: localStorage.getItem(attemptKey(owner)),
+      sharedPending: readWalletPending(localStorage, owner),
     };
   }
   async function refresh() {
@@ -243,6 +337,83 @@ export function ReserveWorkbench() {
       "Funding window closed. The balances below come from Arbitrum; refresh if your transfer is still arriving.",
     );
     await refresh();
+  }
+  function saveFiatPurchase(purchase: FiatPurchase) {
+    const existing = restoreFiatPurchases(
+      localStorage.getItem(fiatKey(purchase.owner)),
+      purchase.owner,
+    );
+    const next = [...existing.filter((v) => v.id !== purchase.id), purchase];
+    if (next.length > 200)
+      throw new Error(
+        "Export and clear saved history before opening another funding request.",
+      );
+    localStorage.setItem(fiatKey(purchase.owner), JSON.stringify(next));
+    if (current(purchase.owner)) setFiatPurchases(next);
+  }
+  async function fundWithEuros() {
+    if (!wallet.address) return;
+    const owner = wallet.address;
+    const purchase: FiatPurchase = {
+      id: crypto.randomUUID(),
+      owner: OwnerSchema.parse(owner),
+      requestedEuroAmount: EuroAmountSchema.parse(euroAmount),
+      startedAt: new Date().toISOString(),
+      status: "opened",
+    };
+    saveFiatPurchase(purchase);
+    let result: { status: "submitted" | "confirmed" };
+    try {
+      result = await wallet.fundWithEuro(purchase.requestedEuroAmount);
+    } catch (failure) {
+      try {
+        saveFiatPurchase({ ...purchase, status: "window-closed" });
+      } catch {
+        setStorageWarning(
+          "The funding window closed, but its status could not be saved. Keep the provider receipt and inspect wallet balances.",
+        );
+      }
+      throw failure;
+    }
+    try {
+      saveFiatPurchase({
+        ...purchase,
+        status:
+          result.status === "confirmed"
+            ? "provider-confirmed"
+            : "provider-submitted",
+      });
+    } catch {
+      setStorageWarning(
+        "The provider returned a status, but it could not be saved. Keep the provider receipt; do not infer a failed purchase from a storage error.",
+      );
+    }
+    if (current(owner)) {
+      setNotice(
+        "The provider checkout does not prove delivery. Current balances are read from Arbitrum; keep the provider's receipt and refresh while funds arrive.",
+      );
+      await refresh();
+    }
+  }
+  async function reviewTransfer() {
+    if (!canAct || !wallet.address) return;
+    const owner = wallet.address;
+    const recipient = OwnerSchema.safeParse(transferRecipient.trim());
+    const amount = parseTransferAmount(transferAmount, transferAsset);
+    if (!recipient.success || !amount)
+      throw new Error(
+        "Enter a valid recipient address and a positive amount with the asset's exact decimal precision.",
+      );
+    const result = await prepareReserve({
+      owner: OwnerSchema.parse(owner),
+      recipient: recipient.data,
+      kind: transferAsset === "ETH" ? "transfer-eth" : "transfer-usdc",
+      amountUnits: amount,
+    });
+    if (current(owner)) {
+      setPrepared(result);
+      setNow(Date.now());
+    }
   }
   async function review(revoke = false) {
     if (!canAct || !wallet.address || (!amountUnits && !revoke)) return;
@@ -283,6 +454,10 @@ export function ReserveWorkbench() {
     );
     recordRef.current = next;
     setRecords(next);
+    if (result.status === "verified" || result.status === "reverted") {
+      clearWalletPending(localStorage, owner, entry.id);
+      window.dispatchEvent(new Event(walletOperationEvent));
+    }
     if (result.status === "reverted")
       setNotice(
         "The transaction reverted. Network fees were still spent. Refresh before trying again.",
@@ -297,9 +472,11 @@ export function ReserveWorkbench() {
           ? "Exact approval confirmed. Review the deposit to move USDC into Aave."
           : entry.prepared.action.kind === "supply"
             ? "Deposit confirmed. Your Privy wallet owns the Aave reserve."
-            : entry.prepared.action.kind === "withdraw"
-              ? "Withdrawal confirmed. USDC was returned to your Privy wallet."
-              : "Allowance removal confirmed.",
+            : isTransferAction(entry.prepared.action)
+              ? `Transfer confirmed: ${actionAmount(entry.prepared.action)} to ${entry.prepared.action.recipient}.`
+              : entry.prepared.action.kind === "withdraw"
+                ? "Withdrawal confirmed. USDC was returned to your Privy wallet."
+                : "Allowance removal confirmed.",
       );
     await refresh();
   }
@@ -326,7 +503,22 @@ export function ReserveWorkbench() {
         const entry = await submitReserveAttempt({
           attempt: intent,
           save: (value) => saveAttempt(owner, value),
-          send: () => wallet.sendReserveAction(fresh),
+          send: async () => {
+            try {
+              return await wallet.sendReserveAction(fresh);
+            } catch (failure) {
+              if (
+                typeof failure === "object" &&
+                failure !== null &&
+                "code" in failure &&
+                failure.code === 4001
+              ) {
+                clearWalletPending(localStorage, owner, intent.id);
+                window.dispatchEvent(new Event(walletOperationEvent));
+              }
+              throw failure;
+            }
+          },
           record: (submitted) => {
             const history = new Map(saved.map((v) => [v.hash, v]));
             for (const known of recordRef.current) {
@@ -354,7 +546,17 @@ export function ReserveWorkbench() {
   function download(entries = records) {
     const url = URL.createObjectURL(
       new Blob(
-        [JSON.stringify(reserveReport(entries, attemptRef.current), null, 2)],
+        [
+          JSON.stringify(
+            {
+              ...reserveReport(entries, attemptRef.current),
+              balanceSnapshot: snapshot,
+              fiatPurchaseRequests: fiatPurchases,
+            },
+            null,
+            2,
+          ),
+        ],
         {
           type: "application/json",
         },
@@ -378,6 +580,7 @@ export function ReserveWorkbench() {
         download(checked);
         try {
           localStorage.removeItem(key(owner));
+          localStorage.removeItem(fiatKey(owner));
         } catch {
           throw new Error(
             "The report download started, but browser history could not be cleared. Keep the downloaded report.",
@@ -385,6 +588,7 @@ export function ReserveWorkbench() {
         }
         recordRef.current = [];
         setRecords([]);
+        setFiatPurchases([]);
         setPrepared(null);
         setStorageWarning(null);
         setNotice(
@@ -409,6 +613,8 @@ export function ReserveWorkbench() {
           );
         if (noSubmission) {
           clearAttempt(owner);
+          clearWalletPending(localStorage, owner, unresolved.id);
+          window.dispatchEvent(new Event(walletOperationEvent));
           setPrepared(null);
           setNotice(
             "You marked the earlier request as not submitted after inspecting wallet activity. No onchain outcome was verified. Review a new operation only if no matching transaction exists.",
@@ -438,6 +644,13 @@ export function ReserveWorkbench() {
             "The receipt was checked but its history could not be saved. Keep the hash; the unresolved operation remains blocked.",
           );
         clearAttempt(owner);
+        if (
+          entry.verification.status === "verified" ||
+          entry.verification.status === "reverted"
+        ) {
+          clearWalletPending(localStorage, owner, unresolved.id);
+          window.dispatchEvent(new Event(walletOperationEvent));
+        }
         setPrepared(null);
         setNotice(
           "The exact operation was matched to its receipt and moved to operation history. Review its status before continuing.",
@@ -447,6 +660,63 @@ export function ReserveWorkbench() {
     });
   }
   const expires = prepared && now >= prepared.expiresAt;
+  function transactionReview() {
+    if (!prepared) return null;
+    const action = prepared.action;
+    return (
+      <div className={r.review} aria-live="polite">
+        <strong>
+          {isTransferAction(action)
+            ? "Review wallet transfer"
+            : action.kind === "approve"
+              ? "Step 1 · Exact approval"
+              : action.kind === "supply"
+                ? "Step 2 · Deposit into Aave"
+                : action.kind === "withdraw"
+                  ? "Withdraw to your Privy wallet"
+                  : "Remove Aave allowance"}
+        </strong>
+        <p>
+          {isTransferAction(action)
+            ? `Send ${actionAmount(action)} on Arbitrum One to the recipient below.`
+            : action.kind === "approve"
+              ? `Allow the Aave Pool to use exactly ${actionAmount(action)}. Approval does not deposit funds.`
+              : action.kind === "revoke"
+                ? "Set the Aave Pool USDC allowance to zero."
+                : `${actionAmount(action)} · Arbitrum One · your wallet is the beneficiary.`}
+        </p>
+        {isTransferAction(action) && (
+          <>
+            <span className={s.note}>Recipient</span>
+            <p className={s.address}>{action.recipient}</p>
+          </>
+        )}
+        <p className={s.note}>
+          Estimated network fee, with 20% buffer:{" "}
+          {units(prepared.estimatedGasWei, 18)} ETH. Privy shows the current fee
+          before signing.
+        </p>
+        {expires && (
+          <p className={s.inputError}>
+            Review expired. Refresh before signing.
+          </p>
+        )}
+        <button
+          disabled={!canAct || !!expires}
+          onClick={() => void task(confirm)}
+        >
+          Confirm in Privy
+        </button>
+        <button
+          className={s.secondary}
+          disabled={busy}
+          onClick={() => setPrepared(null)}
+        >
+          Back to amount
+        </button>
+      </div>
+    );
+  }
   return (
     <div className={base.app}>
       <header className={`${base.header} ${s.header}`}>
@@ -465,19 +735,45 @@ export function ReserveWorkbench() {
         </div>
       </header>
       <main className={s.main}>
+        {(busy || error || storageWarning || notice) && (
+          <aside className={r.feedback} aria-label="Wallet operation status">
+            {busy && <p role="status">Waiting for wallet or chain response…</p>}
+            {error && (
+              <p role="alert" className={s.inputError}>
+                {error}
+              </p>
+            )}
+            {storageWarning && (
+              <p role="alert" className={s.inputError}>
+                {storageWarning}
+              </p>
+            )}
+            {notice && <p role="status">{notice}</p>}
+            {!busy && (
+              <button
+                className={s.secondary}
+                onClick={() => {
+                  setError(null);
+                  setNotice(null);
+                  setStorageWarning(null);
+                }}
+              >
+                Dismiss message
+              </button>
+            )}
+          </aside>
+        )}
         <section className={s.hero}>
-          <span className={s.eyebrow}>
-            Noria × Privy · a reserve before a position
-          </span>
+          <span className={s.eyebrow}>Noria × Privy · fund, grow and move</span>
           <h1>
             Your USDC.
             <br />
             <span>Ready for your next move.</span>
           </h1>
           <p>
-            Open a wallet with Privy, add USDC and earn Aave&apos;s variable
-            supply interest while you evaluate liquidity opportunities. Withdraw
-            to the same wallet when you need it.
+            Fund your wallet in euros, deposit USDC into Aave, or send funds to
+            another wallet. See your current balances and a receipt for each
+            operation before continuing to an Aqua position.
           </p>
           <p className={s.note}>
             This flow uses real USDC and ETH on Arbitrum One. Aave carries
@@ -508,6 +804,13 @@ export function ReserveWorkbench() {
             </div>
           </li>
         </ol>
+        {sharedPending?.route === "aqua" && (
+          <p className={s.inputError} role="alert">
+            An Aqua wallet operation needs attention.{" "}
+            <a href="/aqua">Open the position and check its receipt</a> before
+            sending another transaction.
+          </p>
+        )}
         <div className={s.workspace}>
           <section className={s.panel} aria-labelledby="fund-heading">
             <span className={s.eyebrow}>01 · Your wallet</span>
@@ -544,6 +847,30 @@ export function ReserveWorkbench() {
                     </dd>
                   </div>
                 </dl>
+                <label htmlFor="fund-eur">Pay in euros (EUR)</label>
+                <input
+                  id="fund-eur"
+                  inputMode="decimal"
+                  value={euroAmount}
+                  disabled={busy}
+                  onChange={(event) => setEuroAmount(event.target.value)}
+                />
+                <button
+                  disabled={
+                    busy ||
+                    !historyReady ||
+                    !EuroAmountSchema.safeParse(euroAmount).success
+                  }
+                  onClick={() => void task(fundWithEuros)}
+                >
+                  Buy USDC with euros
+                </button>
+                <p className={s.note}>
+                  Receive native USDC on Arbitrum in this wallet. Review the
+                  final exchange rate, provider fees and payment methods in
+                  Privy&apos;s checkout. EUR is selected; availability and
+                  identity checks depend on the provider and your location.
+                </p>
                 <button
                   disabled={busy}
                   onClick={() => void task(() => fund("USDC"))}
@@ -637,7 +964,7 @@ export function ReserveWorkbench() {
             <p className={s.note} id="reserve-amount-help">
               Up to 1,000 USDC per operation, with at most six decimal places.
             </p>
-            {!prepared ? (
+            {!prepared || isTransferAction(prepared.action) ? (
               <button
                 disabled={!canAct || !amountUnits}
                 onClick={() => void task(() => review())}
@@ -645,47 +972,7 @@ export function ReserveWorkbench() {
                 Review {direction === "supply" ? "deposit" : "withdrawal"}
               </button>
             ) : (
-              <div className={r.review} aria-live="polite">
-                <strong>
-                  {prepared.action.kind === "approve"
-                    ? "Step 1 · Exact approval"
-                    : prepared.action.kind === "supply"
-                      ? "Step 2 · Deposit into Aave"
-                      : prepared.action.kind === "withdraw"
-                        ? "Withdraw to your Privy wallet"
-                        : "Remove Aave allowance"}
-                </strong>
-                <p>
-                  {prepared.action.kind === "approve"
-                    ? `Allow the Aave Pool to use exactly ${units(prepared.action.amountUnits)} USDC. Approval does not deposit funds.`
-                    : prepared.action.kind === "revoke"
-                      ? "Set the Aave Pool USDC allowance to zero."
-                      : `${units(prepared.action.amountUnits)} USDC · Arbitrum One · your wallet is the beneficiary.`}
-                </p>
-                <p className={s.note}>
-                  Estimated network fee, with 20% buffer:{" "}
-                  {units(prepared.estimatedGasWei, 18)} ETH. Privy shows the
-                  current fee before signing.
-                </p>
-                {expires && (
-                  <p className={s.inputError}>
-                    Review expired. Refresh before signing.
-                  </p>
-                )}
-                <button
-                  disabled={!canAct || !!expires}
-                  onClick={() => void task(confirm)}
-                >
-                  Confirm in Privy
-                </button>
-                <button
-                  className={s.secondary}
-                  disabled={busy}
-                  onClick={() => setPrepared(null)}
-                >
-                  Back to amount
-                </button>
-              </div>
+              transactionReview()
             )}
             {snapshot && BigInt(snapshot.allowanceUnits) > 0n && (
               <>
@@ -708,40 +995,114 @@ export function ReserveWorkbench() {
                 another operation.
               </p>
             )}
-            {busy && (
-              <p className={s.status} role="status">
-                Waiting for wallet or chain response…
-              </p>
-            )}
-            {error && (
-              <p className={s.inputError} role="alert">
-                {error}
-              </p>
-            )}
-            {storageWarning && (
-              <p className={s.inputError} role="alert">
-                {storageWarning}
-              </p>
-            )}
-            {notice && (
-              <p className={s.note} role="status">
-                {notice}
-              </p>
-            )}
           </section>
         </div>
         <section
           className={`${s.panel} ${r.history}`}
+          aria-labelledby="transfer-heading"
+        >
+          <span className={s.eyebrow}>03 · Send to another wallet</span>
+          <h2 id="transfer-heading">Transfer funds</h2>
+          <p>
+            Send available wallet funds on Arbitrum One. To send USDC held in
+            your Aave reserve, withdraw it to this wallet first.
+          </p>
+          <div className={s.fieldRow}>
+            <div>
+              <label htmlFor="transfer-asset">Asset to send</label>
+              <select
+                id="transfer-asset"
+                value={transferAsset}
+                disabled={busy}
+                onChange={(event) => {
+                  setTransferAsset(event.target.value as "USDC" | "ETH");
+                  setPrepared(null);
+                }}
+              >
+                <option value="USDC">USDC · Arbitrum</option>
+                <option value="ETH">ETH · Arbitrum</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="transfer-amount">
+                Amount to send ({transferAsset})
+              </label>
+              <input
+                id="transfer-amount"
+                value={transferAmount}
+                inputMode="decimal"
+                disabled={busy}
+                onChange={(event) => {
+                  setTransferAmount(event.target.value);
+                  setPrepared(null);
+                }}
+              />
+            </div>
+          </div>
+          <label htmlFor="transfer-recipient">Recipient address</label>
+          <input
+            id="transfer-recipient"
+            value={transferRecipient}
+            placeholder="0x…"
+            autoComplete="off"
+            spellCheck={false}
+            disabled={busy}
+            onChange={(event) => {
+              setTransferRecipient(event.target.value);
+              setPrepared(null);
+            }}
+          />
+          <p className={s.note}>
+            The recipient must support this asset on Arbitrum. ETH is needed for
+            network fees; the review checks the amount and fee together before
+            confirmation.
+          </p>
+          {snapshot &&
+            transferAsset === "USDC" &&
+            BigInt(snapshot.usdcUnits) > 0n && (
+              <button
+                className={s.secondary}
+                disabled={busy}
+                onClick={() => {
+                  setTransferAmount(units(snapshot.usdcUnits));
+                  setPrepared(null);
+                }}
+              >
+                Use wallet USDC balance
+              </button>
+            )}
+          {prepared && isTransferAction(prepared.action) ? (
+            transactionReview()
+          ) : (
+            <button
+              disabled={
+                !canAct ||
+                !parseTransferAmount(transferAmount, transferAsset) ||
+                !OwnerSchema.safeParse(transferRecipient.trim()).success
+              }
+              onClick={() => void task(reviewTransfer)}
+            >
+              Review transfer
+            </button>
+          )}
+        </section>
+        <section
+          className={`${s.panel} ${r.history}`}
           aria-labelledby="history-heading"
         >
-          <span className={s.eyebrow}>03 · Trace your money</span>
+          <span className={s.eyebrow}>04 · Trace your money</span>
           <h2 id="history-heading">Operation history</h2>
+          <p className={s.note}>
+            Your Noria activity in this browser: deposits, withdrawals,
+            approvals and transfers. Current balances come from Arbitrum and can
+            include funds received elsewhere.
+          </p>
           {attempt && (
             <div className={r.review} role="alert">
               <strong>Resolve the earlier wallet request</strong>
               <p>
                 {attempt.prepared.action.kind} ·{" "}
-                {units(attempt.prepared.action.amountUnits)} USDC · requested{" "}
+                {actionAmount(attempt.prepared.action)} · requested{" "}
                 {new Date(attempt.startedAt).toLocaleString()}. Its outcome is
                 unresolved. A closed window or failed response does not prove
                 cancellation. Do not repeat the operation.
@@ -814,13 +1175,28 @@ export function ReserveWorkbench() {
           ) : (
             <>
               <ul className={r.operations}>
-                {records.map((entry) => (
+                {[...records].reverse().map((entry) => (
                   <li key={entry.id}>
                     <div>
                       <strong>
                         {entry.prepared.action.kind} ·{" "}
-                        {units(entry.prepared.action.amountUnits)} USDC
+                        {actionAmount(entry.prepared.action)}
                       </strong>
+                      <p>
+                        {new Date(entry.submittedAt).toLocaleString()} ·
+                        Arbitrum One
+                      </p>
+                      {isTransferAction(entry.prepared.action) && (
+                        <p className={s.address}>
+                          To {entry.prepared.action.recipient}
+                        </p>
+                      )}
+                      {entry.verification && (
+                        <p>
+                          Network fee:{" "}
+                          {units(entry.verification.networkFeeWei, 18)} ETH
+                        </p>
+                      )}
                       <p>
                         {entry.verification?.status === "verified"
                           ? "Onchain effect verified"
@@ -872,6 +1248,48 @@ export function ReserveWorkbench() {
               </p>
             </>
           )}
+          {fiatPurchases.length > 0 && (
+            <div className={r.fundingHistory}>
+              <h3>Euro funding requests</h3>
+              <p className={s.note}>
+                Requested amounts and provider status only. These entries are
+                not proof of a charge or an onchain USDC receipt. Keep the
+                provider&apos;s final receipt; wallet balances update
+                independently.
+              </p>
+              <ul className={r.operations}>
+                {[...fiatPurchases].reverse().map((purchase) => (
+                  <li key={purchase.id}>
+                    <div>
+                      <strong>
+                        Requested €{purchase.requestedEuroAmount} → USDC
+                      </strong>
+                      <p>
+                        {new Date(purchase.startedAt).toLocaleString()} ·{" "}
+                        {purchase.status.replaceAll("-", " ")}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              {!records.length && (
+                <>
+                  <button className={s.secondary} onClick={() => download()}>
+                    <Download size={14} /> Download operation report
+                  </button>
+                  <button
+                    className={s.secondary}
+                    disabled={
+                      busy || !historyReady || !!attempt || !wallet.ready
+                    }
+                    onClick={() => void task(clearCheckedHistory)}
+                  >
+                    Download and clear checked history
+                  </button>
+                </>
+              )}
+            </div>
+          )}
           {snapshot && (
             <p className={s.note}>
               Balances observed at Arbitrum block {snapshot.blockNumber}.
@@ -900,14 +1318,14 @@ export function ReserveWorkbench() {
           <span className={s.eyebrow}>Continue with Noria</span>
           <h2>Evaluate a liquidity position</h2>
           <p>
-            Use The Graph to inspect a pool and range, then rehearse an
-            Aave-financed Aqua position. The rehearsal runs on a local fork with
-            fixture funds.
+            Use The Graph to inspect a pool and range, then review the
+            Aave-financed Aqua launch. You can also rehearse on a local fork
+            with fixture funds.
           </p>
           <p className={s.note}>
-            Your live reserve is not moved or borrowed against by the rehearsal.
-            A public Aqua PositionAccount would need its own funding; supply in
-            this wallet is not automatically its collateral.
+            This link only passes your chosen amount to the planner. An Aqua
+            position needs its own collateral: withdraw reserve USDC to this
+            wallet before the separate, confirmed position funding step.
           </p>
           <a
             className={s.reportLink}
