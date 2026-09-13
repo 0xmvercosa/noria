@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import type { ReactNode } from "react";
 import { NoriaWalletProvider } from "../components/NoriaWalletProvider";
 import "./globals.css";
@@ -9,13 +10,14 @@ export const metadata: Metadata = {
     "Turn capital and intent into an inspectable Uniswap v3 position analysis, with live Graph data, independent onchain verification, and a downloadable analysis report.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="en">
       <body>
-        <NoriaWalletProvider>{children}</NoriaWalletProvider>
+        <NoriaWalletProvider nonce={nonce}>{children}</NoriaWalletProvider>
       </body>
     </html>
   );

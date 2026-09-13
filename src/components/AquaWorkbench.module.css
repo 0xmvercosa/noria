@@ -541,6 +541,15 @@
   font-size: 11px;
   overflow-wrap: anywhere;
 }
+.walletError button {
+  padding: 8px 12px;
+  margin-top: 10px;
+  border: 1px solid #665738;
+  border-radius: 5px;
+  background: #211f17;
+  color: #d3f78b;
+  font-size: 12px;
+}
 .srOnly {
   position: absolute;
   width: 1px;

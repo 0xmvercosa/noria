@@ -3,6 +3,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useRef,
   useState,
   type ReactNode,
@@ -14,6 +15,7 @@ import {
   useFundWallet,
   useFiatOnramp,
   usePrivy,
+  useLogin,
   useSendTransaction,
   useWallets,
 } from "@privy-io/react-auth";
@@ -29,6 +31,7 @@ import {
   type PreparedReserveAction,
 } from "../integrations/privy/reserve";
 import { euroOnrampOptions } from "../integrations/privy/fiat";
+import { rememberWalletReturn } from "../integrations/privy/navigation";
 import {
   assertPreparedLaunch,
   launchTransaction,
@@ -42,6 +45,7 @@ type WalletContext = {
   chainId: string | null;
   error: string | null;
   connect: () => void;
+  retry: () => void;
   disconnect: () => Promise<void>;
   switchToArbitrum: () => Promise<void>;
   fund: (asset: "USDC" | "ETH") => Promise<void>;
@@ -58,6 +62,7 @@ const unavailable: WalletContext = {
   chainId: null,
   error: null,
   connect: () => {},
+  retry: () => {},
   disconnect: async () => {},
   switchToArbitrum: async () => {},
   fund: async () => {
@@ -78,24 +83,48 @@ export function useNoriaWallet() {
   return useContext(NoriaWalletContext);
 }
 
-function ConnectedWalletProvider({ children }: { children: ReactNode }) {
-  const { ready: privyReady, authenticated, login, logout } = usePrivy();
+function ConnectedWalletProvider({
+  children,
+  retry,
+}: {
+  children: ReactNode;
+  retry: () => void;
+}) {
+  const { ready: privyReady, authenticated, logout } = usePrivy();
   const { wallets, ready: walletsReady } = useWallets();
   const { createWallet } = useCreateWallet();
   const { fundWallet } = useFundWallet();
   const { fund: fiatOnramp } = useFiatOnramp();
   const { sendTransaction } = useSendTransaction();
   const [error, setError] = useState<string | null>(null);
+  const [initializationTimedOut, setInitializationTimedOut] = useState(false);
   const [creating, setCreating] = useState(false);
   const wallet = authenticated
     ? getEmbeddedConnectedWallet(wallets)
     : undefined;
   const activeAddress = useRef(wallet?.address);
   activeAddress.current = wallet?.address;
+  const { login } = useLogin({
+    onError: () =>
+      setError(
+        "Sign-in was not completed. Try again, or use email if your browser does not support Google sign-in.",
+      ),
+  });
+  const initialized = privyReady && (!authenticated || walletsReady);
+  useEffect(() => {
+    setInitializationTimedOut(false);
+    if (initialized) return;
+    const timer = window.setTimeout(
+      () => setInitializationTimedOut(true),
+      15_000,
+    );
+    return () => window.clearTimeout(timer);
+  }, [initialized]);
 
   function connect() {
     setError(null);
     if (!authenticated) {
+      rememberWalletReturn();
       login();
       return;
     }
@@ -188,8 +217,13 @@ function ConnectedWalletProvider({ children }: { children: ReactNode }) {
         ready: privyReady && !creating && (!authenticated || walletsReady),
         address: wallet?.address ?? null,
         chainId: wallet?.chainId ?? null,
-        error,
+        error:
+          error ??
+          (initializationTimedOut
+            ? "Wallet connection is unavailable. Retry the connection; your saved operations will be preserved."
+            : null),
         connect,
+        retry,
         disconnect,
         switchToArbitrum,
         fund,
@@ -240,7 +274,19 @@ function ConnectedWalletProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function NoriaWalletProvider({ children }: { children: ReactNode }) {
+export function NoriaWalletProvider({
+  children,
+  nonce,
+}: {
+  children: ReactNode;
+  nonce?: string;
+}) {
+  const [instance, setInstance] = useState(0);
+  const [oauthRedirect, setOauthRedirect] = useState<string>();
+  useEffect(
+    () => setOauthRedirect(`${window.location.origin}/auth/callback`),
+    [],
+  );
   const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID?.trim();
   if (!appId)
     return (
@@ -250,11 +296,14 @@ export function NoriaWalletProvider({ children }: { children: ReactNode }) {
     );
   return (
     <PrivyProvider
+      key={instance}
       appId={appId}
       config={{
+        scriptNonce: nonce,
+        customOAuthRedirectUrl: oauthRedirect,
         defaultChain: arbitrum,
         supportedChains: [arbitrum],
-        loginMethods: ["email", "wallet"],
+        loginMethods: ["google", "email", "wallet"],
         embeddedWallets: {
           ethereum: { createOnLogin: "all-users" },
           solana: { createOnLogin: "off" },
@@ -267,7 +316,9 @@ export function NoriaWalletProvider({ children }: { children: ReactNode }) {
         },
       }}
     >
-      <ConnectedWalletProvider>{children}</ConnectedWalletProvider>
+      <ConnectedWalletProvider retry={() => setInstance((value) => value + 1)}>
+        {children}
+      </ConnectedWalletProvider>
     </PrivyProvider>
   );
 }
