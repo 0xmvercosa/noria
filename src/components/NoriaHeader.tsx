@@ -64,11 +64,11 @@ export function NoriaHeader({
 
   useEffect(() => {
     const desktop = window.matchMedia("(min-width: 1101px)");
-    const closeOnDesktop = () => {
-      if (desktop.matches) setOpen(false);
-    };
-    desktop.addEventListener("change", closeOnDesktop);
-    return () => desktop.removeEventListener("change", closeOnDesktop);
+    // Close on either breakpoint transition. Reading the media query's current
+    // matches value can miss a queued desktop event after a rapid resize back.
+    const closeOnBreakpoint = () => setOpen(false);
+    desktop.addEventListener("change", closeOnBreakpoint);
+    return () => desktop.removeEventListener("change", closeOnBreakpoint);
   }, []);
   useEffect(() => {
     if (!open) return;
