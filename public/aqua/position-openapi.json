@@ -49,6 +49,9 @@
           },
           "503": {
             "description": "Financing or source provider unavailable"
+          },
+          "422": {
+            "description": "Collateral and health limits size the loan below the 1 USDC minimum."
           }
         }
       }

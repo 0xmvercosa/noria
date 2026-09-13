@@ -324,6 +324,11 @@ test("position HTTP validates collateral intent and bounds streams before provid
   })(make(JSON.stringify(request)));
   assert.equal(unavailable.status, 503);
   assert.equal((await unavailable.text()).includes("private provider"), false);
+  const undersized = await createPositionPostHandler(async () => {
+    throw new Error("loan_below_one_usdc");
+  })(make(JSON.stringify(request)));
+  assert.equal(undersized.status, 422);
+  assert.match(await undersized.text(), /less than 1 USDC/);
 });
 
 test("local runner HTTP is opt-in, loopback-only, same-origin and validates its job envelope", async () => {

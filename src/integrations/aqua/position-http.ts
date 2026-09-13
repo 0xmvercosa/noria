@@ -32,6 +32,14 @@ export function createPositionPostHandler(plan = planPosition) {
     } catch (error) {
       if (error instanceof BodyTooLargeError)
         return respond({ message: error.message }, 413);
+      if (error instanceof Error && error.message === "loan_below_one_usdc")
+        return respond(
+          {
+            message:
+              "These collateral and health-factor settings fund less than 1 USDC of LP inventory. Increase collateral or revise the health limits.",
+          },
+          422,
+        );
       return respond(
         {
           message:
