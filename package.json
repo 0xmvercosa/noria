@@ -20,7 +20,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "agent:call": "node --env-file-if-exists=.env.local --import tsx scripts/call-tool.ts",
-    "check:runtime-assets": "node scripts/check-runtime-assets.mjs"
+    "check:runtime-assets": "node scripts/check-runtime-assets.mjs",
+    "validate:privy-protocol": "node --env-file-if-exists=.env.local --import tsx scripts/validate-privy-reserve.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
