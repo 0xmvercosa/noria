@@ -355,6 +355,58 @@
   border-top: 1px solid #2a352d;
   border-bottom: 1px solid #2a352d;
 }
+.launchHandoff {
+  margin: 24px 0 28px;
+  padding: 18px;
+  border: 1px solid #45583b;
+  border-radius: 10px;
+  background: #192318;
+}
+.launchNext {
+  display: block;
+  margin-bottom: 12px;
+  color: #d3f78b;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.panel .launchButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 56px;
+  padding: 16px 18px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: #d3f78b;
+  color: #172214;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.4;
+  text-decoration: none;
+}
+.launchButton svg {
+  flex-shrink: 0;
+}
+.panel .launchButton:hover {
+  background: #e1ffad;
+  color: #172214;
+}
+.launchButton:focus-visible {
+  outline: 2px solid #78d9c1;
+  outline-offset: 4px;
+}
+.panel .launchHandoff p {
+  margin: 12px 0 0;
+  color: #b4c1b8;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.launchHeading {
+  scroll-margin-top: 28px;
+}
 .policy dt,
 .provenance dt {
   color: #97a69c;
