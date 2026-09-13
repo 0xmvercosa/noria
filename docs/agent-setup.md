@@ -2,6 +2,8 @@
 
 Your MCP client supplies the language model. Noria supplies six deterministic, read-only tools, and The Graph Subgraph MCP supplies live indexed data. The Noria server does not require a model API key and cannot sign or submit transactions.
 
+The external Aqua application uses the separate [versioned HTTP reference API](aqua-integration.md). Its raw-USDC budgets and exact-pair scope do not change the six MCP tools or their documented inputs below.
+
 ## Connect the server
 
 Install dependencies with `npm ci`. Configure your MCP client to launch:
