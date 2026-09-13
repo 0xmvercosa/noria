@@ -126,6 +126,8 @@ This research endpoint retains `executionReady: false`. The implemented Aqua pro
 
 ## Run the Aqua product
 
+**Deployment and demo:** [step-by-step Rabby deployment and testing guide (PT-BR)](docs/1inch/deploy-and-test.pt-BR.md), [contract review](docs/1inch/contract-review.md), and [owner-confirmed lifecycle](docs/1inch/live-launch.md). Run `npm run validate:aqua-deployment` for the isolated-fork deployment test, then `npm run deploy:aqua` to prepare public deployments locally and sign each one in Rabby. The server has no private key or broadcaster. Reports retain exact creation inputs, receipts and runtime verification; local evidence is distinct from public deployment.
+
 In `/aqua`, enter **ETH or USDC collateral**, a safety HF and a comfortable HF. The position endpoint reads Aave, sends the sized loan budget to the real Graph service and preserves its selected pool, range and asymmetric inventory. The USDC path deposits USDC as collateral before borrowing USDC. The 50/50 rule applies to eligible cycle surplus, not opening inventory.
 
 ```sh
