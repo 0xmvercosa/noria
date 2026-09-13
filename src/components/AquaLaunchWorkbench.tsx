@@ -817,12 +817,15 @@ export function AquaLaunchWorkbench({
       )}
       {snapshot?.status === "deployment-required" && (
         <div className={r.review} role="status">
-          <strong>Public deployment required</strong>
-          <p>{snapshot.message}</p>
+          <strong>Public launch is not available yet</strong>
           <p>
             The plan remains available above. A real position can be launched
             after the reviewed contracts are deployed and configured.
           </p>
+          <details className={s.details}>
+            <summary>Deployment details for reviewers</summary>
+            <p>{snapshot.message}</p>
+          </details>
         </div>
       )}
       {pending?.route === "reserve" && (
