@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  ws@>=8 <9: 8.21.3
+
 importers:
 
   .:
@@ -290,7 +293,7 @@ packages:
   isows@1.0.7:
     resolution: {integrity: sha512-I1fSfDCZL5P0v33sVqeTDSpcstAg/N+wF5HS033mogOVIp4B+oHC7oOCsA3axAbBSGTJ8QubbNmnIRN/h8U7hg==}
     peerDependencies:
-      ws: '*'
+      ws: 8.21.3
 
   ox@0.14.44:
     resolution: {integrity: sha512-O54qXXHEk4ySamMSyBpI0AeBegS5frxU6+LA6Jb9Sf6kMOxcTNaxYmwZfpOu22DIQsdKfgQxHq8EsAGaoBQScA==}
@@ -343,20 +346,8 @@ packages:
       typescript:
         optional: true
 
-  ws@8.18.3:
-    resolution: {integrity: sha512-PEIGCY5tSlUt50cqyMXfCzX+oOPqN0vuGqWzbcJ2xvnkzkq46oOpz7dQaTDBdfICb4N14+GARUDw2XV2N4tvzg==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: '>=5.0.2'
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
-  ws@8.21.0:
-    resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
+  ws@8.21.3:
+    resolution: {integrity: sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -574,13 +565,9 @@ snapshots:
     dependencies:
       resolve-pkg-maps: 1.0.0
 
-  isows@1.0.7(ws@8.18.3):
+  isows@1.0.7(ws@8.21.3):
     dependencies:
-      ws: 8.18.3
-
-  isows@1.0.7(ws@8.21.0):
-    dependencies:
-      ws: 8.21.0
+      ws: 8.21.3
 
   ox@0.14.44(typescript@5.9.3)(zod@4.1.12):
     dependencies:
@@ -634,9 +621,9 @@ snapshots:
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
       abitype: 1.1.0(typescript@5.9.3)(zod@4.1.12)
-      isows: 1.0.7(ws@8.18.3)
+      isows: 1.0.7(ws@8.21.3)
       ox: 0.9.6(typescript@5.9.3)(zod@4.1.12)
-      ws: 8.18.3
+      ws: 8.21.3
     optionalDependencies:
       typescript: 5.9.3
     transitivePeerDependencies:
@@ -651,9 +638,9 @@ snapshots:
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
       abitype: 1.2.3(typescript@5.9.3)(zod@4.1.12)
-      isows: 1.0.7(ws@8.21.0)
+      isows: 1.0.7(ws@8.21.3)
       ox: 0.14.44(typescript@5.9.3)(zod@4.1.12)
-      ws: 8.21.0
+      ws: 8.21.3
     optionalDependencies:
       typescript: 5.9.3
     transitivePeerDependencies:
@@ -661,8 +648,6 @@ snapshots:
       - utf-8-validate
       - zod
 
-  ws@8.18.3: {}
-
-  ws@8.21.0: {}
+  ws@8.21.3: {}
 
   zod@4.1.12: {}

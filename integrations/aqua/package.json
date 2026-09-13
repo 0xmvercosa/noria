@@ -27,5 +27,18 @@
     "tsx": "4.20.6",
     "typescript": "5.9.3"
   },
-  "packageManager": "pnpm@10.32.1"
+  "packageManager": "pnpm@10.32.1",
+  "pnpm": {
+    "overrides": {
+      "ws@>=8 <9": "8.21.3"
+    }
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./boundary": "./src/boundary.ts",
+    "./financing": "./src/financing.ts",
+    "./official": "./src/official.ts",
+    "./verifier": "./src/verifier.ts",
+    "./rehearsal-plan": "./src/rehearsal-plan.ts"
+  }
 }
