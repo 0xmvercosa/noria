@@ -62,7 +62,7 @@ Para uma instalação nova:
 ```sh
 mkdir -p "$HOME/Documents/Noria"
 cd "$HOME/Documents/Noria"
-git clone https://github.com/0xmvercosa/noria.git
+git clone https://github.com/rafaelzochling/noria.git
 cd noria
 npm ci
 ```
@@ -254,6 +254,8 @@ Se o explorer solicitar hexadecimal sem prefixo, remova apenas o `0x` inicial. N
 ## 11. Configurar a Vercel e a Privy
 
 Na página local concluída, copie a linha `NORIA_AQUA_FACTORY_ADDRESS=0x...`. Abra o projeto Noria na Vercel, **Settings → Environment Variables**:
+
+O repositório foi transferido para `rafaelzochling/noria`. Se **Settings → Git** mostrar `Project Link not found` na conexão antiga `0xmvercosa/noria`, a Vercel precisa recuperar acesso ao repositório novo. O responsável pela conta `rafaelzochling` deve conceder acesso da integração Vercel a **esse repositório**, e o projeto Noria deve ser reconectado a ele. Não mude o plano, não crie outro projeto nem amplie o acesso para repositórios desnecessários. Enquanto isso não for resolvido, merges no GitHub não atualizam automaticamente o site; o assistente de deploy local continua funcionando.
 
 | Nome                         | Valor / orientação                                                                               |
 | ---------------------------- | ------------------------------------------------------------------------------------------------ |
