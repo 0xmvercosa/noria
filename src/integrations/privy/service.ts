@@ -5,6 +5,7 @@ import {
   ActionSchema,
   OwnerSchema,
   assertReserveAction,
+  assertReserveGas,
   reserveTransaction,
   tokenAbi,
   poolAbi,
@@ -140,11 +141,8 @@ export function createReserveService(
       }),
       client.getGasPrice(),
     ]);
-    const estimatedGasWei = (gas * gasPrice * 120n) / 100n;
-    if (BigInt(before.nativeWei) < estimatedGasWei)
-      throw new Error(
-        "Add ETH on Arbitrum for network fees before continuing.",
-      );
+    const estimatedGasWei = (gas * gasPrice * 120n + 99n) / 100n;
+    assertReserveGas(action, before, estimatedGasWei.toString());
     return {
       action,
       before,
@@ -167,20 +165,39 @@ export function createReserveService(
       !same(transaction.from, action.owner) ||
       !same(transaction.to, expected.to) ||
       transaction.input.toLowerCase() !== expected.data.toLowerCase() ||
-      transaction.value !== 0n ||
-      transaction.chainId !== RESERVE.chainId
+      transaction.value !== expected.value ||
+      transaction.chainId !== RESERVE.chainId ||
+      !same(receipt.from, action.owner) ||
+      !same(receipt.to, expected.to)
     )
       throw new Error(
         "The receipt does not match this wallet, network and exact operation.",
       );
     if (
+      !same(transaction.hash, hash) ||
       transaction.blockHash !== receipt.blockHash ||
-      receipt.transactionHash !== hash
+      transaction.blockNumber !== receipt.blockNumber ||
+      !same(receipt.transactionHash, hash)
     )
       throw new Error("The transaction is not in the reported block.");
     const after = await snapshot(action.owner, receipt.blockNumber);
-    if (after.blockHash !== receipt.blockHash)
+    if (
+      after.blockHash !== receipt.blockHash ||
+      after.blockNumber !== receipt.blockNumber.toString()
+    )
       throw new Error("The receipt block was reorganized. Check again.");
+    if (
+      receipt.logs.some(
+        (log) =>
+          log.removed ||
+          log.blockHash !== receipt.blockHash ||
+          log.blockNumber !== receipt.blockNumber ||
+          !same(log.transactionHash, hash),
+      )
+    )
+      throw new Error(
+        "The receipt logs do not belong to the reported block and transaction.",
+      );
     let effectVerified = false;
     if (receipt.status === "success") {
       const amount = BigInt(action.amountUnits);
@@ -188,7 +205,18 @@ export function createReserveService(
         abi: tokenAbi,
         logs: receipt.logs.filter((l) => same(l.address, RESERVE.usdc)),
       });
-      if (action.kind === "approve" || action.kind === "revoke") {
+      if (action.kind === "transfer-eth") {
+        // Exact sender, recipient, value and empty calldata were matched above.
+        effectVerified = true;
+      } else if (action.kind === "transfer-usdc") {
+        effectVerified = tokenLogs.some(
+          (l) =>
+            l.eventName === "Transfer" &&
+            same(l.args.from, action.owner) &&
+            same(l.args.to, action.recipient) &&
+            l.args.value === amount,
+        );
+      } else if (action.kind === "approve" || action.kind === "revoke") {
         effectVerified = tokenLogs.some(
           (l) =>
             l.eventName === "Approval" &&

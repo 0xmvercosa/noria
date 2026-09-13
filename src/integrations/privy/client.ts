@@ -4,6 +4,8 @@ import {
   PreparedSchema,
   SnapshotSchema,
   assertReserveAction,
+  assertReserveGas,
+  sameReserveAction,
   type ReserveAction,
   type PreparedReserveAction,
 } from "./reserve";
@@ -121,7 +123,7 @@ export function assertPrepared(
 ) {
   const prepared = PreparedSchema.parse(input);
   const expected = ActionSchema.parse(action);
-  if (JSON.stringify(prepared.action) !== JSON.stringify(expected))
+  if (!sameReserveAction(prepared.action, expected))
     throw new Error("The review does not match your requested operation.");
   if (
     now >= prepared.expiresAt ||
@@ -130,6 +132,7 @@ export function assertPrepared(
   )
     throw new Error("This review expired. Refresh before signing.");
   assertReserveAction(expected, prepared.before);
+  assertReserveGas(expected, prepared.before, prepared.estimatedGasWei);
   return prepared;
 }
 export async function prepareReserve(action: ReserveAction) {
@@ -150,13 +153,15 @@ export async function verifyReserve(
     data.schemaVersion !== "noria.privy.operation.v1" ||
     data.hash !== record.hash ||
     data.chainId !== 42161 ||
-    JSON.stringify(ActionSchema.parse(data.action)) !==
-      JSON.stringify(record.prepared.action) ||
+    !sameReserveAction(data.action, record.prepared.action) ||
     !["verified", "reverted", "effect-unverified"].includes(data.status)
   )
     throw new Error("The operation report did not match this transaction.");
-  SnapshotSchema.parse(data.after);
-  return data as ReserveVerification;
+  const after = SnapshotSchema.parse(data.after);
+  const action = ActionSchema.parse(data.action);
+  if (after.owner !== action.owner)
+    throw new Error("The operation report did not match this wallet.");
+  return { ...data, action, after } as ReserveVerification;
 }
 
 export async function verifyReserveAttempt(
@@ -242,7 +247,8 @@ export async function withCheckedReserveHistory<T>(options: {
             options.owner.toLowerCase()) ||
         (savedAttempt &&
           state.attempt &&
-          JSON.stringify(savedAttempt) !== JSON.stringify(state.attempt))
+          JSON.stringify(savedAttempt) !==
+            JSON.stringify(AttemptSchema.parse(state.attempt)))
       )
         throw new Error(
           "The unresolved wallet operation changed. Refresh before continuing.",
@@ -299,11 +305,13 @@ export function reserveReport(
       "Privy React useSendTransaction; wallet origin requires the accompanying login/demo evidence.",
     boundaries: [
       "Funding modal completion is not counted as settled funding or a completed deposit.",
-      "Each verified operation matches canonical transaction calldata and token/protocol events.",
-      "Snapshots are end-of-block observations and can include other activity; event amounts prove this operation.",
+      "Each verified operation matches canonical transaction sender, destination, calldata and value, plus token/protocol events where applicable.",
+      "Wallet transfers report the exact sent asset, recipient and amount. Network fees are paid separately in ETH.",
+      "This statement covers operations recorded in this browser; it is not a complete wallet activity index.",
+      "Snapshots are end-of-block observations and can include other activity; exact transaction value or matched event amounts prove this operation.",
       "Aave balances can include earlier deposits, transfers and interest; balance changes alone are not profit.",
-      "Approval and revocation are permissions, not the required completed financial flow. Use a verified supply or withdrawal.",
-      "Aave supply uses the Privy wallet, not the Aqua PositionAccount. Borrowing and Aqua execution remain local rehearsals.",
+      "Approval and revocation are permissions, not completed financial flows. Use a verified transfer, supply or withdrawal.",
+      "Aave savings uses the Privy wallet. Aqua borrowing and execution use a separately verified PositionAccount deployment and are not part of this wallet statement.",
       "Sequencer inclusion is not Ethereum finality. These client-side records are not cryptographic Privy provenance.",
       "An unresolved wallet request is not a verified transaction or a cancellation. Inspect wallet activity before any retry.",
     ],
