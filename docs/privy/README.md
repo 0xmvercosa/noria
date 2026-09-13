@@ -6,7 +6,7 @@ Open **`/reserve`**. The scope is **Arbitrum One (42161), native USDC and Aave V
 
 ## Submission status
 
-The source implements the financial flow and a protocol-only local fork check. **A configured Privy wallet and its public-chain financial operation have not yet been recorded.** The public App ID and allowed origins are required for that acceptance test. A passing build, wallet connection, approved allowance, mocked wallet or Anvil impersonation is not claimed as a completed Privy financial flow.
+The source implements the financial flow and a protocol-only local fork check. The public App ID is configured, and the real email/wallet login modal was checked on [the deployed reserve](https://noria-blue.vercel.app/reserve). **Authenticated embedded-wallet creation and a public-chain financial operation have not yet been recorded.** See the [configured startup check](validation.md#configured-startup-check--13-september-2026). A passing build, login modal, wallet connection, approved allowance, mocked wallet or Anvil impersonation is not claimed as a completed Privy financial flow.
 
 | Prize requirement                            | Implementation                                                                                                | Evidence required for submission                                                           |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
@@ -14,7 +14,7 @@ The source implements the financial flow and a protocol-only local fork check. *
 | Create or use at least one Privy wallet      | `createOnLogin: "all-users"`, explicit `useCreateWallet` fallback, `getEmbeddedConnectedWallet`               | Record the wallet address from the configured Privy session                                |
 | Functional generally available wallet action | `useSendTransaction`: exact USDC approval, Aave `supply`, Aave `withdraw`, allowance revocation               | A verified supply or withdrawal hash from the Privy wallet; approval alone is insufficient |
 | Funding tools simplify the flow              | `useFundWallet` offers supported USDC and ETH funding methods                                                 | Optional funding demonstration; modal dismissal is not settlement                          |
-| Working demo and source                      | `/reserve`, this repository, tests and report download                                                        | Public judging URL and recording still need to be supplied                                 |
+| Working demo and source                      | [Public reserve](https://noria-blue.vercel.app/reserve), this repository, tests and report download           | A recording of the authenticated financial journey is still required                       |
 | Explain UX improvement                       | One wallet, native-USDC/network defaults, exact approvals, fee preview, receipt recovery and operation report | Demonstrate this sequence rather than only a connection button                             |
 | Commercial/guided features do not count      | No cards, commercial Earn access, sponsored gas or guided onboarding dependency                               | The qualifying operation is an ordinary user-confirmed Ethereum transaction                |
 
