@@ -42,7 +42,7 @@ NORIA_PLAN_FILE=/absolute/path/to/position-plan.json \
   npm --prefix integrations/aqua run fork:rehearse
 ```
 
-Alternatively, configure the public Privy App ID and enable `NORIA_ENABLE_LOCAL_FORK=1` on the loopback app. Connect an external wallet and request the rehearsal in the UI. The API uses that public address for local impersonation and provides the resulting report, including a partial report if execution stops. No signing or upstream mutation occurs.
+Alternatively, configure the public Privy App ID and enable `NORIA_ENABLE_LOCAL_FORK=1` on the loopback app. Create/open the Privy embedded wallet and request the rehearsal in the UI. The API uses that public address for local impersonation and provides the resulting report, including a partial report if execution stops. No signing or upstream mutation occurs.
 
 A standalone checkout can use `pnpm install --frozen-lockfile` inside the module instead of root `npm ci`. Avoid mixing the two dependency installations in one tree.
 
