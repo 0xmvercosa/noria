@@ -14,6 +14,9 @@ import { NoriaHeader } from "./NoriaHeader";
 import { useNoriaWallet } from "./NoriaWalletProvider";
 import { AquaLaunchWorkbench } from "./AquaLaunchWorkbench";
 import { AmountInput } from "./FinancialInput";
+import { EthAmount, EthUsdEquivalent, EthUsdNote } from "./EthUsd";
+import { UsdReferenceSchema, usdReferenceFromReport } from "../domain/eth-usd";
+import { AQUA_SCOPE } from "../integrations/aqua/contract";
 import {
   PositionRequestSchema,
   type PositionRequest,
@@ -327,6 +330,18 @@ export function AquaWorkbench() {
 
   const rec = response?.graph?.recommendation;
   const execution = response?.execution;
+  const financingUsd =
+    response?.intent.fundingAsset === "ETH" &&
+    /^\d+$/.test(response.financing.collateralPriceBase)
+      ? UsdReferenceSchema.safeParse({
+          usd: formatUnits(BigInt(response.financing.collateralPriceBase), 8),
+          timestamp: Date.parse(response.financing.timestamp) / 1000,
+          provider: "Aave V3 oracle · Arbitrum",
+        })
+      : null;
+  const collateralUsdReference = financingUsd?.success
+    ? financingUsd.data
+    : null;
   const expired = response ? now >= Date.parse(response.validUntil) : false;
   const ready =
     response?.status === "ready-for-local-rehearsal" &&
@@ -496,6 +511,13 @@ export function AquaWorkbench() {
                 setAmount(value);
               }}
             />
+            {fundingAsset === "ETH" && collateralAmountUnits && (
+              <p className={s.note}>
+                <EthUsdEquivalent
+                  amount={formatUnits(BigInt(collateralAmountUnits), 18)}
+                />
+              </p>
+            )}
             <p className={s.note} id="position-input-note">
               At launch, your position supplies this collateral to Aave. The
               USDC loan buys the liquidity inventory. Keep collateral in your
@@ -503,6 +525,7 @@ export function AquaWorkbench() {
               You also need ETH for network fees.{" "}
               <a href="/reserve#fund-heading">Add funds</a>.
             </p>
+            <EthUsdNote />
             <div className={s.fieldRow}>
               <div>
                 <label htmlFor="safety-hf">Safety health factor</label>
@@ -649,27 +672,39 @@ export function AquaWorkbench() {
                   </strong>
                   <p className={s.note}>
                     Against{" "}
-                    {rawAmount(
-                      response.intent.collateralAmountUnits,
-                      response.intent.fundingAsset === "ETH" ? 18 : 6,
+                    {response.intent.fundingAsset === "ETH" ? (
+                      <EthAmount
+                        wei={response.intent.collateralAmountUnits}
+                        reference={collateralUsdReference}
+                      />
+                    ) : (
+                      <>
+                        {rawAmount(response.intent.collateralAmountUnits, 6)}{" "}
+                        USDC
+                      </>
                     )}{" "}
-                    {response.intent.fundingAsset} collateral ·{" "}
-                    {response.financing.headroomBps} bps of borrowing headroom.
+                    collateral · {response.financing.headroomBps} bps of
+                    borrowing headroom.
                   </p>
                 </div>
                 <p className={s.note}>
                   You supply{" "}
-                  {rawAmount(
-                    response.intent.collateralAmountUnits,
-                    response.intent.fundingAsset === "ETH" ? 18 : 6,
-                  )}{" "}
-                  {response.intent.fundingAsset}, then owe{" "}
-                  {rawAmount(response.financing.loanUSDCUnits, 6)} USDC plus
-                  variable interest. The loan funds WETH/USDC inventory in your
-                  position account; the reference pool below is used for
-                  research, not a Uniswap LP deposit. Fees require actual Aqua
-                  swaps. Market losses, borrowing costs and network fees can
-                  exceed earnings.
+                  {response.intent.fundingAsset === "ETH" ? (
+                    <EthAmount
+                      wei={response.intent.collateralAmountUnits}
+                      reference={collateralUsdReference}
+                    />
+                  ) : (
+                    <>
+                      {rawAmount(response.intent.collateralAmountUnits, 6)} USDC
+                    </>
+                  )}
+                  , then owe {rawAmount(response.financing.loanUSDCUnits, 6)}{" "}
+                  USDC plus variable interest. The loan funds WETH/USDC
+                  inventory in your position account; the reference pool below
+                  is used for research, not a Uniswap LP deposit. Fees require
+                  actual Aqua swaps. Market losses, borrowing costs and network
+                  fees can exceed earnings.
                 </p>
                 {ready && (
                   <a className={s.reportLink} href="#launch-heading">
@@ -726,11 +761,17 @@ export function AquaWorkbench() {
                       <div>
                         <dt>Target WETH</dt>
                         <dd>
-                          {rawAmount(
-                            execution?.targetWethUnits ??
-                              rec.targetInventory.wethAmountRaw,
-                            18,
-                          )}
+                          <EthAmount
+                            wei={
+                              execution?.targetWethUnits ??
+                              rec.targetInventory.wethAmountRaw
+                            }
+                            symbol="WETH"
+                            reference={usdReferenceFromReport(
+                              rec.report,
+                              AQUA_SCOPE.weth.address,
+                            )}
+                          />
                         </dd>
                       </div>
                       <div>

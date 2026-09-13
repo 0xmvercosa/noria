@@ -5,6 +5,7 @@ import { ArrowUpRight, Download, RefreshCw } from "lucide-react";
 import { formatUnits } from "viem";
 import { NoriaHeader } from "./NoriaHeader";
 import { AmountInput, IdentifierInput } from "./FinancialInput";
+import { EthAmount, EthUsdEquivalent, EthUsdNote, useEthUsd } from "./EthUsd";
 import { useNoriaWallet } from "./NoriaWalletProvider";
 import {
   RESERVE,
@@ -55,13 +56,14 @@ const key = (owner: string) =>
   `noria.privy.operations.v1:${owner.toLowerCase()}`;
 const attemptKey = (owner: string) =>
   `noria.privy.attempt.v1:${owner.toLowerCase()}`;
-const actionAmount = (action: ReserveAction) => {
-  const details = reserveActionDetails(action);
-  return `${units(action.amountUnits, details.decimals)} ${details.asset}`;
-};
-
 export function ReserveWorkbench() {
   const wallet = useNoriaWallet();
+  const { suffix } = useEthUsd();
+  const actionAmount = (action: ReserveAction) => {
+    const details = reserveActionDetails(action);
+    const amount = units(action.amountUnits, details.decimals);
+    return `${amount} ${details.asset}${details.asset === "ETH" ? ` ${suffix(amount)}` : ""}`;
+  };
   const [snapshot, setSnapshot] = useState<ReserveSnapshot | null>(null);
   const [amount, setAmount] = useState("10");
   const [direction, setDirection] = useState<"supply" | "withdraw">("supply");
@@ -99,6 +101,7 @@ export function ReserveWorkbench() {
       !entry.verification || entry.verification.status === "effect-unverified",
   );
   const amountUnits = parseUsdc(amount);
+  const transferUnits = parseTransferAmount(transferAmount, transferAsset);
   const canAct =
     wallet.ready &&
     !!wallet.address &&
@@ -693,8 +696,8 @@ export function ReserveWorkbench() {
         )}
         <p className={s.note}>
           Estimated network fee, with 20% buffer:{" "}
-          {units(prepared.estimatedGasWei, 18)} ETH. Privy shows the current fee
-          before signing.
+          <EthAmount wei={prepared.estimatedGasWei} />. Privy shows the current
+          fee before signing.
         </p>
         {expires && (
           <p className={s.inputError}>
@@ -814,6 +817,7 @@ export function ReserveWorkbench() {
           <section className={s.panel} aria-labelledby="fund-heading">
             <span className={s.eyebrow}>01 · Your wallet</span>
             <h2 id="fund-heading">Add funds</h2>
+            <EthUsdNote />
             {!wallet.configured ? (
               <p>
                 Privy is not configured for this deployment. Wallet creation and
@@ -842,7 +846,11 @@ export function ReserveWorkbench() {
                   <div>
                     <dt>ETH for network fees</dt>
                     <dd>
-                      {snapshot ? units(snapshot.nativeWei, 18) : "Loading…"}
+                      {snapshot ? (
+                        <EthAmount wei={snapshot.nativeWei} />
+                      ) : (
+                        "Loading…"
+                      )}
                     </dd>
                   </div>
                 </dl>
@@ -1071,6 +1079,11 @@ export function ReserveWorkbench() {
                   setPrepared(null);
                 }}
               />
+              {transferAsset === "ETH" && transferUnits && (
+                <p className={s.note}>
+                  <EthUsdEquivalent amount={units(transferUnits, 18)} />
+                </p>
+              )}
             </div>
           </div>
           <label htmlFor="transfer-recipient">Recipient address</label>
@@ -1261,7 +1274,7 @@ export function ReserveWorkbench() {
                       {entry.verification && (
                         <p>
                           Network fee:{" "}
-                          {units(entry.verification.networkFeeWei, 18)} ETH
+                          <EthAmount wei={entry.verification.networkFeeWei} />
                         </p>
                       )}
                       <p>
