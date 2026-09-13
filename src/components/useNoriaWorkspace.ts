@@ -155,6 +155,7 @@ export function useNoriaWorkspace() {
 
   const discountNumber = Number(discount);
   const discountValid =
+    /^\d+$/.test(discount) &&
     Number.isFinite(discountNumber) &&
     Number.isInteger(discountNumber) &&
     discountNumber >= 25 &&

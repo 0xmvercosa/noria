@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { formatUnits, toHex } from "viem";
 import { useNoriaWallet } from "./NoriaWalletProvider";
+import { AmountInput, IdentifierInput } from "./FinancialInput";
 import {
   LAUNCH,
   LaunchAddressSchema,
@@ -786,13 +787,16 @@ export function AquaLaunchWorkbench({
                         leave while debt remains.
                       </p>
                       <label htmlFor="aqua-repayment">USDC to repay</label>
-                      <input
+                      <AmountInput
                         id="aqua-repayment"
-                        inputMode="decimal"
+                        decimals={6}
                         value={repaymentAmount}
                         disabled={busy}
-                        onChange={(e) => {
-                          setRepaymentAmount(e.target.value);
+                        aria-invalid={
+                          Boolean(repaymentAmount) && !repaymentUnits
+                        }
+                        onValueChange={(value) => {
+                          setRepaymentAmount(value);
                           setPrepared(null);
                         }}
                       />
@@ -847,13 +851,14 @@ export function AquaLaunchWorkbench({
                       <label htmlFor="aqua-unwrap">
                         Returned WETH to unwrap
                       </label>
-                      <input
+                      <AmountInput
                         id="aqua-unwrap"
-                        inputMode="decimal"
+                        decimals={18}
                         value={unwrapAmount}
                         disabled={busy}
-                        onChange={(e) => {
-                          setUnwrapAmount(e.target.value);
+                        aria-invalid={Boolean(unwrapAmount) && !unwrapUnits}
+                        onValueChange={(value) => {
+                          setUnwrapAmount(value);
                           setPrepared(null);
                         }}
                       />
@@ -871,11 +876,13 @@ export function AquaLaunchWorkbench({
           <details className={s.details}>
             <summary>Load another account and inspect deployment</summary>
             <label htmlFor="aqua-account">Position account address</label>
-            <input
+            <IdentifierInput
               id="aqua-account"
+              kind="address"
+              valid={LaunchAddressSchema.safeParse(accountInput).success}
               value={accountInput}
               disabled={busy}
-              onChange={(e) => setAccountInput(e.target.value)}
+              onValueChange={setAccountInput}
             />
             <button
               className={s.secondary}
@@ -1057,11 +1064,13 @@ export function AquaLaunchWorkbench({
             Inspect wallet activity
           </a>
           <label htmlFor="aqua-recovery">Transaction hash</label>
-          <input
+          <IdentifierInput
             id="aqua-recovery"
+            kind="hash"
+            valid={LaunchHashSchema.safeParse(recoveryHash).success}
             value={recoveryHash}
             disabled={busy}
-            onChange={(e) => setRecoveryHash(e.target.value)}
+            onValueChange={setRecoveryHash}
           />
           <button
             disabled={

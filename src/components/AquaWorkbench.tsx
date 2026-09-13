@@ -14,6 +14,7 @@ import { NoriaLogo } from "./NoriaLogo";
 import { NoriaWallet } from "./NoriaWallet";
 import { useNoriaWallet } from "./NoriaWalletProvider";
 import { AquaLaunchWorkbench } from "./AquaLaunchWorkbench";
+import { AmountInput } from "./FinancialInput";
 import {
   PositionRequestSchema,
   type PositionRequest,
@@ -435,17 +436,16 @@ export function AquaWorkbench() {
             <label htmlFor="collateral-amount">
               Collateral amount ({fundingAsset})
             </label>
-            <input
+            <AmountInput
               id="collateral-amount"
-              inputMode="decimal"
-              autoComplete="off"
+              decimals={fundingAsset === "USDC" ? 6 : 18}
               value={amount}
               aria-invalid={
                 !collateralAmountUnits || BigInt(collateralAmountUnits) === 0n
               }
-              onChange={(event) => {
+              onValueChange={(value) => {
                 clearPlan();
-                setAmount(event.target.value);
+                setAmount(value);
               }}
             />
             <p className={s.note} id="position-input-note">
@@ -455,14 +455,13 @@ export function AquaWorkbench() {
             <div className={s.fieldRow}>
               <div>
                 <label htmlFor="safety-hf">Safety health factor</label>
-                <input
+                <AmountInput
                   id="safety-hf"
-                  inputMode="decimal"
-                  autoComplete="off"
+                  decimals={18}
                   value={safetyHF}
-                  onChange={(event) => {
+                  onValueChange={(value) => {
                     clearPlan();
-                    setSafetyHF(event.target.value);
+                    setSafetyHF(value);
                   }}
                   aria-invalid={!validHealthFactors}
                   aria-describedby="safety-note"
@@ -475,14 +474,13 @@ export function AquaWorkbench() {
                 <label htmlFor="comfortable-hf">
                   Comfortable health factor
                 </label>
-                <input
+                <AmountInput
                   id="comfortable-hf"
-                  inputMode="decimal"
-                  autoComplete="off"
+                  decimals={18}
                   value={comfortableHF}
-                  onChange={(event) => {
+                  onValueChange={(value) => {
                     clearPlan();
-                    setComfortableHF(event.target.value);
+                    setComfortableHF(value);
                   }}
                   aria-invalid={!validHealthFactors}
                   aria-describedby="comfortable-note"

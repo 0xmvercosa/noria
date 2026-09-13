@@ -167,7 +167,7 @@ test("collateral and HF inputs produce a position request, preserve asymmetric i
     page.getByRole("heading", { name: "The pool comes from the search" }),
   ).toBeVisible();
   expect(requests).toHaveLength(0);
-  await page.getByLabel("Collateral amount (USDC)").fill("1234.56789");
+  await page.getByLabel("Collateral amount (USDC)").fill("1.234,567890");
   await page.getByLabel("Safety health factor", { exact: true }).fill("1.45");
   await page
     .getByLabel("Comfortable health factor", { exact: true })
