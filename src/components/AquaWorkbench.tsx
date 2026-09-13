@@ -10,8 +10,7 @@ import {
   FlaskConical,
   RefreshCw,
 } from "lucide-react";
-import { NoriaLogo } from "./NoriaLogo";
-import { NoriaWallet } from "./NoriaWallet";
+import { NoriaHeader } from "./NoriaHeader";
 import { useNoriaWallet } from "./NoriaWalletProvider";
 import { AquaLaunchWorkbench } from "./AquaLaunchWorkbench";
 import { AmountInput } from "./FinancialInput";
@@ -411,22 +410,7 @@ export function AquaWorkbench() {
 
   return (
     <div className={base.app}>
-      <header className={`${base.header} ${s.header}`}>
-        <a href="/" className={base.brand} aria-label="Noria home">
-          <NoriaLogo className={base.brandLogo} />
-        </a>
-        <nav className={base.navigation} aria-label="Aqua navigation">
-          <a href="/">Discover pools</a>
-          <a href="/reserve">Wallet & funds</a>
-          <a href="/aqua/openapi.json">Graph API</a>
-        </nav>
-        <div className={s.headerActions}>
-          <span className={`${base.chainBadge} ${s.networkBadge}`}>
-            Arbitrum
-          </span>
-          <NoriaWallet />
-        </div>
-      </header>
+      <NoriaHeader current="aqua" context="Positions · Arbitrum One" />
       <main className={s.main}>
         <section className={s.hero}>
           <span className={s.eyebrow}>

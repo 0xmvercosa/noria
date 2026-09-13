@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Download, RefreshCw } from "lucide-react";
 import { formatUnits } from "viem";
-import { NoriaLogo } from "./NoriaLogo";
-import { NoriaWallet } from "./NoriaWallet";
+import { NoriaHeader } from "./NoriaHeader";
 import { AmountInput, IdentifierInput } from "./FinancialInput";
 import { useNoriaWallet } from "./NoriaWalletProvider";
 import {
@@ -720,21 +719,7 @@ export function ReserveWorkbench() {
   }
   return (
     <div className={base.app}>
-      <header className={`${base.header} ${s.header}`}>
-        <a href="/" className={base.brand} aria-label="Noria home">
-          <NoriaLogo className={base.brandLogo} />
-        </a>
-        <nav className={base.navigation} aria-label="Reserve navigation">
-          <a href="/">Discover pools</a>
-          <a href="/aqua">Aqua positions</a>
-        </nav>
-        <div className={s.headerActions}>
-          <span className={`${base.chainBadge} ${s.networkBadge}`}>
-            Arbitrum One
-          </span>
-          <NoriaWallet />
-        </div>
-      </header>
+      <NoriaHeader current="wallet" context="Wallet · Arbitrum One" />
       <main className={s.main}>
         {(busy || error || storageWarning || notice) && (
           <aside className={r.feedback} aria-label="Wallet operation status">

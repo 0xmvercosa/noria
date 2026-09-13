@@ -1,0 +1,244 @@
+.header {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 18px 48px 10px;
+  border-bottom: 1px solid #242e27;
+  color: #eef3ec;
+  background: #0d1210;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.header button {
+  font-family: inherit;
+  cursor: pointer;
+}
+.header button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.header *,
+.header *::before,
+.header *::after {
+  box-sizing: border-box;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-width: 0;
+}
+.header a {
+  text-decoration: none;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+.brand svg {
+  width: 140px;
+  height: auto;
+  display: block;
+}
+.desktopNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 4px;
+  min-width: 0;
+}
+.desktopNav > a,
+.more > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 44px;
+  padding: 8px;
+  font-size: 12px;
+  color: #a7b5aa;
+  white-space: nowrap;
+}
+.desktopNav > a[aria-current="page"] {
+  color: #d3f78b;
+}
+.more {
+  position: relative;
+}
+.more > summary {
+  cursor: pointer;
+  list-style: none;
+}
+.more > summary::-webkit-details-marker {
+  display: none;
+}
+.resourceMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 20;
+  width: 190px;
+  padding: 8px;
+  border: 1px solid #35463b;
+  border-radius: 8px;
+  background: #141b17;
+  box-shadow: 0 12px 30px #0006;
+}
+.resourceMenu a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px;
+  color: #bcc9c0;
+  font-size: 13px;
+}
+.walletArea {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.walletLabel {
+  display: none;
+}
+.menuButton,
+.mobileNav {
+  display: none;
+}
+.header .context {
+  margin: 6px 0 0;
+  text-align: right;
+  font-size: 11px;
+  color: #8d9b91;
+}
+.header a:hover,
+.more > summary:hover {
+  color: #d3f78b;
+}
+.header a:focus-visible,
+.header button:focus-visible,
+.header summary:focus-visible {
+  outline: 2px solid #d3f78b;
+  outline-offset: 3px;
+}
+
+@media (max-width: 1100px) {
+  .header {
+    padding: 14px max(20px, env(safe-area-inset-right)) 10px
+      max(20px, env(safe-area-inset-left));
+  }
+  .topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 12px;
+  }
+  .desktopNav {
+    display: none;
+  }
+  .menuButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 12px;
+    color: #d3f78b;
+    border: 1px solid #46543d;
+    background: #182016;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .mobileNav:not([hidden]) {
+    display: grid;
+    gap: 14px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #2a352d;
+  }
+  .destinations {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .destinations a {
+    display: grid;
+    align-content: center;
+    gap: 4px;
+    min-height: 64px;
+    padding: 12px;
+    border: 1px solid #2a352d;
+    border-radius: 6px;
+    color: #eef3ec;
+    background: #141b17;
+    overflow-wrap: anywhere;
+  }
+  .destinations a[aria-current="page"] {
+    border-color: #516047;
+    color: #d3f78b;
+  }
+  .destinations span {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .destinations small {
+    font-size: 12px;
+    color: #a7b5aa;
+  }
+  .resources {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+  }
+  .resources a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 8px 4px;
+    font-size: 13px;
+    color: #a7b5aa;
+  }
+}
+@media (max-width: 520px) {
+  .header {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+  .topbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+  .brand svg {
+    width: 126px;
+  }
+  .menuButton {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .walletArea {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+  }
+  .walletLabel {
+    display: block;
+    color: #a7b5aa;
+    font-size: 12px;
+  }
+  .destinations {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .header .context {
+    text-align: left;
+  }
+}
