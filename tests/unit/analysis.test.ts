@@ -101,7 +101,7 @@ test("future data, missing hours and altered liquidity fail closed", () => {
 
 test("unsupported capital and invented approval fields cannot enter the analysis", () => {
   assert.throws(() =>
-    buildReport({ ...input, capitalUsd: 1000000 }, fresh(), at),
+    buildReport({ ...input, capitalUsd: 1000001 }, fresh(), at),
   );
   assert.throws(() =>
     buildReport({ ...input, forceProfitable: true }, fresh(), at),

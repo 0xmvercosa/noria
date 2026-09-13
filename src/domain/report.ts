@@ -1,7 +1,7 @@
 import { formatUnits } from "viem";
 import { networkConfig } from "../config/networks";
 import {
-  AnalyzeSchema,
+  ReportInputSchema,
   DataSchema,
   FEE_SPACING,
   digest,
@@ -47,7 +47,7 @@ export function buildReport(
   snapshot: Snapshot,
   now = Math.floor(Date.now() / 1000),
 ): LiveReport {
-  const input = AnalyzeSchema.parse(rawInput),
+  const input = ReportInputSchema.parse(rawInput),
     data = DataSchema.parse(snapshot.data),
     meta = data._meta,
     n = networkConfig(input.network);

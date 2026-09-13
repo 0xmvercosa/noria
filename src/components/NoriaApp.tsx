@@ -37,6 +37,7 @@ export default function NoriaApp() {
             Workspace
           </a>
           <a href="#historical-case">Historical case</a>
+          <a href="/aqua">Aqua handoff</a>
           <a href="#agent-toolkit">
             For agents <ArrowUpRight size={12} />
           </a>

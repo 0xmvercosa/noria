@@ -1,0 +1,465 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Noria Aqua Reference API",
+    "version": "1.0.0",
+    "description": "Informational Arbitrum WETH/native-USDC discovery for an external Aqua execution system. No wallet actions. No profitability or Aqua execution guarantee."
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {
+    "/api/aqua/v1/recommendation": {
+      "get": {
+        "summary": "Capabilities and request example; no live provider calls",
+        "responses": {
+          "200": {
+            "description": "Schema version, exact scope and example request"
+          }
+        }
+      },
+      "post": {
+        "operationId": "recommendAquaReference",
+        "summary": "Discover a reference pool and range from USDC funding",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AquaRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recommendation or an explicit no-recommendation with exclusions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AquaResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON or unsupported input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AquaError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body exceeds 4096 UTF-8 bytes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AquaError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AquaError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Upstream source unavailable; observe Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AquaError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AquaRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "chainId",
+          "funding",
+          "objective",
+          "reviewAfterHours"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "const": "noria.aqua.v1"
+          },
+          "requestId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,64}$"
+          },
+          "chainId": {
+            "const": 42161
+          },
+          "funding": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["tokenAddress", "amountRaw"],
+            "properties": {
+              "tokenAddress": {
+                "type": "string",
+                "pattern": "^0x[aA][fF]88[dD]065[eE]77[cC]8[cC][cC]2239327[cC]5[eE][dD][bB]3[aA]432268[eE]5831$",
+                "description": "Exact native USDC contract on Arbitrum, case-insensitive: 0xaf88d065e77c8cc2239327c5edb3a432268e5831"
+              },
+              "amountRaw": {
+                "type": "string",
+                "pattern": "^(?:[1-9][0-9]{6,10}|100000000000)$",
+                "description": "USDC base units (6 decimals). Integer value must be 1000000 through 100000000000 inclusive (1\u2013100000 USDC)."
+              }
+            }
+          },
+          "objective": {
+            "enum": ["earn-fees", "buy-eth"]
+          },
+          "reviewAfterHours": {
+            "enum": [6, 24]
+          },
+          "discountBps": {
+            "type": "integer",
+            "minimum": 25,
+            "maximum": 1000,
+            "description": "Only for buy-eth; default 100 bps."
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "objective": {
+                  "const": "earn-fees"
+                }
+              }
+            },
+            "then": {
+              "not": {
+                "required": ["discountBps"]
+              }
+            }
+          }
+        ],
+        "examples": [
+          {
+            "schemaVersion": "noria.aqua.v1",
+            "requestId": "aqua-preview-001",
+            "chainId": 42161,
+            "funding": {
+              "tokenAddress": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+              "amountRaw": "1000000000"
+            },
+            "objective": "earn-fees",
+            "reviewAfterHours": 6
+          }
+        ]
+      },
+      "AquaResponse": {
+        "type": "object",
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "status",
+          "scope",
+          "request",
+          "evaluatedAt",
+          "selection",
+          "recommendation",
+          "handoff"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "const": "noria.aqua.v1"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "status": {
+            "enum": ["recommended", "no-recommendation"]
+          },
+          "scope": {
+            "type": "object"
+          },
+          "request": {
+            "$ref": "#/components/schemas/AquaRequest"
+          },
+          "evaluatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "selection": {
+            "type": "object",
+            "required": ["method", "attempted", "discovery"],
+            "properties": {
+              "method": {
+                "const": "highest-ranked-passing-reference-pool"
+              },
+              "attempted": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4
+              },
+              "discovery": {
+                "type": "object",
+                "description": "Original provider, block, selection reasons, candidates, limits and exclusions."
+              }
+            }
+          },
+          "recommendation": {
+            "type": ["object", "null"],
+            "description": "Null when no pool passes. A reference construction, not an executable Aqua strategy. Full field types are in src/integrations/aqua/contract.ts.",
+            "required": [
+              "referencePool",
+              "range",
+              "targetInventory",
+              "funding",
+              "validUntil",
+              "report"
+            ],
+            "properties": {
+              "referencePool": {
+                "type": "object",
+                "required": ["venue", "address", "feeTier", "token0", "token1"],
+                "properties": {
+                  "venue": {
+                    "const": "uniswap-v3"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "feeTier": {
+                    "enum": [100, 500, 3000, 10000]
+                  },
+                  "token0": {
+                    "type": "object"
+                  },
+                  "token1": {
+                    "type": "object"
+                  }
+                }
+              },
+              "range": {
+                "type": "object",
+                "required": [
+                  "priceUnit",
+                  "lower",
+                  "upper",
+                  "spot",
+                  "tickLower",
+                  "tickUpper",
+                  "location",
+                  "method"
+                ],
+                "properties": {
+                  "priceUnit": {
+                    "const": "USDC per WETH"
+                  },
+                  "lower": {
+                    "type": "number"
+                  },
+                  "upper": {
+                    "type": "number"
+                  },
+                  "spot": {
+                    "type": "number"
+                  },
+                  "tickLower": {
+                    "type": "integer"
+                  },
+                  "tickUpper": {
+                    "type": "integer"
+                  },
+                  "location": {
+                    "enum": ["active", "waiting"]
+                  },
+                  "method": {
+                    "enum": [
+                      "seven-day-hourly-tick-quantiles",
+                      "discount-below-spot"
+                    ]
+                  }
+                }
+              },
+              "targetInventory": {
+                "type": "object",
+                "required": [
+                  "wethAmountRaw",
+                  "usdcAmountRaw",
+                  "valuationUsd",
+                  "residualValueUsd"
+                ],
+                "properties": {
+                  "wethAmountRaw": {
+                    "type": "string"
+                  },
+                  "usdcAmountRaw": {
+                    "type": "string"
+                  },
+                  "valuationUsd": {
+                    "type": "number"
+                  },
+                  "residualValueUsd": {
+                    "type": "number"
+                  }
+                }
+              },
+              "funding": {
+                "type": "object",
+                "required": [
+                  "usdcAmountRaw",
+                  "usdcUsdPrice",
+                  "valuationUsd",
+                  "inventoryPreparationRequired",
+                  "swapQuote"
+                ],
+                "properties": {
+                  "usdcAmountRaw": {
+                    "type": "string"
+                  },
+                  "usdcUsdPrice": {
+                    "type": "number"
+                  },
+                  "valuationUsd": {
+                    "type": "number"
+                  },
+                  "inventoryPreparationRequired": {
+                    "type": "boolean"
+                  },
+                  "swapQuote": {
+                    "type": "null"
+                  }
+                }
+              },
+              "validUntil": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "report": {
+                "type": "object",
+                "description": "Unmodified LiveReport with hash, source metadata, original prices, inventory, costs, capacity and explicit economics. See src/domain/types.ts."
+              }
+            }
+          },
+          "handoff": {
+            "type": "object",
+            "required": [
+              "executionReady",
+              "aquaStrategy",
+              "transaction",
+              "economics",
+              "requiredNextSteps",
+              "unpricedCosts"
+            ],
+            "properties": {
+              "executionReady": {
+                "const": false
+              },
+              "aquaStrategy": {
+                "type": "null"
+              },
+              "transaction": {
+                "type": "null"
+              },
+              "economics": {
+                "const": "not-established"
+              },
+              "requiredNextSteps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "unpricedCosts": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "no-recommendation"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "recommendation": {
+                  "type": "null"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "recommendation": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "AquaError": {
+        "type": "object",
+        "required": ["schemaVersion", "status", "code"],
+        "properties": {
+          "schemaVersion": {
+            "const": "noria.aqua.v1"
+          },
+          "status": {
+            "enum": ["invalid-request", "unavailable"]
+          },
+          "code": {
+            "enum": [
+              "invalid-input",
+              "invalid-json",
+              "body-too-large",
+              "content-type",
+              "source-unavailable"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
