@@ -1,5 +1,7 @@
 # Graph application handoff to Aqua
 
+> Handoff completed: the combined collateral/Privy/local-execution flow is now implemented in the [Aqua product integration](1inch/integration.md). The text below records the Graph team boundary at its handoff; current execution evidence is in the [1inch guide](1inch/README.md).
+
 The Graph application keeps its existing discovery and HTTP reference boundaries. This change adds agent access and Vercel deployment support; it does not change the Aqua recommendation request/response schema.
 
 ## Stable integration surfaces

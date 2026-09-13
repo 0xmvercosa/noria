@@ -1,8 +1,8 @@
 # Working on Noria
 
 - Keep code, documentation, UI copy, commits and pull requests in English.
-- The current milestone is informational liquidity discovery for The Graph track at ETHOnline 2026. Preserve the distinction between source verification, position capacity and economic merit.
-- Aave borrowing and 1inch Aqua execution are planned. Do not describe them as implemented or silently introduce wallet actions.
+- Noria combines informational discovery for The Graph track with a separate Arbitrum Aqua/Aave implementation for the 1inch track. Preserve the distinction between source verification, position capacity and economic merit.
+- Aave/Aqua execution is demonstrated on isolated local forks. Privy connects an external wallet; it does not authorize public-chain transactions. Do not claim production deployment, aggregator admission or profitable demand from local related-party fills.
 - Never publish credentials, private keys, local absolute paths, private research archives or unrelated project history.
 - Preserve source timestamps. Do not fabricate quotes, fills, fees, confidence values or profitable outcomes.
 - Do not relax financial invariants to make a candidate pass. Explain legitimate refusals.

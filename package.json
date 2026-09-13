@@ -2,6 +2,9 @@
   "name": "noria",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "integrations/aqua"
+  ],
   "postcss": {
     "plugins": {}
   },
@@ -21,12 +24,16 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
+    "@noria/aqua": "file:integrations/aqua",
+    "@privy-io/react-auth": "3.42.0",
+    "@stripe/stripe-js": "1.54.2",
     "@uniswap/sdk-core": "^7.19.2",
     "@uniswap/v3-sdk": "^3.31.3",
     "decimal.js": "^10.6.0",
     "jsbi": "^3.2.5",
     "lucide-react": "^1.17.0",
     "next": "15.5.25",
+    "ox": "0.8.9",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "viem": "^2.52.2",
@@ -44,7 +51,11 @@
   },
   "packageManager": "npm@10.8.2",
   "overrides": {
-    "postcss": "8.5.28"
+    "postcss": "8.5.28",
+    "axios": "1.18.0",
+    "viem": {
+      "ws": "8.21.3"
+    }
   },
   "description": "Inspectable liquidity discovery powered by The Graph",
   "engines": {

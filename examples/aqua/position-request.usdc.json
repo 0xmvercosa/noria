@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "noria.aqua.position.v1",
+  "requestId": "noria-position-usdc-001",
+  "intent": {
+    "fundingAsset": "USDC",
+    "collateralAmountUnits": "2500000000",
+    "safetyHFWad": "1400000000000000000",
+    "comfortableHFWad": "2000000000000000000",
+    "financingMode": "aave_collateral_then_borrow_usdc"
+  },
+  "reviewAfterHours": 6
+}

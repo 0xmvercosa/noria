@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "noria.aqua.position.v1",
+  "requestId": "noria-position-eth-001",
+  "intent": {
+    "fundingAsset": "ETH",
+    "collateralAmountUnits": "1000000000000000000",
+    "safetyHFWad": "1400000000000000000",
+    "comfortableHFWad": "2000000000000000000",
+    "financingMode": "aave_collateral_then_borrow_usdc"
+  },
+  "reviewAfterHours": 6
+}

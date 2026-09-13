@@ -1,5 +1,7 @@
 # Aqua integration: Arbitrum WETH / native USDC
 
+> This document describes the Graph research boundary. The implemented Aqua caller, Aave financing, Privy connection and local execution are documented in the [position integration guide](1inch/integration.md). The research response itself remains informational.
+
 Noria provides the **informational strategy selection** step in the combined The Graph + Aqua product. The Aqua application initiates the flow, sends a USDC inventory budget and objective, and receives an inspected Uniswap v3 reference pool, price range, target inventory and source evidence. Aqua execution and Aave debt management remain separate work.
 
 The full multi-network demonstration remains at `/`. The focused preview is at `/aqua`. Both use the same Graph, price, canonical-state and range calculation modules. The focused integration never asks the caller to select a pool.
