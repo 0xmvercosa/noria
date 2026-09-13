@@ -50,4 +50,6 @@ Official reference: [ETHOnline 2026 prize page](https://ethglobal.com/events/eth
 
 ## Privy — Best financial flow
 
-The third sponsor surface is [`/reserve`](privy/README.md): embedded-wallet creation, funding, direct Aave USDC supply/withdrawal and verifiable operation reports. Privy is the signer and funding UX, with no cards or guided product dependency. [Setup](privy/setup.md) and [validation](privy/validation.md) distinguish implemented behavior, protocol-only fork evidence and the still-required real Privy financial-flow demo. The reserve uses the wallet account; it does not silently move savings into the Aqua PositionAccount.
+The third sponsor surface is [`/reserve`](privy/README.md): embedded-wallet creation, EUR onramp, USDC/ETH transfers, direct Aave savings and verifiable statements. Privy is the signer and funding UX, with no cards or guided product dependency. [Setup](privy/setup.md) and [validation](privy/validation.md) distinguish implemented behavior, protocol-only fork evidence and the still-required real Privy financial-flow demo. The reserve uses the wallet account; it does not silently move savings into the Aqua PositionAccount.
+
+The [root README](../README.md#for-hackathon-reviewers) is the common starting point for all three sponsor reviewers. The [wallet launch guide](1inch/live-launch.md) maps the public Aqua lifecycle to source files and distinguishes its deployment gate from local execution evidence.

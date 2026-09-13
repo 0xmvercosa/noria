@@ -10,7 +10,8 @@ The Graph component supplies pool/range research. Source-pool selection, financi
 2. [Reproduce the demo](rehearsal.md): run the official contracts on an isolated Arbitrum fork using your public wallet addresses.
 3. [Validation and review](validation.md): test counts, findings, fixes and recorded results.
 4. [English source code](../../integrations/aqua): contracts, SDK program builder, financing, tests and report generation.
-5. [Product integration](integration.md): the implemented collateral → Graph research → Aqua rehearsal round trip, endpoints, examples and Privy configuration.
+5. [Product integration](integration.md): collateral → Graph research → Aqua planning, endpoints, examples and Privy configuration.
+6. [Wallet launch](live-launch.md): public factory configuration, owner-confirmed launch/close lifecycle, exact API/source map and recovery. Public deployment and user-confirmed public execution remain separate acceptance steps.
 
 ## Sponsor scope
 
