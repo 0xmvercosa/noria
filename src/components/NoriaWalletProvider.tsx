@@ -32,6 +32,7 @@ import {
 } from "../integrations/privy/reserve";
 import { euroOnrampOptions } from "../integrations/privy/fiat";
 import { rememberWalletReturn } from "../integrations/privy/navigation";
+import { useEthUsd } from "./EthUsd";
 import {
   assertPreparedLaunch,
   launchTransaction,
@@ -96,6 +97,7 @@ function ConnectedWalletProvider({
   const { fundWallet } = useFundWallet();
   const { fund: fiatOnramp } = useFiatOnramp();
   const { sendTransaction } = useSendTransaction();
+  const ethUsd = useEthUsd();
   const [error, setError] = useState<string | null>(null);
   const [initializationTimedOut, setInitializationTimedOut] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -201,7 +203,7 @@ function ConnectedWalletProvider({
             prepared.action.kind === "revoke"
               ? "Remove Aave's USDC allowance on Arbitrum"
               : isTransferAction(prepared.action)
-                ? `Send ${amount} ${details.asset} to ${details.recipient} on Arbitrum. Network fees are paid separately in ETH.`
+                ? `Send ${amount} ${details.asset}${details.asset === "ETH" ? ` ${ethUsd.suffix(amount)}` : ""} to ${details.recipient} on Arbitrum. Any USD amount is an estimate. Network fees are paid separately in ETH.`
                 : `${prepared.action.kind} ${amount} USDC on Arbitrum. The reserve belongs to your Privy wallet.`,
           buttonText: "Confirm operation",
         },

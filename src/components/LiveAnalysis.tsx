@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import type { LiveReport } from "../domain/types";
 import { AnalysisEvidence } from "./AnalysisEvidence";
+import { EthUsdEquivalent } from "./EthUsd";
+import { usdReferenceFromReport } from "../domain/eth-usd";
 import { MarketChart, RangeChart } from "./PoolCharts";
 import {
   compactHash,
@@ -201,11 +203,15 @@ export function LiveAnalysis({ workspace }: { workspace: NoriaWorkspace }) {
               {report.pool.token0}
             </span>
             <strong>
-              {tokenAmount(report.position.amount0, report.pool.token0Decimals)}
+              {tokenAmount(report.position.amount0, report.pool.token0Decimals)}{" "}
+              <EthUsdEquivalent
+                amount={report.position.amount0}
+                reference={usdReferenceFromReport(
+                  report,
+                  report.pool.token0Address,
+                )}
+              />
             </strong>
-            <small>
-              {usd(Number(report.position.amount0) * report.pool.token0Usd)}
-            </small>
           </div>
           <div>
             <span>
@@ -215,11 +221,15 @@ export function LiveAnalysis({ workspace }: { workspace: NoriaWorkspace }) {
               {report.pool.token1}
             </span>
             <strong>
-              {tokenAmount(report.position.amount1, report.pool.token1Decimals)}
+              {tokenAmount(report.position.amount1, report.pool.token1Decimals)}{" "}
+              <EthUsdEquivalent
+                amount={report.position.amount1}
+                reference={usdReferenceFromReport(
+                  report,
+                  report.pool.token1Address,
+                )}
+              />
             </strong>
-            <small>
-              {usd(Number(report.position.amount1) * report.pool.token1Usd)}
-            </small>
           </div>
           <div>
             <span>
@@ -265,7 +275,14 @@ export function LiveAnalysis({ workspace }: { workspace: NoriaWorkspace }) {
                     report.position.fullConversionAmount0,
                     report.pool.token0Decimals,
                   )}{" "}
-                  {report.pool.token0}
+                  {report.pool.token0}{" "}
+                  <EthUsdEquivalent
+                    amount={report.position.fullConversionAmount0}
+                    reference={usdReferenceFromReport(
+                      report,
+                      report.pool.token0Address,
+                    )}
+                  />
                 </strong>
                 {report.position.fullConversionAveragePrice !== null && (
                   <>

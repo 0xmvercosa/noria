@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { formatUnits, toHex } from "viem";
 import { useNoriaWallet } from "./NoriaWalletProvider";
 import { AmountInput, IdentifierInput } from "./FinancialInput";
+import { EthAmount, EthUsdEquivalent, EthUsdNote } from "./EthUsd";
 import {
   LAUNCH,
   LaunchAddressSchema,
@@ -803,6 +804,7 @@ export function AquaLaunchWorkbench({
         already supplied in your wallet&apos;s Aave reserve must first be
         withdrawn on <a href="/reserve">the wallet page</a>.
       </p>
+      <EthUsdNote />
       {!wallet.address && (
         <button
           className={s.secondary}
@@ -852,11 +854,15 @@ export function AquaLaunchWorkbench({
             </div>
             <div>
               <dt>Wallet ETH · fees</dt>
-              <dd>{units(live.wallet.nativeWei, 18)}</dd>
+              <dd>
+                <EthAmount wei={live.wallet.nativeWei} />
+              </dd>
             </div>
             <div>
               <dt>Wallet WETH</dt>
-              <dd>{units(live.wallet.wethUnits, 18)}</dd>
+              <dd>
+                <EthAmount wei={live.wallet.wethUnits} symbol="WETH" />
+              </dd>
             </div>
             <div>
               <dt>Separate Aave reserve</dt>
@@ -926,13 +932,11 @@ export function AquaLaunchWorkbench({
                 <div>
                   <dt>Aave collateral</dt>
                   <dd>
-                    {units(
-                      position.receiptUnits,
-                      equal(position.collateral, LAUNCH.weth) ? 18 : 6,
-                    )}{" "}
-                    {equal(position.collateral, LAUNCH.weth)
-                      ? "aWETH"
-                      : "aUSDC"}
+                    {equal(position.collateral, LAUNCH.weth) ? (
+                      <EthAmount wei={position.receiptUnits} symbol="aWETH" />
+                    ) : (
+                      <>{units(position.receiptUnits)} aUSDC</>
+                    )}
                   </dd>
                 </div>
                 <div>
@@ -956,7 +960,9 @@ export function AquaLaunchWorkbench({
                 </div>
                 <div>
                   <dt>Position WETH</dt>
-                  <dd>{units(position.wethUnits, 18)}</dd>
+                  <dd>
+                    <EthAmount wei={position.wethUnits} symbol="WETH" />
+                  </dd>
                 </div>
                 <div>
                   <dt>Position USDC</dt>
@@ -992,11 +998,12 @@ export function AquaLaunchWorkbench({
                 <>
                   <p className={s.note}>
                     Opening collateral:{" "}
-                    {units(
-                      originalIntent.collateralAmountUnits,
-                      originalIntent.fundingAsset === "ETH" ? 18 : 6,
-                    )}{" "}
-                    {originalIntent.fundingAsset}.{" "}
+                    {originalIntent.fundingAsset === "ETH" ? (
+                      <EthAmount wei={originalIntent.collateralAmountUnits} />
+                    ) : (
+                      <>{units(originalIntent.collateralAmountUnits)} USDC</>
+                    )}
+                    .{" "}
                     {originalIntent.fundingAsset === "USDC"
                       ? "USDC is supplied as collateral before USDC is borrowed for liquidity."
                       : "ETH is wrapped, then WETH is supplied as collateral."}
@@ -1004,23 +1011,33 @@ export function AquaLaunchWorkbench({
                   {missingCollateral && journey.next !== "wrap" && (
                     <p className={s.inputError}>
                       Add{" "}
-                      {units(
-                        String(
-                          BigInt(originalIntent.collateralAmountUnits) -
-                            BigInt(collateralBalance),
-                        ),
-                        originalIntent.fundingAsset === "ETH" ? 18 : 6,
+                      {originalIntent.fundingAsset === "ETH" ? (
+                        <EthAmount
+                          wei={String(
+                            BigInt(originalIntent.collateralAmountUnits) -
+                              BigInt(collateralBalance),
+                          )}
+                        />
+                      ) : (
+                        <>
+                          {units(
+                            String(
+                              BigInt(originalIntent.collateralAmountUnits) -
+                                BigInt(collateralBalance),
+                            ),
+                          )}{" "}
+                          USDC
+                        </>
                       )}{" "}
-                      {originalIntent.fundingAsset} to your wallet before
-                      supplying collateral.{" "}
+                      to your wallet before supplying collateral.{" "}
                       <a href="/reserve#fund-heading">Fund your wallet</a>.
                     </p>
                   )}
                   {journey.next === "wrap" && (
                     <p className={s.note}>
-                      Wrap only the missing {units(journey.amountUnits!, 18)}{" "}
-                      ETH. Keep additional ETH in your wallet for Arbitrum
-                      network fees.
+                      Wrap only the missing{" "}
+                      <EthAmount wei={journey.amountUnits!} />. Keep additional
+                      ETH in your wallet for Arbitrum network fees.
                       {BigInt(journey.amountUnits!) >=
                         BigInt(live.wallet.nativeWei) && (
                         <>
@@ -1171,6 +1188,11 @@ export function AquaLaunchWorkbench({
                           setPrepared(null);
                         }}
                       />
+                      {unwrapUnits && (
+                        <p className={s.note}>
+                          <EthUsdEquivalent amount={units(unwrapUnits, 18)} />
+                        </p>
+                      )}
                       <button
                         className={s.secondary}
                         disabled={busy || !!prepared}
@@ -1188,8 +1210,11 @@ export function AquaLaunchWorkbench({
                             BigInt(live.wallet.wethUnits)) && (
                           <p className={s.inputError}>
                             Enter an amount up to{" "}
-                            {units(live.wallet.wethUnits, 18)} WETH with at most
-                            18 decimals.
+                            <EthAmount
+                              wei={live.wallet.wethUnits}
+                              symbol="WETH"
+                            />{" "}
+                            with at most 18 decimals.
                           </p>
                         )}
                       {button(
@@ -1258,41 +1283,41 @@ export function AquaLaunchWorkbench({
           {"amountUnits" in request && (
             <p>
               Amount:{" "}
-              {units(
-                request.amountUnits,
-                ["wrap", "unwrap"].includes(request.kind) ||
-                  (request.kind === "approve-collateral" &&
-                    equal(prepared.before.position!.collateral, LAUNCH.weth))
-                  ? 18
-                  : 6,
-              )}{" "}
               {["wrap", "unwrap"].includes(request.kind) ||
               (request.kind === "approve-collateral" &&
-                equal(prepared.before.position!.collateral, LAUNCH.weth))
-                ? "ETH / WETH"
-                : "USDC"}
+                equal(prepared.before.position!.collateral, LAUNCH.weth)) ? (
+                <EthAmount
+                  wei={request.amountUnits}
+                  symbol={request.kind === "wrap" ? "ETH" : "WETH"}
+                />
+              ) : (
+                <>{units(request.amountUnits)} USDC</>
+              )}
             </p>
           )}
           {request.kind === "create" && (
             <p>
               Owner-controlled account for{" "}
-              {units(
-                request.intent.collateralAmountUnits,
-                request.intent.fundingAsset === "ETH" ? 18 : 6,
+              {request.intent.fundingAsset === "ETH" ? (
+                <EthAmount wei={request.intent.collateralAmountUnits} />
+              ) : (
+                <>{units(request.intent.collateralAmountUnits)} USDC</>
               )}{" "}
-              {request.intent.fundingAsset} collateral. Safety HF{" "}
-              {units(request.intent.safetyHFWad, 18)}; comfortable HF{" "}
-              {units(request.intent.comfortableHFWad, 18)}.
+              collateral. Safety HF {units(request.intent.safetyHFWad, 18)};
+              comfortable HF {units(request.intent.comfortableHFWad, 18)}.
             </p>
           )}
           {request.kind === "open" && prepared.plan && (
             <p>
               Supply{" "}
-              {units(
-                prepared.plan.intent.collateralAmountUnits,
-                prepared.plan.intent.fundingAsset === "ETH" ? 18 : 6,
+              {prepared.plan.intent.fundingAsset === "ETH" ? (
+                <EthAmount
+                  wei={prepared.plan.intent.collateralAmountUnits}
+                  symbol="WETH"
+                />
+              ) : (
+                <>{units(prepared.plan.intent.collateralAmountUnits)} USDC</>
               )}{" "}
-              {prepared.plan.intent.fundingAsset === "ETH" ? "WETH" : "USDC"}{" "}
               collateral; borrow {units(prepared.plan.loanUSDCUnits)} USDC into
               the position.
             </p>
@@ -1311,24 +1336,28 @@ export function AquaLaunchWorkbench({
           {prepared.quote && (
             <p>
               Convert{" "}
-              {units(
-                prepared.quote.amountUnits,
-                request.kind === "convert" ? 6 : 18,
-              )}{" "}
-              {request.kind === "convert" ? "USDC" : "WETH"}. Minimum received:{" "}
-              {units(
-                prepared.quote.minOutUnits,
-                request.kind === "convert" ? 18 : 6,
-              )}{" "}
-              {request.kind === "convert" ? "WETH" : "USDC"}, including a 0.5%
-              slippage limit.
+              {request.kind === "convert" ? (
+                <>{units(prepared.quote.amountUnits)} USDC</>
+              ) : (
+                <EthAmount wei={prepared.quote.amountUnits} symbol="WETH" />
+              )}
+              . Minimum received:{" "}
+              {request.kind === "convert" ? (
+                <EthAmount wei={prepared.quote.minOutUnits} symbol="WETH" />
+              ) : (
+                <>{units(prepared.quote.minOutUnits)} USDC</>
+              )}
+              , including a 0.5% slippage limit.
             </p>
           )}
           {request.kind === "ship" && prepared.plan && (
             <p>
               Allocate the position&apos;s{" "}
-              {units(prepared.before.position!.lpWethUnits, 18)} WETH and{" "}
-              {units(prepared.before.position!.lpUsdcUnits)} USDC to the
+              <EthAmount
+                wei={prepared.before.position!.lpWethUnits}
+                symbol="WETH"
+              />{" "}
+              and {units(prepared.before.position!.lpUsdcUnits)} USDC to the
               reviewed Aqua range {units(prepared.plan.lowerPriceE6)}–
               {units(prepared.plan.upperPriceE6)} USDC/WETH. LP fee{" "}
               {prepared.plan.lpFeeBps / 100}%.
@@ -1345,15 +1374,16 @@ export function AquaLaunchWorkbench({
           {request.kind === "exit" && (
             <p>
               Return{" "}
-              {units(
-                prepared.before.position!.receiptUnits,
-                equal(prepared.before.position!.collateral, LAUNCH.weth)
-                  ? 18
-                  : 6,
+              {equal(prepared.before.position!.collateral, LAUNCH.weth) ? (
+                <EthAmount
+                  wei={prepared.before.position!.receiptUnits}
+                  symbol="WETH"
+                />
+              ) : (
+                <>{units(prepared.before.position!.receiptUnits)} USDC</>
               )}{" "}
-              units of supplied collateral, plus remaining position inventory,
-              to your wallet. Current Aave accrual and rounding are applied
-              onchain.
+              of supplied collateral, plus remaining position inventory, to your
+              wallet. Current Aave accrual and rounding are applied onchain.
             </p>
           )}
           <p className={s.address}>
@@ -1363,7 +1393,7 @@ export function AquaLaunchWorkbench({
           </p>
           <p className={s.note}>
             Arbitrum One · estimated network fee with buffer:{" "}
-            {units(prepared.estimatedGasWei, 18)} ETH. Privy displays the
+            <EthAmount wei={prepared.estimatedGasWei} />. Privy displays the
             current fee. Review expires{" "}
             {new Date(prepared.expiresAt).toLocaleTimeString()}.
           </p>
@@ -1467,7 +1497,8 @@ export function AquaLaunchWorkbench({
               </p>
               {entry.verification && (
                 <p>
-                  Network fee: {units(entry.verification.networkFeeWei, 18)} ETH
+                  Network fee:{" "}
+                  <EthAmount wei={entry.verification.networkFeeWei} />
                 </p>
               )}
               <a
