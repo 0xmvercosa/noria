@@ -9,13 +9,15 @@
 5. Enable supported funding methods in the dashboard if you want the funding modal. Direct native-USDC/ETH transfers to the displayed wallet also work. Regional/provider requirements and fees can apply.
 6. Run `npm ci`, `npm run build`, `npm start`, then open `/reserve`.
 
-The same provider is used on `/aqua` for the public owner address of a local rehearsal. Privy authentication may request a login signature for wallet-based login; that signature is not a reserve transfer or an Aqua transaction.
+The same provider is used on `/aqua` for the owner-confirmed position lifecycle and the public owner address of a separate local rehearsal. Privy authentication may request a login signature for wallet-based login; that signature is not a reserve transfer or an Aqua transaction.
 
 ## Supported SDK path
 
 The repository pins `@privy-io/react-auth` **3.42.0**. It uses established React APIs: `PrivyProvider`, `usePrivy`, `useWallets`, `getEmbeddedConnectedWallet`, `useCreateWallet`, `useFundWallet` and `useSendTransaction`.
 
-In that installed version, the newer `useAddFunds` and `useFiatOnramp` are marked experimental. Noria uses the older `useFundWallet` (deprecated, not experimental), which supports external-wallet funding, MoonPay and Coinbase; it does not expose Stripe. The qualifying integration is `useSendTransaction` executing Aave supply/withdrawal. Funding provider availability is not required to prove that action if the wallet receives an ordinary transfer.
+In that version, `useFiatOnramp` is marked experimental. Noria uses it for the explicitly requested EUR checkout because the older `useFundWallet` does not expose a fiat-currency selector. The configuration pins `source.assets: ["eur"]`, `source.defaultAsset: "eur"`, `destination.chain: "eip155:42161"`, the current embedded wallet and native Arbitrum USDC. The provider handles its final quote, payment options, region checks and fees. No parameters are appended to provider-signed URLs.
+
+The established `useFundWallet` remains for external-wallet and ETH funding. It is deprecated, not experimental, in the pinned SDK. The qualifying generally available action is **`useSendTransaction` executing a transfer or Aave supply/withdrawal**, so eligibility does not rely on EUR provider access. No card product, commercial onboarding or provider settlement is mocked as a completed action.
 
 The provider explicitly sets `embeddedWallets.showWalletUIs: true` and each send call also sets `showWalletUIs: true`, `isCancellable: true` and the embedded wallet's `address`. No background signer, delegated authority or gas sponsorship is assumed.
 
@@ -24,8 +26,8 @@ The provider explicitly sets `embeddedWallets.showWalletUIs: true` and each send
 - Chain: Arbitrum One, 42161. No testnet or user-selected RPC is accepted by the product API.
 - Asset: native USDC, six decimals, `0xaf88d065e77c8cc2239327c5edb3a432268e5831`. USDC.e is not interchangeable.
 - Network fees: ETH in the Privy wallet. The review uses an RPC estimate with a 20% buffer; Privy displays the current signing fee. Estimates can change.
-- Amount: positive, at most 1,000 USDC per operation. Revocation alone uses zero. No unlimited approvals or maximum-uint withdrawal.
-- Beneficiary: the same embedded wallet, hardcoded into locally reconstructed calldata.
+- Savings amount: positive, at most 1,000 USDC per operation. Wallet transfers accept available USDC/ETH with exact six/eighteen-decimal precision and sufficient ETH for fees. Revocation alone uses zero. No unlimited approvals or maximum-uint withdrawal.
+- Savings beneficiary: the same embedded wallet. Transfers use the explicitly reviewed Arbitrum recipient; all calldata is locally reconstructed from strict typed actions.
 - Savings: requires no existing Aave debt. Aave's official simulation also enforces caps, pauses and withdrawal liquidity.
 - Approval: exactly the selected deposit amount, consumed by supply. A cancelled/failed supply can leave allowance; explicit revocation remains available even if the account later has debt.
 - Transaction preflight: fresh state, exact request, balance/allowance rules, estimated gas, then another simulation before Privy's confirmation. Protocol state can change while the wallet prompt is open; Aave enforces its own rules during execution.
@@ -63,11 +65,11 @@ The provider explicitly sets `embeddedWallets.showWalletUIs: true` and each send
 }
 ```
 
-These addresses/hashes are schema examples, not evidence. Preparation returns a pinned snapshot, one-minute expiry and gas estimate. It accepts `approve`, `supply`, `withdraw` or `revoke`; it is not an authorization token. The browser reconstructs calldata from the action. Verification checks the exact transaction and canonical token/protocol events; missing receipts return HTTP 202. The API never signs, broadcasts, accepts a recipient, executes an arbitrary call or authenticates Privy wallet authorship from an address alone.
+These addresses/hashes are schema examples, not evidence. Preparation returns a pinned snapshot, one-minute expiry and gas estimate. It accepts `approve`, `supply`, `withdraw`, `revoke`, `transfer-usdc` or `transfer-eth`; transfer actions additionally require an explicit `recipient`. it is not an authorization token. The browser reconstructs calldata from the action. Verification checks the exact transaction and canonical token/protocol events; missing receipts return HTTP 202. The API never signs, broadcasts, executes an arbitrary call or authenticates Privy wallet authorship from an address alone. Transfer recipients are accepted only inside the fixed transfer recipe and are matched exactly during receipt verification.
 
 ## Required acceptance artifact
 
-Record a real configured session showing wallet creation/use, funding balance, a user-confirmed supply or withdrawal, the receipt and the downloaded report. Record the build commit and judging domain. A transaction receipt alone does not identify the wallet vendor, so the session recording/source path establishes Privy's role.
+Record a real configured session showing wallet creation/use, funding balance, a user-confirmed transfer, supply or withdrawal, the receipt and the downloaded report. Record the build commit and judging domain. A transaction receipt alone does not identify the wallet vendor, so the session recording/source path establishes Privy's role.
 
 Do not substitute the protocol-only fork report or automated browser fixtures. Approval, revocation and login alone do not meet this submission's required financial flow. No live transaction has been made by the implementation agent without a configured user wallet and the user's transaction confirmation.
 
@@ -79,7 +81,8 @@ Do not substitute the protocol-only fork report or automated browser fixtures. A
 - [Send an Ethereum transaction](https://docs.privy.io/wallets/using-wallets/ethereum/send-a-transaction)
 - [Confirmation modals](https://docs.privy.io/recipes/react/manage-wallet-UIs)
 - [Network configuration](https://docs.privy.io/basics/react/advanced/configuring-evm-networks)
-- [Current funding documentation](https://docs.privy.io/wallets/funding/add-funds)
+- [Funding documentation](https://docs.privy.io/wallets/funding/add-funds)
+- [Fiat onramp](https://docs.privy.io/wallets/funding/fiat-onramp)
 - [Direct Aave integration recipe](https://docs.privy.io/recipes/yield/aave-guide)
 
-SDK behavior and signatures were checked against the installed 3.42.0 declarations. Current documentation may describe newer APIs; do not migrate to an experimental/guided feature without revisiting the prize requirement and tests.
+SDK behavior and signatures were checked against the installed 3.42.0 declarations. Current documentation may describe newer APIs; the EUR hook's experimental status is explicit, and the required financial action remains on the generally available transaction API.

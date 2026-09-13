@@ -9,11 +9,15 @@ import {
   restoreAttempt,
   submitReserveAttempt,
   verifyReserveAttempt,
+  verifyReserve,
   withCheckedReserveHistory,
   type ReserveAttempt,
   type ReserveRecord,
 } from "../../src/integrations/privy/client";
-import type { PreparedReserveAction } from "../../src/integrations/privy/reserve";
+import type {
+  PreparedReserveAction,
+  TransferAction,
+} from "../../src/integrations/privy/reserve";
 
 const now = Date.UTC(2026, 8, 13);
 const owner = "0x1111111111111111111111111111111111111111";
@@ -163,6 +167,123 @@ test("expired, excessively long and stale-state reviews cannot reach wallet subm
   );
 });
 
+test("transfer reviews bind normalized explicit recipient and check ETH value plus network fees", () => {
+  const action: TransferAction = {
+    owner,
+    kind: "transfer-eth",
+    recipient: "0x0000000000000000000000000000000000000B0b",
+    amountUnits: "99000",
+  };
+  const p = { ...prepared(), action };
+  assert.deepEqual(
+    assertPrepared(
+      p,
+      {
+        ...action,
+        recipient: action.recipient.toLowerCase() as `0x${string}`,
+        amountUnits: "00099000",
+      },
+      now,
+    ),
+    p,
+  );
+  assert.throws(
+    () => assertPrepared(p, { ...action, recipient: owner }, now),
+    /does not match/,
+  );
+  assert.throws(
+    () =>
+      assertPrepared(
+        { ...p, before: { ...p.before, nativeWei: "99999" } },
+        action,
+        now,
+      ),
+    /transfer and network fees/,
+  );
+  assert.throws(
+    () => assertPrepared({ ...p, estimatedGasWei: "0" }, action, now),
+    /fee estimate is invalid/,
+  );
+  assert.throws(() =>
+    assertPrepared({ ...p, estimatedGasWei: "1e3" }, action, now),
+  );
+});
+
+test("old reserve records coexist with full-balance transfer records and preserve exact transfer recovery", () => {
+  const old = record();
+  const transfer = record();
+  transfer.id = "d7b31ebe-a65a-4361-a8fe-d1978ccdc437";
+  transfer.prepared.action = {
+    owner,
+    kind: "transfer-usdc",
+    recipient: "0x2222222222222222222222222222222222222222",
+    amountUnits: "5000000000",
+  };
+  transfer.prepared.before.usdcUnits = "5000000000";
+  assert.deepEqual(restoreRecords(serializedRecords([old, transfer]), owner), [
+    old,
+    transfer,
+  ]);
+  const legacyPadded = {
+    ...old,
+    prepared: {
+      ...old.prepared,
+      action: { ...old.prepared.action, amountUnits: "00010000000" },
+    },
+  };
+  assert.deepEqual(restoreRecords(JSON.stringify([legacyPadded]), owner), [
+    old,
+  ]);
+  const intent = {
+    id: transfer.id,
+    prepared: transfer.prepared,
+    startedAt: transfer.submittedAt,
+  };
+  assert.deepEqual(restoreAttempt(JSON.stringify(intent), owner), intent);
+  assert.deepEqual(recordFromAttempt(intent, transfer.hash), transfer);
+  assert.throws(() =>
+    restoreRecords(
+      JSON.stringify([
+        {
+          ...transfer,
+          prepared: {
+            ...transfer.prepared,
+            action: { ...transfer.prepared.action, recipient: "bad" },
+          },
+        },
+      ]),
+      owner,
+    ),
+  );
+});
+
+test("client receipt binding normalizes transfer action but rejects a changed recipient", async (t) => {
+  const r = checkedRecord();
+  r.prepared.action = {
+    owner,
+    kind: "transfer-usdc",
+    recipient: "0x2222222222222222222222222222222222222222",
+    amountUnits: "10000000",
+  };
+  let recipient = r.prepared.action.recipient;
+  let reportOwner = owner;
+  t.mock.method(globalThis, "fetch", async () =>
+    Response.json({
+      ...r.verification,
+      action: { ...r.prepared.action, recipient, amountUnits: "00010000000" },
+      after: { ...r.verification!.after, owner: reportOwner },
+    }),
+  );
+  const verified = await verifyReserve(r);
+  assert.equal(verified?.status, "verified");
+  assert.deepEqual(verified?.action, r.prepared.action);
+  recipient = owner;
+  await assert.rejects(verifyReserve(r), /did not match/);
+  recipient = r.prepared.action.recipient;
+  reportOwner = recipient;
+  await assert.rejects(verifyReserve(r), /did not match this wallet/);
+});
+
 test("saved transaction hashes survive reload but locally written success labels never do", () => {
   const r = record();
   const edited = JSON.stringify([
@@ -199,7 +320,7 @@ test("export preserves partial operations without declaring approval or funding 
   );
   assert.match(
     report.boundaries.join(" "),
-    /Borrowing and Aqua execution remain local/,
+    /Aqua borrowing and execution use a separately verified PositionAccount deployment/,
   );
   assert.match(
     report.walletActionTransport,

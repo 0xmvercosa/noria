@@ -4,6 +4,7 @@ import {
   decodeFunctionData,
   encodeAbiParameters,
   encodeEventTopics,
+  formatUnits,
   getAddress,
   type Address,
   type Hash,
@@ -13,13 +14,19 @@ import {
   RESERVE,
   ActionSchema,
   OwnerSchema,
+  MAX_TRANSFER_UNITS,
   assertReserveAction,
+  parseTransferAmount,
   parseUsdc,
   poolAbi,
   reserveTransaction,
+  reserveActionDetails,
+  sameReserveAction,
   tokenAbi,
   type ReserveAction,
   type ReserveSnapshot,
+  type SavingsAction,
+  type TransferAction,
 } from "../../src/integrations/privy/reserve";
 import {
   createReserveService,
@@ -34,10 +41,18 @@ const blockHash = `0x${"b".repeat(64)}` as Hash;
 const otherHash = `0x${"c".repeat(64)}` as Hash;
 const amount = 12_345_678n;
 const active = 1n << 56n;
-const action = (kind: ReserveAction["kind"] = "supply"): ReserveAction => ({
+const action = (kind: SavingsAction["kind"] = "supply"): SavingsAction => ({
   owner,
   kind,
   amountUnits: kind === "revoke" ? "0" : amount.toString(),
+});
+const transferAction = (
+  kind: TransferAction["kind"] = "transfer-usdc",
+): TransferAction => ({
+  owner,
+  kind,
+  recipient: stranger,
+  amountUnits: amount.toString(),
 });
 const state = (): ReserveSnapshot => ({
   owner,
@@ -144,6 +159,9 @@ function withdraw(
   );
 }
 function correctLogs(input: ReserveAction): ReceiptLog[] {
+  if (input.kind === "transfer-eth") return [];
+  if (input.kind === "transfer-usdc")
+    return [transfer(input.owner, input.recipient, BigInt(input.amountUnits))];
   if (input.kind === "approve" || input.kind === "revoke")
     return [approval(BigInt(input.amountUnits))];
   return input.kind === "supply"
@@ -152,7 +170,7 @@ function correctLogs(input: ReserveAction): ReceiptLog[] {
 }
 
 /** Only the public-client methods used by the service exist; there is no broadcaster. */
-function harness(input = action()) {
+function harness(input: ReserveAction = action()) {
   const expected = reserveTransaction(input);
   const calls: { method: string; args?: unknown }[] = [];
   const data = {
@@ -170,6 +188,8 @@ function harness(input = action()) {
     gas: 100_000n,
     gasPrice: 10_000_000n,
     receipt: {
+      from: owner as Address,
+      to: expected.to as Address | null,
       status: "success" as "success" | "reverted",
       transactionHash: hash,
       blockHash,
@@ -179,12 +199,14 @@ function harness(input = action()) {
       logs: correctLogs(input),
     },
     transaction: {
+      hash,
       from: owner as Address,
       to: expected.to as Address | null,
       input: expected.data,
-      value: 0n,
+      value: expected.value,
       chainId: 42161,
       blockHash: blockHash as Hash | null,
+      blockNumber: 500n,
       nonce: 7,
     },
     fail: new Map<string, Error>(),
@@ -365,6 +387,327 @@ test("action schema rejects zero, overflow, unsafe owners and executable injecti
     "not-an-address",
   ])
     assert.equal(OwnerSchema.safeParse(value).success, false);
+});
+
+test("wallet transfers have strict normalized recipients and amounts without the savings cap", () => {
+  const input = transferAction();
+  assert.deepEqual(
+    ActionSchema.parse({
+      ...input,
+      owner: owner.toLowerCase(),
+      recipient: stranger.toLowerCase(),
+      amountUnits: `000${amount}`,
+    }),
+    input,
+  );
+  assert.ok(
+    sameReserveAction(input, {
+      ...input,
+      recipient: stranger.toLowerCase() as Address,
+      amountUnits: `000${amount}`,
+    }),
+  );
+  assert.equal(
+    ActionSchema.parse({ ...input, amountUnits: MAX_TRANSFER_UNITS.toString() })
+      .amountUnits,
+    MAX_TRANSFER_UNITS.toString(),
+  );
+  for (const value of [
+    "0",
+    "-1",
+    "+1",
+    "1.5",
+    "1e6",
+    " 1",
+    "1 ",
+    "",
+    "9".repeat(79),
+    (MAX_TRANSFER_UNITS + 1n).toString(),
+  ])
+    assert.equal(
+      ActionSchema.safeParse({ ...input, amountUnits: value }).success,
+      false,
+      value,
+    );
+  for (const recipient of [
+    "0x0000000000000000000000000000000000000000",
+    "0x1234",
+    "not-an-address",
+    "0x52908400098527886e0F7030069857D2E4169EE7",
+  ]) {
+    assert.equal(
+      ActionSchema.safeParse({ ...input, recipient }).success,
+      false,
+      recipient,
+    );
+    assert.equal(OwnerSchema.safeParse(recipient).success, false, recipient);
+  }
+  for (const extra of [
+    { to: owner },
+    { data: "0x1234" },
+    { chainId: 1 },
+    { value: "1" },
+  ])
+    assert.equal(ActionSchema.safeParse({ ...input, ...extra }).success, false);
+  assert.equal(
+    ActionSchema.safeParse({ owner, kind: "transfer-usdc", amountUnits: "1" })
+      .success,
+    false,
+  );
+  assert.equal(
+    ActionSchema.safeParse({ ...action(), recipient: stranger }).success,
+    false,
+  );
+});
+
+test("transfer decimal parsing permits a full uint256 balance and never rounds", () => {
+  assert.equal(parseTransferAmount("2500.123456", "USDC"), "2500123456");
+  assert.equal(parseTransferAmount("0.000000000000000001", "ETH"), "1");
+  assert.equal(
+    parseTransferAmount("0001.000000000000000001", "ETH"),
+    "1000000000000000001",
+  );
+  for (const asset of ["USDC", "ETH"] as const) {
+    const decimals = asset === "ETH" ? 18 : 6;
+    assert.equal(
+      parseTransferAmount(formatUnits(MAX_TRANSFER_UNITS, decimals), asset),
+      MAX_TRANSFER_UNITS.toString(),
+    );
+    assert.equal(
+      parseTransferAmount(
+        formatUnits(MAX_TRANSFER_UNITS + 1n, decimals),
+        asset,
+      ),
+      null,
+    );
+    for (const text of [
+      "",
+      "0",
+      "-1",
+      "+1",
+      "1e3",
+      "1,000",
+      " 1",
+      "1 ",
+      ".1",
+      "1.",
+      `0.${"0".repeat(decimals)}1`,
+      "9".repeat(79),
+    ])
+      assert.equal(parseTransferAmount(text, asset), null, `${asset}: ${text}`);
+  }
+  assert.equal(parseUsdc("2500.123456"), null);
+});
+
+test("transfer calldata fixes token and chain while binding the explicit recipient and value", () => {
+  const usdc = transferAction();
+  const tokenTx = reserveTransaction(usdc);
+  assert.equal(tokenTx.chainId, 42161);
+  assert.equal(tokenTx.to, RESERVE.usdc);
+  assert.equal(tokenTx.value, 0n);
+  assert.deepEqual(decodeFunctionData({ abi: tokenAbi, data: tokenTx.data }), {
+    functionName: "transfer",
+    args: [stranger, amount],
+  });
+  const eth = transferAction("transfer-eth");
+  assert.deepEqual(reserveTransaction(eth), {
+    chainId: 42161,
+    to: stranger,
+    data: "0x",
+    value: amount,
+  });
+  assert.deepEqual(reserveActionDetails(usdc), {
+    asset: "USDC",
+    decimals: 6,
+    recipient: stranger,
+  });
+  assert.deepEqual(reserveActionDetails(eth), {
+    asset: "ETH",
+    decimals: 18,
+    recipient: stranger,
+  });
+  assert.deepEqual(reserveActionDetails(action("withdraw")), {
+    asset: "USDC",
+    decimals: 6,
+    recipient: owner,
+  });
+});
+
+test("transfers ignore Aave debt and reserve flags but require the correct wallet, chain and balance", () => {
+  for (const kind of ["transfer-usdc", "transfer-eth"] as const) {
+    const input = transferAction(kind);
+    const snapshot = {
+      ...state(),
+      debtBase: "99",
+      allowanceUnits: "0",
+      supplyAvailable: false,
+      withdrawAvailable: false,
+    };
+    assert.doesNotThrow(() => assertReserveAction(input, snapshot));
+    assert.throws(
+      () => assertReserveAction(input, { ...snapshot, owner: stranger }),
+      /wallet changed/,
+    );
+    assert.throws(() =>
+      assertReserveAction(input, { ...snapshot, chainId: 1 as 42161 }),
+    );
+    assert.throws(
+      () =>
+        assertReserveAction(input, {
+          ...snapshot,
+          ...(kind === "transfer-eth"
+            ? { nativeWei: (amount - 1n).toString() }
+            : { usdcUnits: (amount - 1n).toString() }),
+        }),
+      /wallet balance/,
+    );
+  }
+});
+
+test("transfer preflight permits full USDC balance and reserves ETH for both transfer value and fees", async () => {
+  const usdc = { ...transferAction(), amountUnits: "2500123456" };
+  const token = harness(usdc);
+  token.data.usdc = BigInt(usdc.amountUnits);
+  token.data.debt = 99n;
+  token.data.config = 0n;
+  assert.equal(
+    (await token.service.prepare(usdc)).action.amountUnits,
+    usdc.amountUnits,
+  );
+  token.data.native = 1_199_999_999_999n;
+  await assert.rejects(token.service.prepare(usdc), /Add ETH/);
+  const eth = transferAction("transfer-eth");
+  const native = harness(eth);
+  const gasBudget = 1_200_000_000_000n;
+  native.data.native = amount + gasBudget - 1n;
+  await assert.rejects(
+    native.service.prepare(eth),
+    /transfer and network fees/,
+  );
+  native.data.native += 1n;
+  const prepared = await native.service.prepare(eth);
+  assert.equal(prepared.estimatedGasWei, gasBudget.toString());
+  assert.equal(prepared.before.nativeWei, (amount + gasBudget).toString());
+  assert.deepEqual(native.calls.find((c) => c.method === "estimateGas")?.args, {
+    account: owner,
+    to: stranger,
+    data: "0x",
+    value: amount,
+  });
+});
+
+test("USDC transfer verification requires the exact token, sender, recipient and amount event", async () => {
+  const input = transferAction();
+  assert.equal(
+    (await harness(input).service.verify(input, hash)).status,
+    "verified",
+  );
+  for (const entry of [
+    null,
+    transfer(stranger, stranger),
+    transfer(owner, owner),
+    transfer(owner, stranger, amount + 1n),
+    { ...transfer(owner, stranger), address: RESERVE.aUsdc },
+  ]) {
+    const h = harness(input);
+    h.data.receipt.logs = entry ? [entry] : [];
+    assert.equal(
+      (await h.service.verify(input, hash)).status,
+      "effect-unverified",
+    );
+  }
+});
+
+test("forged transfer transaction or receipt identities cannot be rescued by matching logs", async () => {
+  const mutations: ((h: ReturnType<typeof harness>) => void)[] = [
+    (h) => {
+      h.data.transaction.from = stranger;
+    },
+    (h) => {
+      h.data.transaction.to = owner;
+    },
+    (h) => {
+      h.data.transaction.value += 1n;
+    },
+    (h) => {
+      h.data.transaction.input = "0x1234";
+    },
+    (h) => {
+      h.data.transaction.chainId = 1;
+    },
+    (h) => {
+      h.data.chainId = 1;
+    },
+    (h) => {
+      h.data.transaction.hash = otherHash;
+    },
+    (h) => {
+      h.data.transaction.blockNumber = 499n;
+    },
+    (h) => {
+      h.data.receipt.from = stranger;
+    },
+    (h) => {
+      h.data.receipt.to = owner;
+    },
+    (h) => {
+      h.data.receipt.transactionHash = otherHash;
+    },
+    (h) => {
+      h.data.canonicalHash = otherHash;
+    },
+  ];
+  for (const kind of ["transfer-usdc", "transfer-eth"] as const) {
+    const input = transferAction(kind);
+    for (const mutate of mutations) {
+      const h = harness(input);
+      mutate(h);
+      await assert.rejects(
+        h.service.verify(input, hash),
+        /exact operation|Arbitrum One|reported block|reorganized/,
+      );
+    }
+    const reverted = harness(input);
+    reverted.data.receipt.status = "reverted";
+    assert.equal(
+      (await reverted.service.verify(input, hash)).status,
+      "reverted",
+    );
+  }
+  const wrongRecipient = harness(transferAction());
+  wrongRecipient.data.transaction.input = reserveTransaction({
+    ...transferAction(),
+    recipient: owner,
+  }).data;
+  await assert.rejects(
+    wrongRecipient.service.verify(transferAction(), hash),
+    /exact operation/,
+  );
+});
+
+test("ETH transfers verify exact successful value transfer without requiring token events", async () => {
+  const input = transferAction("transfer-eth");
+  const h = harness(input);
+  assert.deepEqual(h.data.receipt.logs, []);
+  const result = await h.service.verify(input, hash);
+  assert.equal(result.status, "verified");
+  assert.equal(result.transaction.value, amount.toString());
+  assert.equal(result.transaction.to, stranger);
+  assert.equal(result.networkFeeWei, "800000000000");
+});
+
+test("removed or foreign transfer logs never provide canonical receipt evidence", async () => {
+  for (const fields of [
+    { removed: true },
+    { transactionHash: otherHash },
+    { blockHash: otherHash },
+    { blockNumber: 499n },
+  ]) {
+    const input = transferAction();
+    const h = harness(input);
+    h.data.receipt.logs = [{ ...transfer(owner, stranger), ...fields }];
+    await assert.rejects(h.service.verify(input, hash), /logs do not belong/);
+  }
 });
 
 test("supply requires exact allowance, enough USDC, zero debt and the same wallet", () => {
@@ -714,6 +1057,49 @@ const request = (body: unknown) =>
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
   });
+
+test("the existing endpoint prepares and verifies transfers but refuses malformed recipients and amounts before RPC", async () => {
+  for (const kind of ["transfer-usdc", "transfer-eth"] as const) {
+    const input = transferAction(kind);
+    const h = harness(input);
+    const handlers = createReserveHandlers(h.service);
+    assert.equal(
+      (await handlers.POST(request({ operation: "prepare", action: input })))
+        .status,
+      200,
+    );
+    const verified = await handlers.POST(
+      request({ operation: "verify", action: input, hash }),
+    );
+    assert.equal(verified.status, 200);
+    assert.equal((await verified.json()).status, "verified");
+    const count = h.calls.length;
+    for (const fields of [
+      { recipient: "bad" },
+      { recipient: "0x0000000000000000000000000000000000000000" },
+      { amountUnits: "1e18" },
+      { amountUnits: (MAX_TRANSFER_UNITS + 1n).toString() },
+      { chainId: 1 },
+    ])
+      assert.equal(
+        (
+          await handlers.POST(
+            request({ operation: "prepare", action: { ...input, ...fields } }),
+          )
+        ).status,
+        400,
+      );
+    assert.equal(h.calls.length, count);
+  }
+  const eth = transferAction("transfer-eth");
+  const h = harness(eth);
+  h.data.native = amount + 1n;
+  const response = await createReserveHandlers(h.service).POST(
+    request({ operation: "prepare", action: eth }),
+  );
+  assert.equal(response.status, 422);
+  assert.match((await response.json()).message, /transfer and network fees/);
+});
 
 test("HTTP exposes read/simulate/verify operations only and returns uncached confirmed evidence", async () => {
   const { service, calls } = harness();

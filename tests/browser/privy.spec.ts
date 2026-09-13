@@ -38,11 +38,16 @@ test("reserve explains real custody and disables unconfigured Privy without send
     }),
   ).toBeVisible();
   await expect(
-    page.getByText(
-      "Your live reserve is not moved or borrowed against by the rehearsal.",
-      { exact: false },
-    ),
+    page.getByText("This link only passes your chosen amount to the planner.", {
+      exact: false,
+    }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Transfer funds", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Review transfer", exact: true }),
+  ).toBeDisabled();
   await page.getByLabel("Operation", { exact: true }).selectOption("withdraw");
   await page.getByLabel("Amount (USDC)").fill("1.000001");
   await expect(

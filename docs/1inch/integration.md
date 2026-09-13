@@ -8,6 +8,8 @@ The supplied capital is collateral, not the LP budget. The USDC entry path suppl
 
 The user benefits only if the combined LP result and collateral yield justify borrowing, preparation, exit, gas and risk. Fees can coexist with losses. Rising, flat or falling ETH prices alone do not determine profitability. Reports separate LP surplus, owner equity and the consolidated result of related demo wallets.
 
+The public wallet lifecycle is documented in [Owner-confirmed Aqua launch](live-launch.md), including factory deployment, exact signing, recovery and close/repay/exit. The diagram below describes the separately reproducible local execution path.
+
 ## Implemented round trip
 
 ```mermaid
@@ -80,11 +82,11 @@ The cycle rule is different: after docking, owner provenance confirmation, reali
 
 At/below safety health, ordinary investment and allocation stop; defense prioritizes repayment. Below comfortable health, new cycles cannot ship. Debt-free accounts cannot silently reopen or reborrow. See [architecture](architecture.md) for ownership, reconciliation and lifecycle details.
 
-## Privy and local simulation
+## Privy, wallet launch and local simulation
 
-Set the public `NEXT_PUBLIC_PRIVY_APP_ID` before building and allow local/deployed origins in Privy. The shared provider creates/opens a Privy embedded wallet with Arbitrum support, account display and sign-out. Wallet login may request an authentication signature. Aqua rehearsal only consumes the public address; it does not request an Aqua transaction signature. The separate [`/reserve` flow](../privy/README.md) offers user-confirmed public Aave savings operations.
+Set the public `NEXT_PUBLIC_PRIVY_APP_ID` before building and allow local/deployed origins in Privy. The shared provider creates/opens a Privy embedded wallet with Arbitrum support, account display and sign-out. Wallet login may request an authentication signature. Aqua rehearsal only consumes the public address; it does not request an Aqua transaction signature. The separate [`/reserve` flow](../privy/README.md) offers EUR checkout, transfers and public Aave savings. The same wallet signs the [public Aqua lifecycle](live-launch.md) once its verified factory is configured.
 
-Without an App ID, the UI displays wallet connection as unavailable; research and plan downloads work. This state does not demonstrate a successfully tested real Privy connection. A real App ID and configured origins are needed for that acceptance check. The current Privy scope and outstanding real financial-flow evidence are maintained in the [Privy guide](../privy/README.md).
+Without an App ID, the UI displays wallet connection as unavailable; research and plan downloads work. This state does not demonstrate a successfully tested real Privy connection. The App ID is now configured and an authenticated embedded wallet has been observed; public funding and financial signing still need acceptance evidence. The current Privy scope and outstanding real financial-flow evidence are maintained in the [Privy guide](../privy/README.md).
 
 Install Foundry (`forge`/`anvil` on `PATH`) on macOS/Linux, set `NORIA_ENABLE_LOCAL_FORK=1` and bind the app to loopback. Vercel, native Windows and non-loopback hosts are refused. The UI requires a connected public address and unexpired plan. An owned local Anvil impersonates that address, gives it labeled fixture balances, executes official contracts and writes a report. No mutation is sent upstream. One job runs at a time; a four-minute deadline stops its private process group, with forced shutdown after ten more seconds if necessary. An interrupted server may leave `.runtime/aqua-rehearsals/active.lock`; remove it only after confirming its process has stopped.
 

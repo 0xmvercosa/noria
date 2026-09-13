@@ -12,6 +12,7 @@ import {
   getEmbeddedConnectedWallet,
   useCreateWallet,
   useFundWallet,
+  useFiatOnramp,
   usePrivy,
   useSendTransaction,
   useWallets,
@@ -21,9 +22,18 @@ import { formatUnits, type Hash } from "viem";
 import {
   PreparedSchema,
   assertReserveAction,
+  assertReserveGas,
+  reserveActionDetails,
+  isTransferAction,
   reserveTransaction,
   type PreparedReserveAction,
 } from "../integrations/privy/reserve";
+import { euroOnrampOptions } from "../integrations/privy/fiat";
+import {
+  assertPreparedLaunch,
+  launchTransaction,
+  type LaunchPrepared,
+} from "../integrations/aqua/launch-contract";
 
 type WalletContext = {
   configured: boolean;
@@ -35,7 +45,11 @@ type WalletContext = {
   disconnect: () => Promise<void>;
   switchToArbitrum: () => Promise<void>;
   fund: (asset: "USDC" | "ETH") => Promise<void>;
+  fundWithEuro: (
+    amount: string,
+  ) => Promise<{ status: "submitted" | "confirmed" }>;
   sendReserveAction: (prepared: PreparedReserveAction) => Promise<Hash>;
+  sendLaunchAction: (prepared: LaunchPrepared, plan?: unknown) => Promise<Hash>;
 };
 const unavailable: WalletContext = {
   configured: false,
@@ -49,7 +63,13 @@ const unavailable: WalletContext = {
   fund: async () => {
     throw new Error("Privy is not configured.");
   },
+  fundWithEuro: async () => {
+    throw new Error("Privy is not configured.");
+  },
   sendReserveAction: async () => {
+    throw new Error("Privy is not configured.");
+  },
+  sendLaunchAction: async () => {
     throw new Error("Privy is not configured.");
   },
 };
@@ -63,6 +83,7 @@ function ConnectedWalletProvider({ children }: { children: ReactNode }) {
   const { wallets, ready: walletsReady } = useWallets();
   const { createWallet } = useCreateWallet();
   const { fundWallet } = useFundWallet();
+  const { fund: fiatOnramp } = useFiatOnramp();
   const { sendTransaction } = useSendTransaction();
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -126,11 +147,20 @@ function ConnectedWalletProvider({ children }: { children: ReactNode }) {
     if (!wallet || !isCurrent())
       throw new Error("The wallet changed. Review this operation again.");
     assertReserveAction(prepared.action, prepared.before);
+    assertReserveGas(
+      prepared.action,
+      prepared.before,
+      prepared.estimatedGasWei,
+    );
     await wallet.switchChain(arbitrum.id);
     if (!isCurrent() || Date.now() >= prepared.expiresAt)
       throw new Error("This review expired. Refresh it before signing.");
     const tx = reserveTransaction(prepared.action);
-    const amount = formatUnits(BigInt(prepared.action.amountUnits), 6);
+    const details = reserveActionDetails(prepared.action);
+    const amount = formatUnits(
+      BigInt(prepared.action.amountUnits),
+      details.decimals,
+    );
     const { hash } = await sendTransaction(
       { ...tx, from: owner },
       {
@@ -141,7 +171,9 @@ function ConnectedWalletProvider({ children }: { children: ReactNode }) {
           description:
             prepared.action.kind === "revoke"
               ? "Remove Aave's USDC allowance on Arbitrum"
-              : `${prepared.action.kind} ${amount} USDC on Arbitrum. The reserve belongs to your Privy wallet.`,
+              : isTransferAction(prepared.action)
+                ? `Send ${amount} ${details.asset} to ${details.recipient} on Arbitrum. Network fees are paid separately in ETH.`
+                : `${prepared.action.kind} ${amount} USDC on Arbitrum. The reserve belongs to your Privy wallet.`,
           buttonText: "Confirm operation",
         },
       },
@@ -161,7 +193,46 @@ function ConnectedWalletProvider({ children }: { children: ReactNode }) {
         disconnect,
         switchToArbitrum,
         fund,
+        fundWithEuro: async (amount) => {
+          if (
+            !wallet ||
+            activeAddress.current?.toLowerCase() !==
+              wallet.address.toLowerCase()
+          )
+            throw new Error("Create your Privy wallet first.");
+          // The pinned SDK marks this interface experimental; ordinary signed
+          // transfers/deposits remain the submission's qualifying wallet action.
+          return fiatOnramp(euroOnrampOptions(wallet.address, amount));
+        },
         sendReserveAction,
+        sendLaunchAction: async (input, plan) => {
+          const prepared = assertPreparedLaunch(input, input.request, plan);
+          const owner = prepared.request.owner;
+          const isCurrent = () =>
+            activeAddress.current?.toLowerCase() === owner.toLowerCase();
+          if (!wallet || !isCurrent())
+            throw new Error(
+              "The wallet changed. Review the position operation again.",
+            );
+          await wallet.switchChain(arbitrum.id);
+          if (!isCurrent())
+            throw new Error("The wallet changed. Review again.");
+          assertPreparedLaunch(prepared, prepared.request, plan);
+          const tx = launchTransaction(prepared);
+          const { hash } = await sendTransaction(
+            { ...tx, from: owner },
+            {
+              address: owner,
+              uiOptions: {
+                showWalletUIs: true,
+                isCancellable: true,
+                description: `Noria Aqua: ${prepared.request.kind} on Arbitrum. Confirm the reviewed amount and destination; network fees are paid separately in ETH.`,
+                buttonText: "Confirm position operation",
+              },
+            },
+          );
+          return hash;
+        },
       }}
     >
       {children}

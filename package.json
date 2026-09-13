@@ -21,7 +21,8 @@
     "format:check": "prettier --check .",
     "agent:call": "node --env-file-if-exists=.env.local --import tsx scripts/call-tool.ts",
     "check:runtime-assets": "node scripts/check-runtime-assets.mjs",
-    "validate:privy-protocol": "node --env-file-if-exists=.env.local --import tsx scripts/validate-privy-reserve.ts"
+    "validate:privy-protocol": "node --env-file-if-exists=.env.local --import tsx scripts/validate-privy-reserve.ts",
+    "validate:aqua-launch": "node --env-file-if-exists=.env.local --import tsx scripts/validate-aqua-launch.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

@@ -52,14 +52,14 @@ export function createReserveHandlers(service = createReserveService()) {
             const message = error instanceof Error ? error.message : "";
             // Do not leak RPC URLs, credentials or raw provider errors.
             const safe =
-              /^(The wallet changed|This savings flow|Aave USDC supply|Aave withdrawals|The amount exceeds|Add enough|Approve exactly|Add ETH|Arbitrum state is stale)/.test(
+              /^(The wallet changed|This savings flow|Aave USDC supply|Aave withdrawals|The amount exceeds|Add enough|Approve exactly|Add ETH|Leave enough ETH|The network fee estimate|Arbitrum state is stale)/.test(
                 message,
               );
             return json(
               {
                 message: safe
                   ? message
-                  : "The official contracts could not simulate this operation. Refresh balances and try again.",
+                  : "This operation could not be simulated on Arbitrum. Refresh balances and try again.",
               },
               422,
             );

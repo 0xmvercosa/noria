@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { formatUnits } from "viem";
 import {
   ArrowDown,
   ArrowUpRight,
@@ -12,6 +13,7 @@ import {
 import { NoriaLogo } from "./NoriaLogo";
 import { NoriaWallet } from "./NoriaWallet";
 import { useNoriaWallet } from "./NoriaWalletProvider";
+import { AquaLaunchWorkbench } from "./AquaLaunchWorkbench";
 import {
   PositionRequestSchema,
   type PositionRequest,
@@ -382,7 +384,8 @@ export function AquaWorkbench() {
             target inventory.
           </p>
           <p className={s.note}>
-            Inspect and rehearse locally. Historical activity does not establish
+            Review the plan, then launch with your Privy wallet when the public
+            deployment is available. Historical activity does not establish
             future Aqua demand or profitable returns.
           </p>
         </section>
@@ -581,8 +584,8 @@ export function AquaWorkbench() {
                     "This plan cannot proceed"
                   ) : (
                     <>
-                      <Check size={14} aria-hidden="true" /> Ready for local
-                      rehearsal
+                      <Check size={14} aria-hidden="true" /> Plan ready for
+                      review
                     </>
                   )}
                 </p>
@@ -791,12 +794,29 @@ export function AquaWorkbench() {
             )}
           </section>
         </div>
+        <AquaLaunchWorkbench
+          plan={response}
+          onPlan={(updated) => {
+            setResponse(updated);
+            setFundingAsset(updated.intent.fundingAsset);
+            setAmount(
+              formatUnits(
+                BigInt(updated.intent.collateralAmountUnits),
+                updated.intent.fundingAsset === "ETH" ? 18 : 6,
+              ),
+            );
+            setSafetyHF(formatUnits(BigInt(updated.intent.safetyHFWad), 18));
+            setComfortableHF(
+              formatUnits(BigInt(updated.intent.comfortableHFWad), 18),
+            );
+          }}
+        />
         <section
           className={`${s.panel} ${s.simulation}`}
           aria-labelledby="rehearsal-heading"
         >
           <div>
-            <span className={s.eyebrow}>03 · Inspect local execution</span>
+            <span className={s.eyebrow}>04 · Inspect local execution</span>
             <h2 id="rehearsal-heading">
               <FlaskConical size={21} aria-hidden="true" /> Rehearse this plan
               locally

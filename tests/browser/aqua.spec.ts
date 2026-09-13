@@ -1,4 +1,40 @@
 import { test, expect, type Page } from "@playwright/test";
+
+test("public launch fails closed without a configured factory and never substitutes a local fixture", async ({
+  request,
+}) => {
+  test.skip(
+    Boolean(process.env.NORIA_AQUA_FACTORY_ADDRESS),
+    "This scenario requires no configured public factory.",
+  );
+  const owner = "0x1111111111111111111111111111111111111111";
+  const response = await request.get(`/api/aqua/v1/launch?owner=${owner}`);
+  expect(response.status()).toBe(200);
+  expect(await response.json()).toMatchObject({
+    status: "deployment-required",
+    chainId: 42161,
+    owner,
+  });
+  const prepare = await request.post("/api/aqua/v1/launch", {
+    data: {
+      operation: "prepare",
+      request: {
+        owner,
+        kind: "create",
+        id: `0x${"1".repeat(64)}`,
+        intent: {
+          fundingAsset: "USDC",
+          collateralAmountUnits: "10000000",
+          safetyHFWad: "1400000000000000000",
+          comfortableHFWad: "2000000000000000000",
+          financingMode: "aave_collateral_then_borrow_usdc",
+        },
+      },
+    },
+  });
+  expect(prepare.status()).toBe(409);
+  expect(await prepare.json()).toMatchObject({ code: "deployment-required" });
+});
 import { readFileSync } from "node:fs";
 import type { AquaResponse } from "../../src/integrations/aqua/contract";
 import type {
@@ -290,14 +326,17 @@ test("unconfigured Privy stays honest and cannot start a local run even with a r
   await mockPosition(page, []);
   await page.goto("/aqua");
   await expect(
-    page.getByText("Wallet unavailable", { exact: true }),
+    page.getByRole("banner").getByText("Wallet unavailable", { exact: true }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Wallet unavailable", exact: true }),
+  ).toBeDisabled();
   await expect(
     page.getByRole("button", { name: "Connect wallet", exact: true }),
   ).toHaveCount(0);
   await page.getByRole("button", { name: "Find my pool and range" }).click();
   await expect(
-    page.getByText("Ready for local rehearsal", { exact: true }),
+    page.getByText("Plan ready for review", { exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Run local rehearsal", exact: true }),

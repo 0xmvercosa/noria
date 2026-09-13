@@ -55,8 +55,25 @@ The review also found an async gap between preparation and signing: a storage ev
 
 The submission lifecycle also needs to distinguish explicit wallet cancellation from an ambiguous SDK/RPC error after submission. The browser stores an intent before asking Privy to send; an interrupted or uncertain attempt blocks another send until it is reconciled. Recovery must use a matching receipt or an explicit user acknowledgment after inspecting wallet activity; no timeout automatically retries a financial operation.
 
+## Authenticated wallet observation — 13 September 2026
+
+The user connected an actual Privy embedded wallet on the configured Vercel deployment. The reserve displayed the full embedded address and canonical balances at Arbitrum block **504679670**: **0 USDC, 0 ETH and 0 aUSDC**. This establishes use of a Privy wallet in the UI; it does not establish funding, a deposit, a transfer or a signed Aqua transaction. No private key or public financial signature was collected by the implementation agent.
+
+The EUR checkout uses `useFiatOnramp` with the EUR source and exact native-Arbitrum-USDC destination. It is marked experimental in pinned SDK 3.42.0; the required generally available integration remains `useSendTransaction` for a transfer or Aave supply/withdrawal. Provider statuses are recorded separately from chain evidence.
+
 ## Evidence still required
 
-A user-controlled authenticated and funded Privy wallet is still needed to record the final session. The real login modal has been checked on the configured production origin; embedded-wallet creation, funding and signing remain unverified. Browser fixtures cover the unconfigured page, mobile layout, API refusal and amount handoff only; they do not emulate a funded wallet or count toward eligibility.
+A funded user-controlled Privy wallet is still needed to record the final financial session. Login and an authenticated embedded-wallet connection have been observed; funding and signing remain unverified. Browser fixtures cover interface and failure handling; they do not count as a funded wallet or toward eligibility.
 
-The final submission must include at least one verified supply or withdrawal through the Privy wallet, its report and the demo showing Privy's involvement. No cards, onramp mock or protocol fork is used to fill that gap.
+The final submission must include at least one verified transfer, supply or withdrawal through the Privy wallet, its report and the demo showing Privy's involvement. No cards, onramp mock or protocol fork is used to fill that gap.
+
+## Extended wallet and launch checks — 13 September 2026
+
+The implementation through `6d81c72` adds EUR request tracking, strict USDC/ETH transfers, current balance observations, exact recipients/fees in reports, the shared pending-operation gate and the owner-confirmed Aqua frontend.
+
+- Root unit tests: **156 passed**, including transfer verification, 15 launch API/policy tests and recovery/persistence failure cases.
+- TypeScript, production build, required runtime assets and formatting: **passed**.
+- Configured browser run: **26 passed**, with **2 unconfigured-only scenarios skipped** because the build contained a Privy App ID. This local run used installed Chrome; the bundled Chromium download timed out. CI runs the unconfigured build separately.
+- The local interface exposed transfer controls and the complete planning/launch handoff. The missing factory API returned `deployment-required`; preparation refused with no fallback deployment.
+
+These checks do not establish payment-provider availability in a particular region, an EUR charge, receipt of USDC, or a public Privy signature. The provider-returned status is recorded as such, independently of wallet balances and verified onchain operations.
