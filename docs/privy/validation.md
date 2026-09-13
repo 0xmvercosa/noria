@@ -63,7 +63,7 @@ The EUR checkout uses `useFiatOnramp` with the EUR source and exact native-Arbit
 
 ## Evidence still required
 
-A funded user-controlled Privy wallet is still needed to record the final financial session. Login and an authenticated embedded-wallet connection have been observed; funding and signing remain unverified. Browser fixtures cover interface and failure handling; they do not count as a funded wallet or toward eligibility.
+The final financial session still needs a verified user-confirmed transaction and recording. Login and an authenticated embedded-wallet connection have been observed. The later balance observation below confirms available funds, but does not establish that Noria initiated their arrival or that a EUR purchase settled. Browser fixtures do not count toward financial-flow eligibility.
 
 The final submission must include at least one verified transfer, supply or withdrawal through the Privy wallet, its report and the demo showing Privy's involvement. No cards, onramp mock or protocol fork is used to fill that gap.
 
@@ -77,3 +77,17 @@ The implementation through `6d81c72` adds EUR request tracking, strict USDC/ETH 
 - The local interface exposed transfer controls and the complete planning/launch handoff. The missing factory API returned `deployment-required`; preparation refused with no fallback deployment.
 
 These checks do not establish payment-provider availability in a particular region, an EUR charge, receipt of USDC, or a public Privy signature. The provider-returned status is recorded as such, independently of wallet balances and verified onchain operations.
+
+## Financial journey and security review — 13 September 2026
+
+The stable judging origin was corrected to `https://noria-blue.vercel.app` in the authorized Privy dashboard session. The wallet initialized and showed **1 USDC**, **0.000398882932576 ETH**, **0 aUSDC** and **1 USDC Aave allowance** at Arbitrum block **504711218**. The agent did not sign the approval, deposit, funding or transfer. Existing allowance and incoming balances are not substitute evidence of an app-executed flow.
+
+The review adds Google/callback configuration, initialization recovery, per-request nonce CSP, preserved planner input, optional savings navigation and position-state guidance. See [financial journey](../financial-journey.md) and [browser security](security.md).
+
+- **173 root unit tests passed**; lifecycle tests include new cash arriving after defense, partial repayment and zero-debt exit.
+- **33 configured browser tests passed** with installed Chrome; two tests specifically requiring an unconfigured App ID were skipped. The configured run includes initialization-failure recovery. CI runs the unconfigured scenarios separately.
+- TypeScript, production build, formatting and runtime-asset tracing passed.
+- Independent source review identified stale query restoration and repayment of newly received position cash. Both were corrected, covered by regressions and re-reviewed with no remaining finding in that scope.
+- CSP browser checks use a parser-inserted untrusted script, verify it cannot execute, and confirm normal hydration with a different nonce on every application document. Browser automation's privileged evaluation is not used as evidence of CSP enforcement.
+
+These are application checks. Public Aqua deployment and user-confirmed financial receipts remain separate acceptance work. The EUR hook remains experimental in SDK 3.42.0; ordinary Privy transaction actions remain the generally available qualifying integration.

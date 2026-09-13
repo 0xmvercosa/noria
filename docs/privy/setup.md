@@ -3,11 +3,13 @@
 ## Application configuration
 
 1. Create or open the Noria application in the [Privy dashboard](https://dashboard.privy.io/).
-2. Enable email and/or wallet login and Ethereum embedded wallets. The code requests an embedded wallet for all login users, including those who authenticate with an external wallet.
+2. Enable Google, email and/or wallet login and Ethereum embedded wallets. The code requests an embedded wallet for all login users, including those who authenticate with an external wallet.
 3. Add the exact local and deployed origins you intend to use, for example `http://127.0.0.1:3100` and the actual HTTPS judging domain. Use your own deployment's URL, not an invented example origin.
 4. Set the **public** `NEXT_PUBLIC_PRIVY_APP_ID` in `.env.local` for local builds and the deployment environment for Vercel. Rebuild after changing it: Next.js bundles this value at build time. No Privy app secret, private key or server-wallet authorization key is used.
 5. Enable supported funding methods in the dashboard if you want the funding modal. Direct native-USDC/ETH transfers to the displayed wallet also work. Regional/provider requirements and fees can apply.
 6. Run `npm ci`, `npm run build`, `npm start`, then open `/reserve`.
+
+Configure the exact `/auth/callback` URL as an allowed OAuth redirect on the judging origin. See the [browser security guide](security.md) for the stable deployment URLs and CSP. Never authorize every Vercel subdomain.
 
 The same provider is used on `/aqua` for the owner-confirmed position lifecycle and the public owner address of a separate local rehearsal. Privy authentication may request a login signature for wallet-based login; that signature is not a reserve transfer or an Aqua transaction.
 
