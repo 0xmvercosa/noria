@@ -40,3 +40,14 @@ test("health ordering, zero oracle price and unsupported collateral precision re
   assert.throws(() => sizeLoan({ ...terms, usdcPriceBase: 0n }));
   assert.throws(() => sizeLoan({ ...terms, collateralDecimals: 8 }));
 });
+
+test("malformed HF input produces validation issues instead of a BigInt exception", () => {
+  const intent = {
+    fundingAsset: "USDC",
+    collateralAmountUnits: "1000000000",
+    safetyHFWad: "abc",
+    comfortableHFWad: "1700000000000000000",
+    financingMode: "aave_collateral_then_borrow_usdc",
+  };
+  assert.equal(PositionIntentSchema.safeParse(intent).success, false);
+});
