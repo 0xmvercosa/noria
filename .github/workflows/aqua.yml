@@ -28,3 +28,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
       - run: pnpm example:plan
+  solidity:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: integrations/aqua/contracts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.0.0
+      - run: forge test

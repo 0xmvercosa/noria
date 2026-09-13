@@ -1,0 +1,627 @@
+{
+  "schemaVersion": "noria.aqua.run.v1",
+  "runId": "2026-09-13T02-11-43-448Z",
+  "mode": "local-arbitrum-fork",
+  "forkBlock": "504589079",
+  "owner": "0x00000000000000000000000000000000000a11ce",
+  "taker": "0x0000000000000000000000000000000000000b0b",
+  "keeper": "0x000000000000000000000000000000000000c0de",
+  "intent": {
+    "fundingAsset": "ETH",
+    "collateralAmountUnits": "10000000000000000000",
+    "safetyHFWad": "1400000000000000000",
+    "comfortableHFWad": "2000000000000000000",
+    "financingMode": "aave_collateral_then_borrow_usdc"
+  },
+  "relatedPartyTakers": true,
+  "routingStatus": "not_validated",
+  "fixtures": [
+    {
+      "sequence": 1,
+      "kind": "fixture",
+      "name": "Local native gas fixture",
+      "method": "anvil_setBalance",
+      "params": [
+        "0x00000000000000000000000000000000000a11ce",
+        "0x56bc75e2d63100000"
+      ],
+      "synthetic": true
+    },
+    {
+      "sequence": 2,
+      "kind": "fixture",
+      "name": "Local wallet impersonation",
+      "method": "anvil_impersonateAccount",
+      "params": [
+        "0x00000000000000000000000000000000000a11ce"
+      ],
+      "synthetic": true
+    },
+    {
+      "sequence": 3,
+      "kind": "fixture",
+      "name": "Local native gas fixture",
+      "method": "anvil_setBalance",
+      "params": [
+        "0x0000000000000000000000000000000000000b0b",
+        "0x56bc75e2d63100000"
+      ],
+      "synthetic": true
+    },
+    {
+      "sequence": 4,
+      "kind": "fixture",
+      "name": "Local wallet impersonation",
+      "method": "anvil_impersonateAccount",
+      "params": [
+        "0x0000000000000000000000000000000000000b0b"
+      ],
+      "synthetic": true
+    },
+    {
+      "sequence": 5,
+      "kind": "fixture",
+      "name": "Local native gas fixture",
+      "method": "anvil_setBalance",
+      "params": [
+        "0x000000000000000000000000000000000000c0de",
+        "0x56bc75e2d63100000"
+      ],
+      "synthetic": true
+    },
+    {
+      "sequence": 6,
+      "kind": "fixture",
+      "name": "Local wallet impersonation",
+      "method": "anvil_impersonateAccount",
+      "params": [
+        "0x000000000000000000000000000000000000c0de"
+      ],
+      "synthetic": true
+    },
+    {
+      "sequence": 7,
+      "kind": "fixture",
+      "name": "Local minter gas",
+      "method": "anvil_setBalance",
+      "params": [
+        "0x8aFf09e2259cacbF4Fc4e3E53F3bf799EfEEab36",
+        "0xde0b6b3a7640000"
+      ],
+      "synthetic": true
+    },
+    {
+      "sequence": 8,
+      "kind": "fixture",
+      "name": "Local official minter impersonation",
+      "method": "anvil_impersonateAccount",
+      "params": [
+        "0x8aFf09e2259cacbF4Fc4e3E53F3bf799EfEEab36"
+      ],
+      "synthetic": true
+    },
+    {
+      "sequence": 23,
+      "kind": "fixture",
+      "name": "Local credential admin gas",
+      "method": "anvil_setBalance",
+      "params": [
+        "0x89C8eeC57bD474816d407fe38354B8410B567Da3",
+        "0xde0b6b3a7640000"
+      ],
+      "synthetic": true
+    },
+    {
+      "sequence": 24,
+      "kind": "fixture",
+      "name": "Local credential admin impersonation",
+      "method": "anvil_impersonateAccount",
+      "params": [
+        "0x89C8eeC57bD474816d407fe38354B8410B567Da3"
+      ],
+      "synthetic": true
+    },
+    {
+      "sequence": 30,
+      "kind": "fixture",
+      "name": "Advance local time to accrue real Aave interest",
+      "method": "evm_increaseTime",
+      "params": [
+        86400
+      ],
+      "synthetic": true
+    },
+    {
+      "sequence": 31,
+      "kind": "fixture",
+      "name": "Mine accrued-interest block",
+      "method": "evm_mine",
+      "params": [],
+      "synthetic": true
+    }
+  ],
+  "forkBlockHash": "0x5fb9482035cc4bf770d16e28c4e606e46d2115ab55c1a002ddb5a7948bae3508",
+  "forkTimestamp": "1789265502",
+  "protocols": [
+    {
+      "name": "aqua",
+      "address": "0x1111113ccf1426a8e30e2bff5e005d929bf6a90a",
+      "codeHash": "0x720bc02d220db318164dc3bade86eec1f3655bdc00fc1174de7d816a95c341f8",
+      "byteLength": 5619
+    },
+    {
+      "name": "swapVm",
+      "address": "0x111111338c5091e8440b67b168bae16a668ac0de",
+      "codeHash": "0x7cb8785de84b35bced79fbecbbc6336f473623568cba28b7af3ed001b20d580e",
+      "byteLength": 20541
+    },
+    {
+      "name": "kycNft",
+      "address": "0x26ffc7d378e8e49be2c483295a3e3e511f96a468",
+      "codeHash": "0x44261f04ce0209e7739cb708d067e4b9c640b6ce27912d745a1cf7aa471ce651",
+      "byteLength": 8303
+    },
+    {
+      "name": "aavePool",
+      "address": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
+      "codeHash": "0xf168c2e9e4d04292c7d5d526a9a917175a44369ab63a2f9997537acf0ffaaf2e",
+      "byteLength": 2400
+    },
+    {
+      "name": "aWeth",
+      "address": "0xe50fa9b3c56ffb159cb0fca61f5c9d750e8128c8",
+      "codeHash": "0x3ebcd59bd9d51bd49cafbb0419423ba025e8e477f34cefa1a71ea3c29b78fa1f",
+      "byteLength": 2400
+    },
+    {
+      "name": "variableDebtUSDC",
+      "address": "0xf611aeb5013fd2c0511c9cd55c7dc5c1140741a6",
+      "codeHash": "0xc3aa4c3619e0f36aac996ce2308856466850ac4ef7033e5fef29a8807d2ae6e8",
+      "byteLength": 2015
+    },
+    {
+      "name": "uniswapFactory",
+      "address": "0x1f98431c8ad98523631ae4a59f267346ea31f984",
+      "codeHash": "0x4d7b8525cd5d14343fa67a732fba5b24cddba11620ca88392f4ec6c52f91fd69",
+      "byteLength": 24535
+    },
+    {
+      "name": "uniswapRouter",
+      "address": "0xe592427a0aece92de3edee1f18e0157c05861564",
+      "codeHash": "0x0c84ebe12118f30206a5dd66607005e72a85606f5e781c6ae99ab01bdae3bb4d",
+      "byteLength": 12070
+    },
+    {
+      "name": "sourcePool500",
+      "address": "0xc6962004f452be9203591991d15f6b388e09e8d0",
+      "codeHash": "0xb9d899dac136c1f5179e1987328abb4c9f1ac0abf027ca0ad81750300996af6c",
+      "byteLength": 22142
+    },
+    {
+      "name": "weth",
+      "address": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+      "codeHash": "0x2d240bb4510ed1acfeaba905eb4bcc4524d63c8ae66e48fcccac55ea714db7a7",
+      "byteLength": 2092
+    },
+    {
+      "name": "usdc",
+      "address": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+      "codeHash": "0xad30d819dbc47814b7e6cb837fd7cc57fcb591479a38596ee93de4fc52e8c435",
+      "byteLength": 1852
+    }
+  ],
+  "fillRounds": 2,
+  "sourceGitCommit": "63042ad9a64dc8f97ee2dd72c1983c2231fd488d",
+  "sourceWorkingTreeDirty": false,
+  "sdkVersions": {
+    "aqua": "0.3.4",
+    "swapVM": "0.4.4",
+    "viem": "2.38.6"
+  },
+  "swapABI": "swap((address,uint256,bytes),address,address,uint256,bytes)",
+  "financing": {
+    "intent": {
+      "fundingAsset": "ETH",
+      "collateralAmountUnits": "10000000000000000000",
+      "safetyHFWad": "1400000000000000000",
+      "comfortableHFWad": "2000000000000000000",
+      "financingMode": "aave_collateral_then_borrow_usdc"
+    },
+    "asset": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+    "blockNumber": "504589085",
+    "blockHash": "0x4c55f8b4a5556286279a70656e79c4d3926c7d2159d37f46008114a148950145",
+    "timestamp": "1789265517",
+    "oracle": "0xb56c2F0B653B2e0b10C9b928C8580Ac5Df02C7C7",
+    "terms": {
+      "collateralUnits": "10000000000000000000",
+      "collateralDecimals": 18,
+      "collateralPriceBase": "252291650000",
+      "usdcPriceBase": "99983619",
+      "ltvBps": "8000",
+      "liquidationThresholdBps": "8400",
+      "comfortableHFWad": "2000000000000000000"
+    },
+    "collateralBase": "2522916500000",
+    "loanUSDCUnits": "10544995429",
+    "headroomBps": 50,
+    "constraint": "comfortable_hf"
+  },
+  "account": "0x0c7f7040bbfc098538ff17e05c1863f213d11978",
+  "ownContracts": [
+    {
+      "address": "0x0c7f7040bbfc098538ff17e05c1863f213d11978",
+      "codeHash": "0x72eae2075f2c7ce49e8ff9db763cff41c6cb775efce8623a689eded90dd55c06"
+    },
+    {
+      "address": "0xfc14a3000713f07c3b16b1e22125a67949d67bd8",
+      "codeHash": "0x24319d23f33c8dc4a0157c0adb70e5d1450cf7ac3ccaf46271f276280a2dfb3b"
+    }
+  ],
+  "adapter": "0xfc14a3000713f07c3b16b1e22125a67949d67bd8",
+  "accountManifestHash": "0x805ec372a0f6bcea71b57170ed4596e091dd10e83cd9444b1b6b03bc8d5d1e5e",
+  "economicStart": {
+    "blockNumber": "504589087",
+    "blockHash": "0xb1f3bb2ee47fffb514a1996074bd0ba15eced21501ea0c330b969619e670047f",
+    "timestamp": "1789265523",
+    "wallets": [
+      {
+        "address": "0x00000000000000000000000000000000000a11ce",
+        "native": "79999959210619155608",
+        "weth": "20000000000000000000",
+        "usdc": "100000000000",
+        "aWeth": "0",
+        "aUSDC": "0",
+        "debt": "0",
+        "scaledDebt": "0",
+        "aaveAccount": [
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+        ]
+      },
+      {
+        "address": "0x0000000000000000000000000000000000000b0b",
+        "native": "79999999404330412850",
+        "weth": "20000000000000000000",
+        "usdc": "100000000000",
+        "aWeth": "0",
+        "aUSDC": "0",
+        "debt": "0",
+        "scaledDebt": "0",
+        "aaveAccount": [
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+        ]
+      },
+      {
+        "address": "0x000000000000000000000000000000000000c0de",
+        "native": "100000000000000000000",
+        "weth": "0",
+        "usdc": "0",
+        "aWeth": "0",
+        "aUSDC": "0",
+        "debt": "0",
+        "scaledDebt": "0",
+        "aaveAccount": [
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+        ]
+      },
+      {
+        "address": "0x0c7f7040bbfc098538ff17e05c1863f213d11978",
+        "native": "0",
+        "weth": "0",
+        "usdc": "0",
+        "aWeth": "0",
+        "aUSDC": "0",
+        "debt": "0",
+        "scaledDebt": "0",
+        "aaveAccount": [
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+        ]
+      }
+    ],
+    "position": {
+      "phase": 0,
+      "cycleId": "0",
+      "nonce": "0",
+      "principal": "0",
+      "lpWeth": "0",
+      "lpUsdc": "0",
+      "reserves": "0",
+      "lossCarry": "0",
+      "debtCheckpoint": "0",
+      "scaledDebtCheckpoint": "0",
+      "dockSnapshotHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "aquaAllowances": [
+        "0",
+        "0"
+      ]
+    }
+  },
+  "valuationPriceUSDCPerWethE6": "2523994736",
+  "valuationBlock": {
+    "number": "504589089",
+    "hash": "0x1d9a89ed8e39198db5dd6ab7cd3eafb1fcebf9079f6b4da6a050ba6aae900388",
+    "timestamp": "1789265529"
+  },
+  "rangeOrigin": "explicit fork fixture; Graph selection is validated by the separate integration test",
+  "order": {
+    "maker": "0x0c7f7040bbfc098538ff17e05c1863f213d11978",
+    "traits": "28948022309329048855892746252171976963317496166410141009864396001978282409984",
+    "data": "0x211426ffc7d378e8e49be2c483295a3e3e511f96a468124000000000000000000000000000000000000000000000000000002a2058a517d2000000000000000000000000000000000000000000000000000030ffeb8fee3e1504002dc6c0110014080000000000000001",
+    "bytes": "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000c7f7040bbfc098538ff17e05c1863f213d1197840000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000006a211426ffc7d378e8e49be2c483295a3e3e511f96a468124000000000000000000000000000000000000000000000000000002a2058a517d2000000000000000000000000000000000000000000000000000030ffeb8fee3e1504002dc6c011001408000000000000000100000000000000000000000000000000000000000000",
+    "strategyHash": "0x50244b677ab71605d606fddf1556ceaaf52067db21113c7d14fe6c6d78f8d6bc",
+    "lowerPriceE6": "2145395525",
+    "upperPriceE6": "2902593946"
+  },
+  "economicEnd": {
+    "blockNumber": "504589114",
+    "blockHash": "0xb90e1da0bdc27c9af2b2bba9a15b6fad041f385212bc69c60b7ac56eb7ff907b",
+    "timestamp": "1789351944",
+    "wallets": [
+      {
+        "address": "0x00000000000000000000000000000000000a11ce",
+        "native": "79999950846703783338",
+        "weth": "20000255238370532300",
+        "usdc": "100001621666",
+        "aWeth": "0",
+        "aUSDC": "0",
+        "debt": "0",
+        "scaledDebt": "0",
+        "aaveAccount": [
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+        ]
+      },
+      {
+        "address": "0x0000000000000000000000000000000000000b0b",
+        "native": "79999997421712514968",
+        "weth": "19987612134306564989",
+        "usdc": "100018012367",
+        "aWeth": "0",
+        "aUSDC": "0",
+        "debt": "0",
+        "scaledDebt": "0",
+        "aaveAccount": [
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+        ]
+      },
+      {
+        "address": "0x000000000000000000000000000000000000c0de",
+        "native": "99999999768081084053",
+        "weth": "0",
+        "usdc": "0",
+        "aWeth": "0",
+        "aUSDC": "0",
+        "debt": "0",
+        "scaledDebt": "0",
+        "aaveAccount": [
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+        ]
+      },
+      {
+        "address": "0x0c7f7040bbfc098538ff17e05c1863f213d11978",
+        "native": "0",
+        "weth": "0",
+        "usdc": "0",
+        "aWeth": "0",
+        "aUSDC": "0",
+        "debt": "0",
+        "scaledDebt": "0",
+        "aaveAccount": [
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+        ]
+      }
+    ],
+    "position": {
+      "phase": 6,
+      "cycleId": "2",
+      "nonce": "3",
+      "principal": "10547942564",
+      "lpWeth": "0",
+      "lpUsdc": "0",
+      "reserves": "0",
+      "lossCarry": "0",
+      "debtCheckpoint": "0",
+      "scaledDebtCheckpoint": "0",
+      "dockSnapshotHash": "0x2c6dc839a46139627ca4f8b6b06d26d365d94b3d6319f6a453c0906a3952ef3d",
+      "aquaAllowances": [
+        "0",
+        "0"
+      ],
+      "virtualBalances": [
+        [
+          "0",
+          255
+        ],
+        [
+          "0",
+          255
+        ]
+      ]
+    }
+  },
+  "failure": null,
+  "assertions": [
+    {
+      "name": "Owned loopback Anvil has the expected fork",
+      "passed": true,
+      "detail": {
+        "forkBlockNumber": 504589079
+      }
+    },
+    {
+      "name": "Arbitrum chain ID",
+      "passed": true,
+      "detail": {}
+    },
+    {
+      "name": "Official Aqua code matches the reviewed deployment",
+      "passed": true,
+      "detail": {}
+    },
+    {
+      "name": "Official SwapVM code matches SDK 0.4.4 binding",
+      "passed": true,
+      "detail": {}
+    },
+    {
+      "name": "Official quote produces nonzero output",
+      "passed": true,
+      "detail": {}
+    },
+    {
+      "name": "Official quote produces nonzero output",
+      "passed": true,
+      "detail": {}
+    },
+    {
+      "name": "Official quote produces nonzero output",
+      "passed": true,
+      "detail": {}
+    },
+    {
+      "name": "Official quote produces nonzero output",
+      "passed": true,
+      "detail": {}
+    },
+    {
+      "name": "Terminal debt is zero",
+      "passed": true,
+      "detail": {}
+    },
+    {
+      "name": "Aqua allowances revoked at exit",
+      "passed": true,
+      "detail": {}
+    },
+    {
+      "name": "No inventory stranded after exit",
+      "passed": true,
+      "detail": {}
+    }
+  ],
+  "quotes": [
+    {
+      "tokenIn": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+      "tokenOut": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+      "amount": "1000000000",
+      "result": [
+        "1000000000",
+        "393735734671064514",
+        "0x50244b677ab71605d606fddf1556ceaaf52067db21113c7d14fe6c6d78f8d6bc"
+      ]
+    },
+    {
+      "tokenIn": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+      "tokenOut": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+      "amount": "400000000000000000",
+      "result": [
+        "400000000000000000",
+        "1009683914",
+        "0x50244b677ab71605d606fddf1556ceaaf52067db21113c7d14fe6c6d78f8d6bc"
+      ]
+    },
+    {
+      "tokenIn": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+      "tokenOut": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+      "amount": "1000000000",
+      "result": [
+        "1000000000",
+        "393876399635500475",
+        "0x50244b677ab71605d606fddf1556ceaaf52067db21113c7d14fe6c6d78f8d6bc"
+      ]
+    },
+    {
+      "tokenIn": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+      "tokenOut": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+      "amount": "400000000000000000",
+      "result": [
+        "400000000000000000",
+        "1009328453",
+        "0x50244b677ab71605d606fddf1556ceaaf52067db21113c7d14fe6c6d78f8d6bc"
+      ]
+    }
+  ],
+  "operationCount": 46,
+  "economics": {
+    "valuation": "One reference price captured after the initial inventory conversion, applied to both endpoints; gas is already in native equity.",
+    "referenceBlock": {
+      "number": "504589089",
+      "hash": "0x1d9a89ed8e39198db5dd6ab7cd3eafb1fcebf9079f6b4da6a050ba6aae900388",
+      "timestamp": "1789265529"
+    },
+    "actors": [
+      {
+        "address": "0x00000000000000000000000000000000000a11ce",
+        "initialEquityUSDCUnits": "352399370647",
+        "finalEquityUSDCUnits": "352401615423",
+        "changeUSDCUnits": "2244776"
+      },
+      {
+        "address": "0x0000000000000000000000000000000000000b0b",
+        "initialEquityUSDCUnits": "352399472096",
+        "finalEquityUSDCUnits": "352386212551",
+        "changeUSDCUnits": "-13259545"
+      },
+      {
+        "address": "0x000000000000000000000000000000000000c0de",
+        "initialEquityUSDCUnits": "252399473600",
+        "finalEquityUSDCUnits": "252399473014",
+        "changeUSDCUnits": "-586"
+      },
+      {
+        "address": "0x0c7f7040bbfc098538ff17e05c1863f213d11978",
+        "initialEquityUSDCUnits": "0",
+        "finalEquityUSDCUnits": "0",
+        "changeUSDCUnits": "0"
+      }
+    ],
+    "relatedPartyGroupNetUSDCUnits": "-11015355",
+    "unrelatedExistingAaveAccrualUSDCUnits": "0",
+    "strategyGroupNetUSDCUnits": "-11015355",
+    "totalAaveRepaidUSDCUnits": "10546067139",
+    "totalBorrowInterestUSDCUnits": "1071710",
+    "collateralYieldUnits": "255238370532300",
+    "collateralYieldAsset": "ETH",
+    "collateralYieldSource": "Closed.collateralReturned at actual withdrawal",
+    "organicDemandProven": false,
+    "gasCaveat": "Local EVM gas accounting is not an Arbitrum L1 data-fee forecast."
+  }
+}

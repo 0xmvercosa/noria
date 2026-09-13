@@ -23,7 +23,12 @@ const fresh = () => ({
   evidence: structuredClone(initialEvidence),
 });
 test("Aqua initiates a constrained information request; examples remain simulation-only", () => {
-  const request = createDiscoveryRequest("8000000000", "request-1", now);
+  const request = createDiscoveryRequest(
+    "8000000000",
+    "request-1",
+    initialRequest.positionIntent,
+    now,
+  );
   assert.equal(request.chainId, 42161);
   const plan = planAquaPosition(
     initialRequest,

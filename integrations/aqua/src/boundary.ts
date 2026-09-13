@@ -4,12 +4,16 @@ export const CHAIN_ID = 42161 as const;
 export const WETH = "0x82af49447d8a07e3bd95bd0d56f35241523fbab1" as const;
 export const USDC = "0xaf88d065e77c8cc2239327c5edb3a432268e5831" as const;
 export const address = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
+const isUintText = (x: string) => x.length <= 78 && /^(0|[1-9][0-9]*)$/.test(x);
 export const uint = z
   .string()
   .max(78)
   .regex(/^(0|[1-9][0-9]*)$/)
-  .refine((x) => BigInt(x) < 2n ** 256n, "uint256 overflow");
-const positive = uint.refine((x) => BigInt(x) > 0n, "must be positive");
+  .refine((x) => isUintText(x) && BigInt(x) < 2n ** 256n, "uint256 overflow");
+const positive = uint.refine(
+  (x) => isUintText(x) && BigInt(x) > 0n,
+  "must be positive",
+);
 const hash = z.string().regex(/^0x[0-9a-fA-F]{64}$/);
 const instant = z.iso.datetime();
 const id = z.string().min(1).max(160);
@@ -26,6 +30,8 @@ export const PositionIntentSchema = z
   })
   .refine(
     (x) =>
+      isUintText(x.safetyHFWad) &&
+      isUintText(x.comfortableHFWad) &&
       BigInt(x.safetyHFWad) > 10n ** 18n &&
       BigInt(x.comfortableHFWad) > BigInt(x.safetyHFWad) &&
       BigInt(x.comfortableHFWad) <= 10n ** 19n,
@@ -135,14 +141,8 @@ export type PlanDecision = {
 export function createDiscoveryRequest(
   capitalUSDCUnits: string,
   requestId: string,
+  positionIntent: PositionIntent,
   now = new Date(),
-  positionIntent: PositionIntent = {
-    fundingAsset: "ETH",
-    collateralAmountUnits: "10000000000000000000",
-    safetyHFWad: "1400000000000000000",
-    comfortableHFWad: "2000000000000000000",
-    financingMode: "aave_collateral_then_borrow_usdc",
-  },
 ): DiscoveryRequest {
   return DiscoveryRequestSchema.parse({
     schemaVersion: "noria.aqua.discovery.v1",
