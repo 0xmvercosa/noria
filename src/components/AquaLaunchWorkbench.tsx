@@ -808,7 +808,9 @@ export function AquaLaunchWorkbench({
       aria-labelledby="launch-heading"
     >
       <span className={s.eyebrow}>03 · Launch with your wallet</span>
-      <h2 id="launch-heading">Your Aqua position</h2>
+      <h2 id="launch-heading" className={s.launchHeading} tabIndex={-1}>
+        Your Aqua position
+      </h2>
       <p className={s.note}>
         Create an account, supply collateral, borrow USDC, prepare inventory and
         launch. Each step uses a separate Privy confirmation on Arbitrum. Funds

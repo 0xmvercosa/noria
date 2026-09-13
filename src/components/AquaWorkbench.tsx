@@ -707,9 +707,22 @@ export function AquaWorkbench() {
                   fees can exceed earnings.
                 </p>
                 {ready && (
-                  <a className={s.reportLink} href="#launch-heading">
-                    Continue to launch review <ArrowUpRight size={14} />
-                  </a>
+                  <div className={s.launchHandoff}>
+                    <span className={s.launchNext}>
+                      Next step · Wallet review
+                    </span>
+                    <a
+                      className={s.launchButton}
+                      href="#launch-heading"
+                      aria-describedby="launch-review-note"
+                    >
+                      <span>Continue to launch review</span>
+                      <ArrowDown size={20} aria-hidden="true" />
+                    </a>
+                    <p id="launch-review-note">
+                      Check your wallet and review the launch steps.
+                    </p>
+                  </div>
                 )}
                 <dl className={s.policy}>
                   <div>
