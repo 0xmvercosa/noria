@@ -27,6 +27,11 @@ export const AnalyzeSchema = z
     poolAddress: AddressSchema,
   })
   .strict();
+// Integrations may value an exact token budget at a verified USD quote. Public
+// discovery/MCP inputs retain their documented presets through AnalyzeSchema.
+export const ReportInputSchema = AnalyzeSchema.extend({
+  capitalUsd: z.number().finite().positive().max(1_000_000),
+});
 export const DiscoverSchema = z
   .object({
     ...IntentFields,

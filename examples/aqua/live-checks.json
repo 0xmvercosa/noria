@@ -1,0 +1,90 @@
+{
+  "classification": "dated live informational checks",
+  "scope": "Arbitrum WETH/native USDC; no Aqua execution or transaction simulation",
+  "checks": [
+    {
+      "inputUsdcRaw": "1000000000",
+      "objective": "earn-fees",
+      "evaluatedAt": "2026-09-13T01:38:47.000Z",
+      "status": "recommended",
+      "referencePool": "0xc6962004f452be9203591991d15f6b388e09e8d0",
+      "range": {
+        "priceUnit": "USDC per WETH",
+        "lower": 2460.2352387273477,
+        "upper": 2527.5630595076545,
+        "spot": 2523.380087946517,
+        "tickLower": -198240,
+        "tickUpper": -197970,
+        "location": "active",
+        "method": "seven-day-hourly-tick-quantiles"
+      },
+      "maxSharePercent": 0.049633427199999997,
+      "sourceBlock": 504581345,
+      "reportId": "5a7ab7f591757a60fa54594d9e4ee54ef17fa98fa3f1bb7ffa25e71c0c7b3fa8",
+      "economics": "not-established"
+    },
+    {
+      "inputUsdcRaw": "5000000000",
+      "objective": "earn-fees",
+      "evaluatedAt": "2026-09-13T01:41:20.000Z",
+      "status": "recommended",
+      "referencePool": "0xc6962004f452be9203591991d15f6b388e09e8d0",
+      "range": {
+        "priceUnit": "USDC per WETH",
+        "lower": 2460.2352387273477,
+        "upper": 2527.5630595076545,
+        "spot": 2524.569215298137,
+        "tickLower": -198240,
+        "tickUpper": -197970,
+        "location": "active",
+        "method": "seven-day-hourly-tick-quantiles"
+      },
+      "maxSharePercent": 0.24767788770000002,
+      "sourceBlock": 504581946,
+      "reportId": "cf91a35ae331c45ab200126d42255edb16c5d4d147cf68aa2648fb943d12b3a8",
+      "economics": "not-established"
+    },
+    {
+      "inputUsdcRaw": "10000000000",
+      "objective": "earn-fees",
+      "evaluatedAt": "2026-09-13T01:41:25.000Z",
+      "status": "recommended",
+      "referencePool": "0xc6962004f452be9203591991d15f6b388e09e8d0",
+      "range": {
+        "priceUnit": "USDC per WETH",
+        "lower": 2460.2352387273477,
+        "upper": 2527.5630595076545,
+        "spot": 2524.569215298137,
+        "tickLower": -198240,
+        "tickUpper": -197970,
+        "location": "active",
+        "method": "seven-day-hourly-tick-quantiles"
+      },
+      "maxSharePercent": 0.4941319199,
+      "sourceBlock": 504581965,
+      "reportId": "000f248acbe33e80e0293158539e900e0896b6ab8a25e55e5e3438c788867ecc",
+      "economics": "not-established"
+    },
+    {
+      "inputUsdcRaw": "1000000000",
+      "objective": "buy-eth",
+      "evaluatedAt": "2026-09-13T01:41:30.000Z",
+      "status": "recommended",
+      "referencePool": "0xc6962004f452be9203591991d15f6b388e09e8d0",
+      "range": {
+        "priceUnit": "USDC per WETH",
+        "lower": 2484.959771545545,
+        "upper": 2497.4150599229674,
+        "spot": 2524.569215298137,
+        "tickLower": -198140,
+        "tickUpper": -198090,
+        "location": "waiting",
+        "method": "discount-below-spot"
+      },
+      "maxSharePercent": 0.261856806,
+      "sourceBlock": 504581983,
+      "reportId": "462e712500bec27d2d15a3ef113c43ae357312cfcf0235e7a671ce42ac1c7c42",
+      "economics": "not-established"
+    }
+  ]
+}

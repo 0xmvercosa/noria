@@ -95,7 +95,7 @@ export interface LiveReport {
   version: 1;
   id: string;
   classification: "live-construction-analysis";
-  input: AnalyzeInput;
+  input: Omit<AnalyzeInput, "capitalUsd"> & { capitalUsd: number };
   createdAt: string;
   validUntil: string;
   priceReferences?: PriceReferenceAssessment;

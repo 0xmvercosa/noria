@@ -1,0 +1,17 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Noria mark"
+>
+  <title>Noria mark</title>
+  <path
+    fill="#D3F78B"
+    d="M31 6H46L39 17H31A14 14 0 0 0 17 31V39L6 46V31A25 25 0 0 1 31 6Z"
+  />
+  <path
+    fill="#78D9C1"
+    d="M33 58H18L25 47H33A14 14 0 0 0 47 33V25L58 18V33A25 25 0 0 1 33 58Z"
+  />
+</svg>

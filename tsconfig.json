@@ -25,6 +25,7 @@
     "src/**/*.tsx",
     "tests/**/*.ts",
     "scripts/**/*.ts",
+    "examples/**/*.ts",
     "next.config.ts",
     "playwright.config.ts",
     ".next/types/**/*.ts"
