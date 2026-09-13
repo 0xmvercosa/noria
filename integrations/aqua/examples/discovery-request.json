@@ -13,7 +13,15 @@
     "maxSourceAgeSeconds": 3600,
     "maxCapitalShareBps": 1000,
     "minCoverageBps": 8000,
-    "maxRangeWidthBps": 6000
+    "maxRangeWidthBps": 6000,
+    "minObservations": 24
   },
-  "objective": "historical_fee_density_times_range_coverage"
+  "objective": "historical_fee_density_times_range_coverage",
+  "positionIntent": {
+    "fundingAsset": "ETH",
+    "collateralAmountUnits": "10000000000000000000",
+    "safetyHFWad": "1400000000000000000",
+    "comfortableHFWad": "2000000000000000000",
+    "financingMode": "aave_collateral_then_borrow_usdc"
+  }
 }

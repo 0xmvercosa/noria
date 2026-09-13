@@ -55,4 +55,3 @@ The demo request clock is explicitly fixed. Production evaluation uses the real 
 ## Final integration order
 
 The Aqua module is built and tested independently first. The real adapter to the other Noria system is added **after that system has been pushed to Git**, so its existing request/response contracts can be reconciled without inventing its behavior. The versioned boundary above is the proposal for that handoff.
-

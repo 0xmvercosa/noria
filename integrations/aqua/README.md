@@ -14,4 +14,3 @@ Implementation is in progress on this branch. Do not interpret the presence of a
 - `docs/1inch/` at repository root: judge entry point and protocol walkthrough.
 
 No private key, mainnet transaction or autonomous real-funds execution is required to run the local rehearsal. Fixture preparation is recorded separately from product operations.
-
