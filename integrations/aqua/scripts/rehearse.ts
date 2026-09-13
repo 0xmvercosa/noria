@@ -1,5 +1,5 @@
 /** Dedicated local Arbitrum fork. Every mutation is sent only to its owned loopback Anvil. */
-import { spawn, execFileSync } from "node:child_process";
+import { spawn, execFile, execFileSync } from "node:child_process";
 import { createServer } from "node:net";
 import { mkdir, readFile, writeFile, appendFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -25,6 +25,18 @@ import { parseRehearsalPlan } from "../src/rehearsal-plan.js";
 import { priceFromSqrt, verifySourcePool } from "../src/verifier.js";
 import { PositionIntentSchema } from "../src/boundary.js";
 import { writeReports } from "../src/rehearsal-report.js";
+import { DemoTerminal, terminalError } from "./terminal.js";
+
+const demo = new DemoTerminal("Aqua position rehearsal");
+
+let stopOwnedFork: (() => void) | undefined;
+process.once("uncaughtException", (error) => {
+  demo.fail(error);
+  stopOwnedFork?.();
+  process.exitCode = 1;
+});
+
+demo.stage("Read the position plan and fork source block");
 
 const encode = (v: unknown) =>
   JSON.stringify(v, (_k, x) => (typeof x === "bigint" ? x.toString() : x), 2);
@@ -72,6 +84,10 @@ const intent =
 const fillRounds = Number(process.env.NORIA_FILL_ROUNDS ?? "2");
 if (!Number.isInteger(fillRounds) || fillRounds < 1 || fillRounds > 10)
   throw new Error("fill_rounds_out_of_bounds");
+demo.info(
+  `Collateral: ${intent.fundingAsset} · fill rounds: ${fillRounds} · source block: ${forkBlock}`,
+);
+demo.stage("Start the owned fork and verify official deployments");
 const server = createServer();
 await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
 const port = (server.address() as { port: number }).port;
@@ -93,6 +109,9 @@ const anvil = spawn(
   ],
   { stdio: ["ignore", "ignore", "pipe"] },
 );
+stopOwnedFork = () => {
+  anvil.kill("SIGTERM");
+};
 let startupFailed = false;
 anvil.once("error", () => {
   startupFailed = true;
@@ -100,7 +119,8 @@ anvil.once("error", () => {
 // Never serialize Anvil startup output: it may contain upstream endpoint credentials.
 anvil.stderr.on("data", (chunk: Buffer) => {
   const message = chunk.toString().replaceAll(rpc, "[upstream RPC]");
-  if (/error|failed/i.test(message)) console.error(message.slice(0, 1000));
+  if (/error|failed/i.test(message))
+    demo.info(`Anvil: ${terminalError(new Error(message))}`);
 });
 const url = `http://127.0.0.1:${port}`;
 const transport = http(url, {
@@ -273,6 +293,7 @@ async function tx(
   value = 0n,
   expectedRevert = false,
 ) {
+  demo.activity(name);
   const before = await snapshot();
   const wallet = createWalletClient({
     account: actor,
@@ -321,7 +342,7 @@ async function tx(
     before,
     after,
   });
-  console.log(`${receipt.status}: ${name}`);
+  demo.receipt(name, receipt, expectedRevert);
   if ((receipt.status === "reverted") !== expectedRevert)
     throw new Error(`unexpected_transaction_status:${name}:${hash}`);
   return receipt;
@@ -331,6 +352,7 @@ async function deploy(
   artifactName: string,
   args: readonly unknown[],
 ): Promise<Address> {
+  demo.activity(name);
   const artifact = JSON.parse(
     await readFile(
       resolve("contracts/out", `${artifactName}.sol`, `${artifactName}.json`),
@@ -350,6 +372,7 @@ async function deploy(
     gas: 12_000_000n,
   });
   const receipt = await client.waitForTransactionReceipt({ hash });
+  demo.receipt(name, receipt);
   if (receipt.status !== "success" || !receipt.contractAddress)
     throw new Error("deployment_failed");
   await writeFile(
@@ -379,6 +402,7 @@ async function deploy(
 }
 function check(name: string, condition: boolean, detail: unknown = {}) {
   assertions.push({ name, passed: condition, detail });
+  demo.check(name, condition);
   if (!condition) throw new Error(`assertion_failed:${name}`);
 }
 async function swapInventory(wethIn: boolean, amount: bigint) {
@@ -482,6 +506,7 @@ try {
   manifest.sdkVersions = { aqua: "0.3.4", swapVM: "0.4.4", viem: "2.38.6" };
   manifest.swapABI =
     "swap((address,uint256,bytes),address,address,uint256,bytes)";
+  demo.stage("Prepare fixture capital and local actor permissions");
   // Explicit fixture capital grows with collateral; it is never counted as LP revenue.
   const ownerWethFixture =
     20n * 10n ** 18n +
@@ -557,17 +582,25 @@ try {
     [],
     20n * 10n ** 18n,
   );
-  execFileSync("forge", ["build", "--skip", "test"], {
-    cwd: resolve("contracts"),
-    stdio: "pipe",
-    timeout: 90_000,
-    killSignal: "SIGKILL",
+  demo.stage("Compile reviewed contracts and deploy the local adapter");
+  await new Promise<void>((resolveBuild, reject) => {
+    execFile(
+      "forge",
+      ["build", "--skip", "test"],
+      {
+        cwd: resolve("contracts"),
+        timeout: 90_000,
+        killSignal: "SIGKILL",
+      },
+      (error) => (error ? reject(error) : resolveBuild()),
+    );
   });
   const adapter = await deploy(
     "Deploy fixed inventory adapter",
     "UniswapInventoryAdapter",
     [D.uniswapRouter, D.weth, D.usdc, 500],
   );
+  demo.stage("Check financing and retained Graph source evidence");
   const financing = await quoteFinancing(intent, url);
   if (downloadedPlan) {
     if (Date.parse(downloadedPlan.validUntil) <= Date.now())
@@ -625,6 +658,7 @@ try {
   }
   manifest.financing = financing;
   const manifestHash = keccak256(toHex(encode(manifest)));
+  demo.stage("Deploy the owner account and open the financed position");
   account = await deploy("Deploy owner position account", "PositionAccount", [
     {
       owner,
@@ -670,6 +704,7 @@ try {
     "openPosition",
     [BigInt(intent.collateralAmountUnits), financing.loanUSDCUnits],
   );
+  demo.stage("Prepare WETH / USDC inventory and the Aqua strategy");
   await swapInventory(
     false,
     downloadedPlan
@@ -726,6 +761,7 @@ try {
       : (spot * 115n) / 100n,
   };
   requireFreshPlan("shipment");
+  demo.stage("Ship Aqua liquidity and verify taker access enforcement");
   await tx(
     "Ship concentrated liquidity on official Aqua",
     owner,
@@ -793,6 +829,7 @@ try {
     activeUsdc / 4n,
   ].reduce((a, b) => (a < b ? a : b));
   if (roundUSDC === 0n) throw new Error("inventory_too_small_for_rehearsal");
+  demo.stage("Execute related-taker fills through official SwapVM");
   for (const [tokenIn, tokenOut, amount] of Array.from(
     { length: fillRounds },
     () =>
@@ -801,6 +838,9 @@ try {
         [D.weth, D.usdc, (roundUSDC * 10n ** 18n) / spot],
       ] as const,
   ).flat()) {
+    demo.activity(
+      `Quote ${tokenIn === D.usdc ? "USDC to WETH" : "WETH to USDC"} on official SwapVM`,
+    );
     const quote = await client.simulateContract({
       account: taker,
       address: D.swapVm,
@@ -827,6 +867,9 @@ try {
       [order.order.build(), tokenIn, tokenOut, amount, bounded],
     );
   }
+  demo.stage(
+    "Accrue fork interest, close the cycle and verify settlement guards",
+  );
   await fixture(
     "Advance local time to accrue real Aave interest",
     "evm_increaseTime",
@@ -934,6 +977,7 @@ try {
   );
   const nextPrincipal = await read(account, accountABI, "principal");
   if (nextPrincipal > 0n) {
+    demo.stage("Prepare a subsequent cycle without new borrowing");
     await swapInventory(
       false,
       downloadedPlan
@@ -963,6 +1007,7 @@ try {
     );
     strategyHash = nextOrder.strategyHash;
   }
+  demo.stage("Stop trading, repay residual debt and return collateral");
   await tx(
     "Owner-triggered terminal defense, independent of profit attestations",
     owner,
@@ -1009,6 +1054,7 @@ try {
     accountABI,
     "exit",
   );
+  demo.stage("Verify terminal balances and revoked Aqua allowances");
   const final = await snapshot();
   manifest.economicEnd = final;
   check(
@@ -1028,7 +1074,7 @@ try {
 } catch (error) {
   failure =
     error instanceof Error ? error.message.split("\n")[0] : "unknown_failure";
-  console.error(failure);
+  demo.fail(error);
   process.exitCode = 1;
 } finally {
   manifest.failure = failure ?? null;
@@ -1036,7 +1082,10 @@ try {
   manifest.quotes = quotes;
   manifest.operationCount = operations.length;
   try {
+    if (!failure) demo.stage("Write evidence reports and stop the owned fork");
     await writeReports(dir, manifest, operations);
+    demo.report(`runs/${runId}/report.html`);
+    demo.report(`runs/${runId}/manifest.json`);
   } finally {
     anvil.kill("SIGTERM");
     await Promise.race([
@@ -1045,5 +1094,8 @@ try {
     ]);
     if (anvil.exitCode === null) anvil.kill("SIGKILL");
   }
-  console.log(`Report: runs/${runId}/report.html`);
 }
+if (!failure)
+  demo.complete(
+    `${operations.filter((op) => op.kind === "transaction").length} transactions checked; ${assertions.length} assertions passed. Related-party fills do not establish demand or profit.`,
+  );

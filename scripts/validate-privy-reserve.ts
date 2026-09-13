@@ -17,8 +17,12 @@ import {
 import { arbitrum } from "viem/chains";
 import { createReserveService } from "../src/integrations/privy/service";
 import { RESERVE, reserveTransaction } from "../src/integrations/privy/reserve";
+import { DemoTerminal } from "../integrations/aqua/scripts/terminal";
+
+const demo = new DemoTerminal("Privy reserve protocol validation");
 
 async function main() {
+  demo.stage("Read Arbitrum state and start the owned fork");
   const output = join(
     ".runtime",
     "privy-protocol",
@@ -121,6 +125,7 @@ async function main() {
       hash,
       timeout: 30000,
     });
+    demo.receipt("Local USDC funding fixture", receipt);
     assert.equal(receipt.status, "success");
     fixtures.push({
       account,
@@ -148,6 +153,8 @@ async function main() {
       }
     }
     assert.ok(ready, "Owned Anvil must be verified before any mutation.");
+    demo.info(`Fork source block: ${forkBlock.number}`);
+    demo.stage("Prepare explicit local fixture funds");
     for (const account of [owner]) {
       await fixture("anvil_impersonateAccount", [account]);
       await fixture("anvil_setBalance", [account, toHex(10n ** 18n)]);
@@ -184,6 +191,8 @@ async function main() {
       "approve",
       "revoke",
     ] as const) {
+      demo.stage(`Reserve operation: ${kind}`);
+      demo.activity("Prepare the exact operation and submit to the owned fork");
       const available = await service.snapshot(owner);
       const action = {
         owner,
@@ -202,7 +211,12 @@ async function main() {
         account: owner,
         ...reserveTransaction(action),
       });
-      await client.waitForTransactionReceipt({ hash, timeout: 30000 });
+      const receipt = await client.waitForTransactionReceipt({
+        hash,
+        timeout: 30000,
+      });
+      demo.receipt(kind, receipt);
+      demo.activity("Verify token and protocol events");
       const verification = await service.verify(action, hash);
       operations.push({ prepared, verification });
       assert.equal(
@@ -210,7 +224,9 @@ async function main() {
         "verified",
         `${kind} must verify token and protocol events`,
       );
+      demo.check(`${kind}: onchain effect verified`, true);
     }
+    demo.stage("Verify final balances, allowance and debt");
     const final = await service.snapshot(owner);
     // Aave scaled aToken arithmetic can round by one raw USDC unit at mint/burn.
     assert.ok(
@@ -221,23 +237,34 @@ async function main() {
     assert.equal(final.allowanceUnits, "0");
     assert.equal(final.debtBase, "0");
     report.completed = true;
-    console.log(
-      `Protocol-only fork check passed: ${operations.length} operations. Report: ${output}/report.json`,
+    demo.check(
+      "USDC returned, aUSDC within rounding tolerance, allowance and debt zero",
+      true,
     );
+  } catch (error) {
+    demo.fail(error);
+    throw error;
   } finally {
+    if (report.completed)
+      demo.stage("Save protocol evidence and request fork shutdown");
     clearTimeout(deadline);
     await writeFile(
       join(output, "report.json"),
       JSON.stringify(report, null, 2) + "\n",
     );
+    demo.report(`${output}/report.json`);
     processHandle.kill("SIGTERM");
     const escalation = setTimeout(() => processHandle.kill("SIGKILL"), 2000);
     escalation.unref();
   }
+  demo.complete(
+    `${operations.length} protocol operations passed. Privy authentication and wallet signing were not exercised.`,
+  );
 }
-void main().catch(() => {
-  console.error(
-    "Protocol-only reserve validation failed. Inspect the partial report in .runtime/privy-protocol; no upstream transaction was sent.",
+void main().catch((error) => {
+  demo.fail(error);
+  demo.info(
+    "Protocol-only reserve validation failed. Any partial evidence is under .runtime/privy-protocol; no upstream transaction was sent.",
   );
   process.exitCode = 1;
 });
