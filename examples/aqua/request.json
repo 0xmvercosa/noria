@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "noria.aqua.v1",
+  "requestId": "aqua-preview-001",
+  "chainId": 42161,
+  "funding": {
+    "tokenAddress": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+    "amountRaw": "1000000000"
+  },
+  "objective": "earn-fees",
+  "reviewAfterHours": 6
+}

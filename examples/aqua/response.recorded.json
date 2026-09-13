@@ -1,0 +1,1181 @@
+{
+  "schemaVersion": "noria.aqua.v1",
+  "requestId": "aqua-preview-001",
+  "status": "recommended",
+  "scope": {
+    "chainId": 42161,
+    "network": "arbitrum",
+    "referenceVenue": "uniswap-v3",
+    "weth": {
+      "address": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+      "symbol": "WETH",
+      "decimals": 18
+    },
+    "usdc": {
+      "address": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+      "symbol": "USDC",
+      "decimals": 6
+    }
+  },
+  "request": {
+    "schemaVersion": "noria.aqua.v1",
+    "requestId": "aqua-preview-001",
+    "chainId": 42161,
+    "funding": {
+      "tokenAddress": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+      "amountRaw": "1000000000"
+    },
+    "objective": "earn-fees",
+    "reviewAfterHours": 6
+  },
+  "evaluatedAt": "2026-09-13T01:38:47.000Z",
+  "selection": {
+    "method": "highest-ranked-passing-reference-pool",
+    "attempted": 2,
+    "discovery": {
+      "network": "arbitrum",
+      "provider": "The Graph Subgraph MCP",
+      "sourceBlock": 504581327,
+      "receivedAt": "2026-09-13T01:38:42.548Z",
+      "pools": [
+        {
+          "network": "arbitrum",
+          "address": "0x6f38e884725a116c9c7fbf208e79fe8828a2595f",
+          "token0": {
+            "address": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+            "symbol": "WETH",
+            "decimals": 18
+          },
+          "token1": {
+            "address": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+            "symbol": "USDC",
+            "decimals": 6
+          },
+          "feeTier": 100,
+          "tvlUsd": 1524484.8500481725,
+          "volume24hUsd": 1102730.6129486961,
+          "activeHours": 24,
+          "score": 84.54,
+          "reasons": [
+            "24/24 completed hours had swaps.",
+            "Approximate 24h turnover 0.72\u00d7; used for discovery, not a position fee estimate.",
+            "TVL and volume re-marked from token quantities; Graph's raw USD valuation is not the final ranking input.",
+            "DeFiLlama \u2014 WETH (0x82af\u2026bab1): aged price reference for informational analysis (age 432s; provider confidence 0.99)."
+          ]
+        },
+        {
+          "network": "arbitrum",
+          "address": "0xc6962004f452be9203591991d15f6b388e09e8d0",
+          "token0": {
+            "address": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+            "symbol": "WETH",
+            "decimals": 18
+          },
+          "token1": {
+            "address": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+            "symbol": "USDC",
+            "decimals": 6
+          },
+          "feeTier": 500,
+          "tvlUsd": 105022754.81493202,
+          "volume24hUsd": 11431543.860858152,
+          "activeHours": 24,
+          "score": 82.06,
+          "reasons": [
+            "24/24 completed hours had swaps.",
+            "Approximate 24h turnover 0.11\u00d7; used for discovery, not a position fee estimate.",
+            "TVL and volume re-marked from token quantities; Graph's raw USD valuation is not the final ranking input.",
+            "DeFiLlama \u2014 WETH (0x82af\u2026bab1): aged price reference for informational analysis (age 432s; provider confidence 0.99)."
+          ]
+        }
+      ],
+      "considered": 4,
+      "selectedReason": "0xc6962004f452be9203591991d15f6b388e09e8d0 is the highest-ranked passing WETH/native-USDC reference pool in this bounded scan. The range is a construction heuristic, not a prediction of Aqua fills or profit.",
+      "limitations": [
+        "Bounded scan of up to 40 pools from a named set of commonly traded assets in Uniswap's public token list, expanded by your token query; both contracts must be listed and pools older than seven days. Not every pool on the network is scanned.",
+        "The Graph USD TVL orders the initial retrieval only. Final scores use token balances and token volumes re-marked at current independent prices.",
+        "Approximate 24h turnover is a triage input, not APR, forward fees or proof of profitability.",
+        "Token-list membership and canonical contracts do not establish issuer, depeg, bridge or redemption safety.",
+        "Score weights are a transparent research heuristic: 35% active hours, 25% volume scale, 20% liquidity scale, 20% turnover. No predictive validation is claimed."
+      ],
+      "rejected": [
+        {
+          "address": "0xc473e2aee3441bf9240be85eb122abb059a3b57c",
+          "reason": "Failed the discovery thresholds: $250k re-marked TVL, $50k approximate 24h volume, swaps in 18/24 hours, or numeric data quality."
+        },
+        {
+          "address": "0x42fc852a750ba93d5bf772ecdc857e87a86403a9",
+          "reason": "Failed the discovery thresholds: $250k re-marked TVL, $50k approximate 24h volume, swaps in 18/24 hours, or numeric data quality."
+        },
+        {
+          "address": "0x6f38e884725a116c9c7fbf208e79fe8828a2595f",
+          "reason": "Range exceeds the 1% per-segment reference liquidity capacity policy for this budget."
+        }
+      ]
+    }
+  },
+  "recommendation": {
+    "referencePool": {
+      "venue": "uniswap-v3",
+      "address": "0xc6962004f452be9203591991d15f6b388e09e8d0",
+      "feeTier": 500,
+      "token0": {
+        "address": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+        "symbol": "WETH",
+        "decimals": 18
+      },
+      "token1": {
+        "address": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+        "symbol": "USDC",
+        "decimals": 6
+      }
+    },
+    "range": {
+      "priceUnit": "USDC per WETH",
+      "lower": 2460.2352387273477,
+      "upper": 2527.5630595076545,
+      "spot": 2523.380087946517,
+      "tickLower": -198240,
+      "tickUpper": -197970,
+      "location": "active",
+      "method": "seven-day-hourly-tick-quantiles"
+    },
+    "targetInventory": {
+      "wethAmountRaw": "24445944561000366",
+      "usdcAmountRaw": "938263537",
+      "valuationUsd": 999.8907096416673,
+      "residualValueUsd": 7.792421292575992e-7
+    },
+    "funding": {
+      "usdcAmountRaw": "1000000000",
+      "usdcUsdPrice": 0.9998907104209094,
+      "valuationUsd": 999.8907104209094,
+      "inventoryPreparationRequired": true,
+      "swapQuote": null
+    },
+    "validUntil": "2026-09-13T01:39:47.000Z",
+    "report": {
+      "version": 1,
+      "id": "5a7ab7f591757a60fa54594d9e4ee54ef17fa98fa3f1bb7ffa25e71c0c7b3fa8",
+      "classification": "live-construction-analysis",
+      "input": {
+        "capitalUsd": 999.8907104209094,
+        "intent": "earn-fees",
+        "horizonHours": 6,
+        "network": "arbitrum",
+        "poolAddress": "0xc6962004f452be9203591991d15f6b388e09e8d0"
+      },
+      "createdAt": "2026-09-13T01:38:47.462Z",
+      "validUntil": "2026-09-13T01:39:47.000Z",
+      "priceReferences": {
+        "provider": "DeFiLlama",
+        "freshness": "aged",
+        "oldestTimestamp": 1789263090,
+        "ageSeconds": 437,
+        "freshAgeSeconds": 300,
+        "maxAgeSeconds": 900,
+        "poolRatio": 2523.380087946517,
+        "referenceRatio": 2525.427563930725,
+        "deviationPercent": 0.08114021323968323,
+        "maxDeviationPercent": 2,
+        "quotes": [
+          {
+            "role": "token0",
+            "key": "arbitrum:0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+            "usd": 2525.1515610152387,
+            "timestamp": 1789263090,
+            "confidence": 0.99,
+            "provider": "DeFiLlama",
+            "symbol": "WETH"
+          },
+          {
+            "role": "token1",
+            "key": "arbitrum:0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+            "usd": 0.9998907104209094,
+            "timestamp": 1789263400,
+            "confidence": 0.99,
+            "provider": "DeFiLlama",
+            "symbol": "USDC"
+          },
+          {
+            "role": "gas",
+            "key": "coingecko:ethereum",
+            "usd": 2522.380414919708,
+            "timestamp": 1789263400,
+            "confidence": 0.99,
+            "provider": "DeFiLlama",
+            "symbol": "ETH"
+          }
+        ]
+      },
+      "source": {
+        "provider": "The Graph Subgraph MCP",
+        "subgraphId": "FbCGRftH4a3yZugY7TnbYgPJVEv2LvMT6oF1fxPe9aJM",
+        "deployment": "QmZ5uwhnwsJXAQGYEF8qKPQ85iVhYAcVZcZAPfrF7ZNb9z",
+        "blockNumber": 504581345,
+        "blockHash": "0x8bc84b075ae2b7b55353c9684e1e77e965f40515dba498a53d37eb159ed76ee0",
+        "blockTimestamp": 1789263523,
+        "receivedAt": "2026-09-13T01:38:47.462Z",
+        "queryHash": "3e6a34009bff65f9f7956cbbb85dd17958e6d54d525f5193e520a8123e221737",
+        "responseHash": "71a66dbdfae1867f57809f5d8542846174a32d463cacaf5aa564c0ffdade40ea",
+        "rpcMatched": true,
+        "elapsedMs": 2105,
+        "stateAgeSeconds": 4,
+        "tickCount": 166,
+        "ticks": {
+          "provider": "RPC",
+          "scope": "range-and-spot",
+          "poolAddress": "0xc6962004f452be9203591991d15f6b388e09e8d0",
+          "lowerTick": -199620,
+          "upperTick": -197970,
+          "bitmapWords": 1,
+          "tickCount": 166,
+          "graphTickCount": 1980,
+          "reason": "net-gross: Initialized tick -203600 has |net liquidity| greater than gross liquidity.",
+          "blockNumber": 504581345,
+          "blockHash": "0x8bc84b075ae2b7b55353c9684e1e77e965f40515dba498a53d37eb159ed76ee0",
+          "queryHash": "d020c1cffeeebf6f1569c486b5a02cafd9c73a6955d0c7451810f685a7fc59ad",
+          "responseHash": "75cd637eb159801939a92b8de5ef3cbb846d30f2b9bdfc81dc3358aaf7dcf318"
+        }
+      },
+      "pool": {
+        "address": "0xc6962004f452be9203591991d15f6b388e09e8d0",
+        "network": "arbitrum",
+        "chain": "Arbitrum",
+        "token0": "WETH",
+        "token1": "USDC",
+        "token0Address": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+        "token1Address": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+        "token0Decimals": 18,
+        "token1Decimals": 6,
+        "explorerUrl": "https://arbiscan.io",
+        "feePercent": 0.05,
+        "relativePrice": 2523.380087946517,
+        "token0Usd": 2525.1515610152387,
+        "token1Usd": 0.9998907104209094,
+        "priceTimestamp": 1789263090,
+        "volume24hUsd": 11434782.979832463,
+        "historyHours": 168,
+        "history": [
+          {
+            "timestamp": 1788656400,
+            "price": 2504.9181790045996,
+            "volumeUsd": 1848585.1338889361
+          },
+          {
+            "timestamp": 1788660000,
+            "price": 2502.915145931433,
+            "volumeUsd": 1072778.7449904343
+          },
+          {
+            "timestamp": 1788663600,
+            "price": 2510.183770841726,
+            "volumeUsd": 950755.3820202528
+          },
+          {
+            "timestamp": 1788667200,
+            "price": 2503.6660955651696,
+            "volumeUsd": 523582.04941318004
+          },
+          {
+            "timestamp": 1788670800,
+            "price": 2512.6950844965395,
+            "volumeUsd": 1560633.4762446855
+          },
+          {
+            "timestamp": 1788674400,
+            "price": 2506.4215056998314,
+            "volumeUsd": 403565.73176229815
+          },
+          {
+            "timestamp": 1788678000,
+            "price": 2496.915651823446,
+            "volumeUsd": 1932782.5367890322
+          },
+          {
+            "timestamp": 1788681600,
+            "price": 2495.9171352043522,
+            "volumeUsd": 439333.0450683495
+          },
+          {
+            "timestamp": 1788685200,
+            "price": 2498.913883621132,
+            "volumeUsd": 645836.3456403597
+          },
+          {
+            "timestamp": 1788688800,
+            "price": 2501.6640637081546,
+            "volumeUsd": 265939.4313371907
+          },
+          {
+            "timestamp": 1788692400,
+            "price": 2502.164421537537,
+            "volumeUsd": 438524.9371625168
+          },
+          {
+            "timestamp": 1788696000,
+            "price": 2500.913714563873,
+            "volumeUsd": 619446.4297659113
+          },
+          {
+            "timestamp": 1788699600,
+            "price": 2494.6695509369806,
+            "volumeUsd": 3203453.0334977754
+          },
+          {
+            "timestamp": 1788703200,
+            "price": 2479.0033165166137,
+            "volumeUsd": 9749837.332339233
+          },
+          {
+            "timestamp": 1788706800,
+            "price": 2480.243066099995,
+            "volumeUsd": 1211609.3857156688
+          },
+          {
+            "timestamp": 1788710400,
+            "price": 2483.9660360832136,
+            "volumeUsd": 1297308.4257914273
+          },
+          {
+            "timestamp": 1788714000,
+            "price": 2491.9270601996277,
+            "volumeUsd": 1083834.9043119836
+          },
+          {
+            "timestamp": 1788717600,
+            "price": 2494.4201089260882,
+            "volumeUsd": 525609.9179465079
+          },
+          {
+            "timestamp": 1788721200,
+            "price": 2490.681470371387,
+            "volumeUsd": 196533.97895218545
+          },
+          {
+            "timestamp": 1788724800,
+            "price": 2499.9135991194094,
+            "volumeUsd": 446430.5362056269
+          },
+          {
+            "timestamp": 1788728400,
+            "price": 2507.4242246974277,
+            "volumeUsd": 1728743.3217895648
+          },
+          {
+            "timestamp": 1788732000,
+            "price": 2508.42734484279,
+            "volumeUsd": 1727343.9619043272
+          },
+          {
+            "timestamp": 1788735600,
+            "price": 2513.9516833334246,
+            "volumeUsd": 1980918.9322929892
+          },
+          {
+            "timestamp": 1788739200,
+            "price": 2511.9414267077723,
+            "volumeUsd": 2012945.1361330133
+          },
+          {
+            "timestamp": 1788742800,
+            "price": 2504.1668538209437,
+            "volumeUsd": 1813537.4364842477
+          },
+          {
+            "timestamp": 1788746400,
+            "price": 2511.439113770627,
+            "volumeUsd": 2660011.894069116
+          },
+          {
+            "timestamp": 1788750000,
+            "price": 2498.41417580183,
+            "volumeUsd": 1358849.435407276
+          },
+          {
+            "timestamp": 1788753600,
+            "price": 2496.915651823446,
+            "volumeUsd": 718806.3078139975
+          },
+          {
+            "timestamp": 1788757200,
+            "price": 2505.1686708225,
+            "volumeUsd": 1121426.3817302343
+          },
+          {
+            "timestamp": 1788760800,
+            "price": 2498.66401721941,
+            "volumeUsd": 549328.3754494904
+          },
+          {
+            "timestamp": 1788764400,
+            "price": 2488.1921582280524,
+            "volumeUsd": 2516946.5222199815
+          },
+          {
+            "timestamp": 1788768000,
+            "price": 2491.677892410387,
+            "volumeUsd": 430441.51472813025
+          },
+          {
+            "timestamp": 1788771600,
+            "price": 2485.456788349452,
+            "volumeUsd": 676792.0248268096
+          },
+          {
+            "timestamp": 1788775200,
+            "price": 2489.187584392826,
+            "volumeUsd": 535319.4095412064
+          },
+          {
+            "timestamp": 1788778800,
+            "price": 2488.938690523774,
+            "volumeUsd": 510205.5752088253
+          },
+          {
+            "timestamp": 1788782400,
+            "price": 2506.4215056998314,
+            "volumeUsd": 685643.7002585216
+          },
+          {
+            "timestamp": 1788786000,
+            "price": 2499.413691386995,
+            "volumeUsd": 1407312.855585104
+          },
+          {
+            "timestamp": 1788789600,
+            "price": 2490.432427128674,
+            "volumeUsd": 2254654.1354563325
+          },
+          {
+            "timestamp": 1788793200,
+            "price": 2469.848409005843,
+            "volumeUsd": 2601438.112846642
+          },
+          {
+            "timestamp": 1788796800,
+            "price": 2481.7315840257234,
+            "volumeUsd": 807426.0555139516
+          },
+          {
+            "timestamp": 1788800400,
+            "price": 2494.9190178920744,
+            "volumeUsd": 1080917.9282619285
+          },
+          {
+            "timestamp": 1788804000,
+            "price": 2491.677892410387,
+            "volumeUsd": 541157.487380692
+          },
+          {
+            "timestamp": 1788807600,
+            "price": 2495.1685097938634,
+            "volumeUsd": 360093.24114687974
+          },
+          {
+            "timestamp": 1788811200,
+            "price": 2494.4201089260882,
+            "volumeUsd": 577747.5306163811
+          },
+          {
+            "timestamp": 1788814800,
+            "price": 2491.677892410387,
+            "volumeUsd": 318262.118162497
+          },
+          {
+            "timestamp": 1788818400,
+            "price": 2481.979757184126,
+            "volumeUsd": 1537078.3694450215
+          },
+          {
+            "timestamp": 1788822000,
+            "price": 2490.9305385184243,
+            "volumeUsd": 848838.7678841506
+          },
+          {
+            "timestamp": 1788825600,
+            "price": 2494.4201089260882,
+            "volumeUsd": 1164531.440945084
+          },
+          {
+            "timestamp": 1788829200,
+            "price": 2502.915145931433,
+            "volumeUsd": 1037625.3108517765
+          },
+          {
+            "timestamp": 1788832800,
+            "price": 2485.2082675226998,
+            "volumeUsd": 1430663.1130151446
+          },
+          {
+            "timestamp": 1788836400,
+            "price": 2484.7113004155035,
+            "volumeUsd": 873117.3467303489
+          },
+          {
+            "timestamp": 1788840000,
+            "price": 2479.0033165166137,
+            "volumeUsd": 608618.4524229657
+          },
+          {
+            "timestamp": 1788843600,
+            "price": 2473.3084452397757,
+            "volumeUsd": 1751069.9949426276
+          },
+          {
+            "timestamp": 1788847200,
+            "price": 2467.8734191277654,
+            "volumeUsd": 2095300.1114335037
+          },
+          {
+            "timestamp": 1788850800,
+            "price": 2478.5075902134954,
+            "volumeUsd": 1237384.8981354353
+          },
+          {
+            "timestamp": 1788854400,
+            "price": 2476.5256761067176,
+            "volumeUsd": 1349110.2809255535
+          },
+          {
+            "timestamp": 1788858000,
+            "price": 2491.677892410387,
+            "volumeUsd": 1363677.2241738285
+          },
+          {
+            "timestamp": 1788861600,
+            "price": 2481.4834356821552,
+            "volumeUsd": 1219477.2373851554
+          },
+          {
+            "timestamp": 1788865200,
+            "price": 2473.5557760843,
+            "volumeUsd": 797296.9389147293
+          },
+          {
+            "timestamp": 1788868800,
+            "price": 2472.566601079981,
+            "volumeUsd": 1005668.7020071041
+          },
+          {
+            "timestamp": 1788872400,
+            "price": 2457.776356076926,
+            "volumeUsd": 5018837.220263103
+          },
+          {
+            "timestamp": 1788876000,
+            "price": 2484.7113004155035,
+            "volumeUsd": 3128971.8328948645
+          },
+          {
+            "timestamp": 1788879600,
+            "price": 2497.1653433886286,
+            "volumeUsd": 2465949.4974062927
+          },
+          {
+            "timestamp": 1788883200,
+            "price": 2495.9171352043522,
+            "volumeUsd": 1987501.5095424952
+          },
+          {
+            "timestamp": 1788886800,
+            "price": 2488.938690523774,
+            "volumeUsd": 1327527.9807580565
+          },
+          {
+            "timestamp": 1788890400,
+            "price": 2486.202499952146,
+            "volumeUsd": 2465865.673542462
+          },
+          {
+            "timestamp": 1788894000,
+            "price": 2480.9872134295974,
+            "volumeUsd": 2007493.3956224998
+          },
+          {
+            "timestamp": 1788897600,
+            "price": 2483.717664316782,
+            "volumeUsd": 1138631.5447814497
+          },
+          {
+            "timestamp": 1788901200,
+            "price": 2481.7315840257234,
+            "volumeUsd": 835727.0330535739
+          },
+          {
+            "timestamp": 1788904800,
+            "price": 2488.6898215416195,
+            "volumeUsd": 861732.192998488
+          },
+          {
+            "timestamp": 1788908400,
+            "price": 2484.7113004155035,
+            "volumeUsd": 542165.9330790507
+          },
+          {
+            "timestamp": 1788912000,
+            "price": 2495.9171352043522,
+            "volumeUsd": 843588.3294269225
+          },
+          {
+            "timestamp": 1788915600,
+            "price": 2496.6659852249236,
+            "volumeUsd": 1073194.9067143109
+          },
+          {
+            "timestamp": 1788919200,
+            "price": 2494.6695509369806,
+            "volumeUsd": 896878.0406648293
+          },
+          {
+            "timestamp": 1788922800,
+            "price": 2488.938690523774,
+            "volumeUsd": 539965.7342375297
+          },
+          {
+            "timestamp": 1788926400,
+            "price": 2509.1799483015716,
+            "volumeUsd": 2053144.604385227
+          },
+          {
+            "timestamp": 1788930000,
+            "price": 2495.9171352043522,
+            "volumeUsd": 1421757.5789309188
+          },
+          {
+            "timestamp": 1788933600,
+            "price": 2500.413606838369,
+            "volumeUsd": 709844.2377919557
+          },
+          {
+            "timestamp": 1788937200,
+            "price": 2509.6818093830316,
+            "volumeUsd": 1387265.2825576505
+          },
+          {
+            "timestamp": 1788940800,
+            "price": 2520.244110182078,
+            "volumeUsd": 1296367.952804346
+          },
+          {
+            "timestamp": 1788944400,
+            "price": 2491.179631572276,
+            "volumeUsd": 1555862.2836764364
+          },
+          {
+            "timestamp": 1788948000,
+            "price": 2485.95390456169,
+            "volumeUsd": 1225895.604308734
+          },
+          {
+            "timestamp": 1788951600,
+            "price": 2500.1635904793216,
+            "volumeUsd": 1317719.891045738
+          },
+          {
+            "timestamp": 1788955200,
+            "price": 2510.685832697732,
+            "volumeUsd": 1178313.471222939
+          },
+          {
+            "timestamp": 1788958800,
+            "price": 2500.913714563873,
+            "volumeUsd": 2984405.2451738645
+          },
+          {
+            "timestamp": 1788962400,
+            "price": 2497.9145679091025,
+            "volumeUsd": 3365457.388219109
+          },
+          {
+            "timestamp": 1788966000,
+            "price": 2490.681470371387,
+            "volumeUsd": 6502917.574820992
+          },
+          {
+            "timestamp": 1788969600,
+            "price": 2495.1685097938634,
+            "volumeUsd": 1689471.3502867892
+          },
+          {
+            "timestamp": 1788973200,
+            "price": 2494.1706918569025,
+            "volumeUsd": 1253069.0590781295
+          },
+          {
+            "timestamp": 1788976800,
+            "price": 2482.2279551598444,
+            "volumeUsd": 700976.9831902785
+          },
+          {
+            "timestamp": 1788980400,
+            "price": 2464.420986226655,
+            "volumeUsd": 1519220.2213578701
+          },
+          {
+            "timestamp": 1788984000,
+            "price": 2470.589437626467,
+            "volumeUsd": 2533375.8782932214
+          },
+          {
+            "timestamp": 1788987600,
+            "price": 2460.7273103774455,
+            "volumeUsd": 1464060.6289158417
+          },
+          {
+            "timestamp": 1788991200,
+            "price": 2450.6594849325793,
+            "volumeUsd": 2943103.0758223403
+          },
+          {
+            "timestamp": 1788994800,
+            "price": 2467.133205149757,
+            "volumeUsd": 716459.8793589777
+          },
+          {
+            "timestamp": 1788998400,
+            "price": 2464.91389506811,
+            "volumeUsd": 1593723.16365505
+          },
+          {
+            "timestamp": 1789002000,
+            "price": 2463.4354642249828,
+            "volumeUsd": 2591942.78096432
+          },
+          {
+            "timestamp": 1789005600,
+            "price": 2474.050511975074,
+            "volumeUsd": 1167799.0145073112
+          },
+          {
+            "timestamp": 1789009200,
+            "price": 2473.5557760843,
+            "volumeUsd": 864684.2285201821
+          },
+          {
+            "timestamp": 1789012800,
+            "price": 2478.0119630407676,
+            "volumeUsd": 463581.0895655713
+          },
+          {
+            "timestamp": 1789016400,
+            "price": 2481.979757184126,
+            "volumeUsd": 848823.0653023452
+          },
+          {
+            "timestamp": 1789020000,
+            "price": 2480.491090406605,
+            "volumeUsd": 749568.010773872
+          },
+          {
+            "timestamp": 1789023600,
+            "price": 2471.8249794289313,
+            "volumeUsd": 867751.660547425
+          },
+          {
+            "timestamp": 1789027200,
+            "price": 2470.83649657023,
+            "volumeUsd": 686345.4390007941
+          },
+          {
+            "timestamp": 1789030800,
+            "price": 2467.133205149757,
+            "volumeUsd": 747359.0319866884
+          },
+          {
+            "timestamp": 1789034400,
+            "price": 2464.6674283252773,
+            "volumeUsd": 936268.8011670853
+          },
+          {
+            "timestamp": 1789038000,
+            "price": 2462.4503363335793,
+            "volumeUsd": 1035453.3534262247
+          },
+          {
+            "timestamp": 1789041600,
+            "price": 2413.9343355854353,
+            "volumeUsd": 9652639.03079316
+          },
+          {
+            "timestamp": 1789045200,
+            "price": 2435.2696286043015,
+            "volumeUsd": 5299841.618499305
+          },
+          {
+            "timestamp": 1789048800,
+            "price": 2442.8302994109517,
+            "volumeUsd": 2845200.4117809837
+          },
+          {
+            "timestamp": 1789052400,
+            "price": 2440.144797651192,
+            "volumeUsd": 1934115.2264666026
+          },
+          {
+            "timestamp": 1789056000,
+            "price": 2446.7417606547983,
+            "volumeUsd": 2318234.210646157
+          },
+          {
+            "timestamp": 1789059600,
+            "price": 2466.1465985316836,
+            "volumeUsd": 2756095.346134037
+          },
+          {
+            "timestamp": 1789063200,
+            "price": 2466.639852512856,
+            "volumeUsd": 1745223.6797452176
+          },
+          {
+            "timestamp": 1789066800,
+            "price": 2461.957920129974,
+            "volumeUsd": 1347572.7608010422
+          },
+          {
+            "timestamp": 1789070400,
+            "price": 2462.204115921987,
+            "volumeUsd": 433557.97474168934
+          },
+          {
+            "timestamp": 1789074000,
+            "price": 2459.005490057179,
+            "volumeUsd": 325450.2876523899
+          },
+          {
+            "timestamp": 1789077600,
+            "price": 2444.0519588681163,
+            "volumeUsd": 1065633.8419748682
+          },
+          {
+            "timestamp": 1789081200,
+            "price": 2437.218526319073,
+            "volumeUsd": 1798699.7823100137
+          },
+          {
+            "timestamp": 1789084800,
+            "price": 2456.05660059865,
+            "volumeUsd": 1404720.65859371
+          },
+          {
+            "timestamp": 1789088400,
+            "price": 2452.8659609123197,
+            "volumeUsd": 1257464.4872002883
+          },
+          {
+            "timestamp": 1789092000,
+            "price": 2446.0078849066435,
+            "volumeUsd": 842725.0171313903
+          },
+          {
+            "timestamp": 1789095600,
+            "price": 2445.518756700116,
+            "volumeUsd": 1009441.6999292638
+          },
+          {
+            "timestamp": 1789099200,
+            "price": 2458.267935925905,
+            "volumeUsd": 1089919.5964031038
+          },
+          {
+            "timestamp": 1789102800,
+            "price": 2467.133205149757,
+            "volumeUsd": 633735.0659977571
+          },
+          {
+            "timestamp": 1789106400,
+            "price": 2465.9000085308307,
+            "volumeUsd": 398539.98778517416
+          },
+          {
+            "timestamp": 1789110000,
+            "price": 2466.8865164981075,
+            "volumeUsd": 696424.9920960861
+          },
+          {
+            "timestamp": 1789113600,
+            "price": 2475.535313439321,
+            "volumeUsd": 1378876.9807509894
+          },
+          {
+            "timestamp": 1789117200,
+            "price": 2468.613855192174,
+            "volumeUsd": 844707.5665323131
+          },
+          {
+            "timestamp": 1789120800,
+            "price": 2462.4503363335793,
+            "volumeUsd": 916456.7683026292
+          },
+          {
+            "timestamp": 1789124400,
+            "price": 2457.5306030166244,
+            "volumeUsd": 1702899.5046838655
+          },
+          {
+            "timestamp": 1789128000,
+            "price": 2509.4308662964017,
+            "volumeUsd": 19284420.74099819
+          },
+          {
+            "timestamp": 1789131600,
+            "price": 2628.3431484545536,
+            "volumeUsd": 17614422.86135975
+          },
+          {
+            "timestamp": 1789135200,
+            "price": 2606.8799272467886,
+            "volumeUsd": 13344926.518101392
+          },
+          {
+            "timestamp": 1789138800,
+            "price": 2559.8661859287085,
+            "volumeUsd": 9998019.489127519
+          },
+          {
+            "timestamp": 1789142400,
+            "price": 2577.8472103606978,
+            "volumeUsd": 7006862.105899434
+          },
+          {
+            "timestamp": 1789146000,
+            "price": 2567.3002002844505,
+            "volumeUsd": 2465824.341156762
+          },
+          {
+            "timestamp": 1789149600,
+            "price": 2536.9318960536784,
+            "volumeUsd": 6909846.966112722
+          },
+          {
+            "timestamp": 1789153200,
+            "price": 2539.2160482687436,
+            "volumeUsd": 1830890.2227920976
+          },
+          {
+            "timestamp": 1789156800,
+            "price": 2530.0917602738996,
+            "volumeUsd": 2931319.608477375
+          },
+          {
+            "timestamp": 1789160400,
+            "price": 2515.4604314864596,
+            "volumeUsd": 1812971.0604599223
+          },
+          {
+            "timestamp": 1789164000,
+            "price": 2510.936901281002,
+            "volumeUsd": 3273737.761331619
+          },
+          {
+            "timestamp": 1789167600,
+            "price": 2515.2089105954,
+            "volumeUsd": 1460812.5026712962
+          },
+          {
+            "timestamp": 1789171200,
+            "price": 2511.6902576820044,
+            "volumeUsd": 601069.8482849968
+          },
+          {
+            "timestamp": 1789174800,
+            "price": 2513.9516833334246,
+            "volumeUsd": 647255.9256883045
+          },
+          {
+            "timestamp": 1789178400,
+            "price": 2514.203078501758,
+            "volumeUsd": 255797.17552697702
+          },
+          {
+            "timestamp": 1789182000,
+            "price": 2512.443840112528,
+            "volumeUsd": 583924.6542937453
+          },
+          {
+            "timestamp": 1789185600,
+            "price": 2512.946354004989,
+            "volumeUsd": 199539.14651562582
+          },
+          {
+            "timestamp": 1789189200,
+            "price": 2512.443840112528,
+            "volumeUsd": 360323.29946749355
+          },
+          {
+            "timestamp": 1789192800,
+            "price": 2519.7401369572854,
+            "volumeUsd": 451238.0495266978
+          },
+          {
+            "timestamp": 1789196400,
+            "price": 2523.0177652534626,
+            "volumeUsd": 206605.47654200668
+          },
+          {
+            "timestamp": 1789200000,
+            "price": 2533.1295408035353,
+            "volumeUsd": 738399.727124019
+          },
+          {
+            "timestamp": 1789203600,
+            "price": 2530.0917602738996,
+            "volumeUsd": 758685.073621193
+          },
+          {
+            "timestamp": 1789207200,
+            "price": 2532.6229908791297,
+            "volumeUsd": 374459.96382230904
+          },
+          {
+            "timestamp": 1789210800,
+            "price": 2535.6638105566612,
+            "volumeUsd": 287369.82956921
+          },
+          {
+            "timestamp": 1789214400,
+            "price": 2534.142944617762,
+            "volumeUsd": 356450.8241431346
+          },
+          {
+            "timestamp": 1789218000,
+            "price": 2544.553737702487,
+            "volumeUsd": 1292371.6009616645
+          },
+          {
+            "timestamp": 1789221600,
+            "price": 2539.977889262245,
+            "volumeUsd": 692107.9353065992
+          },
+          {
+            "timestamp": 1789225200,
+            "price": 2534.90326352797,
+            "volumeUsd": 878845.9224607622
+          },
+          {
+            "timestamp": 1789228800,
+            "price": 2531.3570591885145,
+            "volumeUsd": 335424.13277445297
+          },
+          {
+            "timestamp": 1789232400,
+            "price": 2525.0368860519466,
+            "volumeUsd": 564742.8130412727
+          },
+          {
+            "timestamp": 1789236000,
+            "price": 2521.504484286784,
+            "volumeUsd": 658504.3652189894
+          },
+          {
+            "timestamp": 1789239600,
+            "price": 2518.4806447616543,
+            "volumeUsd": 488493.74858570355
+          },
+          {
+            "timestamp": 1789243200,
+            "price": 2521.0002590249765,
+            "volumeUsd": 261091.65526461793
+          },
+          {
+            "timestamp": 1789246800,
+            "price": 2523.270067029988,
+            "volumeUsd": 491521.69963249157
+          },
+          {
+            "timestamp": 1789250400,
+            "price": 2522.0088103986864,
+            "volumeUsd": 337540.7880289187
+          },
+          {
+            "timestamp": 1789254000,
+            "price": 2525.5419186795257,
+            "volumeUsd": 124876.9669740116
+          },
+          {
+            "timestamp": 1789257600,
+            "price": 2524.5319544157437,
+            "volumeUsd": 89212.20574226203
+          }
+        ]
+      },
+      "position": {
+        "tickLower": -198240,
+        "tickUpper": -197970,
+        "lowerPrice": 2460.2352387273477,
+        "upperPrice": 2527.5630595076545,
+        "amount0": "0.024445944561000366",
+        "amount1": "938.263537",
+        "amount0Raw": "24445944561000366",
+        "amount1Raw": "938263537",
+        "liquidityRaw": "1483424497983407",
+        "deployedUsd": 999.8907096416673,
+        "residualUsd": 7.792421292575992e-7,
+        "maxSharePercent": 0.049633427199999997,
+        "location": "active",
+        "fullConversionAmount0": null,
+        "fullConversionAveragePrice": null
+      },
+      "checks": {
+        "data": "verified",
+        "construction": "feasible",
+        "economics": "not-established",
+        "reasons": [
+          "Graph state and USD references satisfy their separate age policies.",
+          "Oldest USD reference: 437s. Up to 300s is recent; up to 900s is usable with an age caveat for informational estimates.",
+          "USD references are aged. Inventory values and gas estimates use the original quotes, not updated USD prices.",
+          "USD reference ratio differs from the pool's relative price by 0.081% (limit 2%). This cannot detect a shared USD valuation error in both tokens.",
+          "Modeled liquidity stays within the 1% research capacity policy on every range segment.",
+          "Current profitability is not established. Pool volume is context, not this range's future fees."
+        ]
+      },
+      "costs": {
+        "estimatedCycleGasUsd": 0.039089379737619015,
+        "estimatedGasUnits": 770000,
+        "gasPriceGwei": 0.020126,
+        "swapPreparationUsd": 0,
+        "explanation": "Observed ETH gas price \u00d7 estimated lifecycle units. Native gas is external. Required token inventory is assumed held; preparation and exit swaps are not priced. L2 data fees are not included in this first estimate."
+      },
+      "decision": {
+        "action": "review-plan",
+        "title": "A range to investigate",
+        "explanation": "Suggested range from the previous seven days' 10th\u201390th percentile ticks. Inventory and capacity are modeled; economic merit remains unestablished.",
+        "management": [
+          "Refresh market data and review inventory and cost assumptions before relying on this analysis.",
+          "Compare holding, adjusting and exiting after costs; a border touch is not an automatic rebalance.",
+          "Review the objective after 6 hours. This interval does not predict fees or a fill."
+        ],
+        "assumptions": [
+          "The Graph provides discovery and range history; RPC reconciles the selected chain, factory, pool and active state.",
+          "Indexed ticks failed validation. Capacity uses 166 initialized ticks from all 1 RPC bitmap words covering spot and the modeled ranges, at the same block. Ticks outside this window were not audited.",
+          "Token symbols do not verify issuers. Token risk, redemption rights and wallet inventory need separate review.",
+          "Capacity is a present-state constraint; future competition and prices may change.",
+          "Swap fees accrue only while price remains inside the range.",
+          "USD references are marks, not guaranteed swap proceeds."
+        ]
+      }
+    }
+  },
+  "handoff": {
+    "executionReady": false,
+    "aquaStrategy": null,
+    "transaction": null,
+    "economics": "not-established",
+    "requiredNextSteps": [
+      "Validate Aave borrowing, total ETH exposure and health in the calling system.",
+      "Map the reference price range and inventory to a supported Aqua strategy; Uniswap ticks and fee tiers are not Aqua execution parameters.",
+      "Obtain executable inventory swap quotes and apply slippage, price-impact and all cost limits before funding.",
+      "Refresh expired evidence; re-check inventory, prices and execution constraints immediately before user authorization.",
+      "Keep realized P&L, interest, prior losses and the 50/50 allocation ledger in the execution system."
+    ],
+    "unpricedCosts": [
+      "inventory preparation swap",
+      "slippage",
+      "price impact",
+      "Aqua execution and settlement",
+      "Arbitrum L1 data fees",
+      "exit swaps",
+      "Aave interest"
+    ]
+  }
+}
