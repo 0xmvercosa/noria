@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "noria.aqua.discovery.v1",
+  "requestId": "example-arbitrum-weth-usdc",
+  "createdAt": "2026-09-13T01:00:00.000Z",
+  "expiresAt": "2026-09-13T01:15:00.000Z",
+  "chainId": 42161,
+  "pair": {
+    "base": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+    "quote": "0xaf88d065e77c8cc2239327c5edb3a432268e5831"
+  },
+  "capitalUSDCUnits": "8000000000",
+  "policy": {
+    "maxSourceAgeSeconds": 3600,
+    "maxCapitalShareBps": 1000,
+    "minCoverageBps": 8000,
+    "maxRangeWidthBps": 6000,
+    "minObservations": 24
+  },
+  "objective": "historical_fee_density_times_range_coverage",
+  "positionIntent": {
+    "fundingAsset": "ETH",
+    "collateralAmountUnits": "10000000000000000000",
+    "safetyHFWad": "1400000000000000000",
+    "comfortableHFWad": "2000000000000000000",
+    "financingMode": "aave_collateral_then_borrow_usdc"
+  }
+}

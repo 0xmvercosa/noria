@@ -8,3 +8,7 @@ package-lock.json
 # Recorded fixtures and the example ledger retain their published bytes.
 tests/fixtures/
 data/examples/
+integrations/aqua/pnpm-lock.yaml
+integrations/aqua/runs/
+integrations/aqua/contracts/out/
+integrations/aqua/contracts/cache/

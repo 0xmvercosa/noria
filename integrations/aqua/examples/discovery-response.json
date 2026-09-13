@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "noria.aqua.candidates.v1",
+  "requestId": "example-arbitrum-weth-usdc",
+  "candidates": [
+    {
+      "candidateId": "example-range-balanced",
+      "sourcePool": {
+        "protocol": "uniswap-v3",
+        "address": "0xc6962004f452be9203591991d15f6b388e09e8d0",
+        "chainId": 42161,
+        "token0": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+        "token1": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+        "feeTierPips": 500,
+        "liquidity": "10000000000000000",
+        "tvlUSDCUnits": "10000000000000",
+        "volume24hUSDCUnits": "20000000000000",
+        "spotUSDCPerWethE6": "3000000000"
+      },
+      "range": {
+        "lowerUSDCPerWethE6": "2550000000",
+        "upperUSDCPerWethE6": "3450000000",
+        "inRangeObservations": 95,
+        "totalObservations": 100,
+        "windowStart": "2026-09-12T00:00:00.000Z",
+        "windowEnd": "2026-09-13T00:50:00.000Z",
+        "method": "observed_prices_inside_proposed_range"
+      },
+      "source": {
+        "kind": "the-graph",
+        "deployment": "SYNTHETIC_EXAMPLE_NOT_A_DEPLOYMENT",
+        "queryHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "indexedBlock": {
+          "number": "504576000",
+          "hash": "0x1111111111111111111111111111111111111111111111111111111111111111",
+          "timestamp": "2026-09-13T00:55:00.000Z"
+        },
+        "queriedAt": "2026-09-13T00:56:00.000Z",
+        "mode": "synthetic-example"
+      }
+    }
+  ]
+}
