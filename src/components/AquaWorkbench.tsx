@@ -21,6 +21,10 @@ import {
   type PositionPlanResponse,
 } from "../integrations/aqua/position-contract";
 import { parseUsdc } from "../integrations/privy/reserve";
+import {
+  plannerDraftKey,
+  restorePlannerDraft,
+} from "../integrations/aqua/planner-draft";
 import { usd, number } from "./format";
 import base from "./NoriaApp.module.css";
 import s from "./AquaWorkbench.module.css";
@@ -80,6 +84,8 @@ export function AquaWorkbench() {
   const [safetyHF, setSafetyHF] = useState("1.4");
   const [comfortableHF, setComfortableHF] = useState("2");
   const [hours, setHours] = useState<6 | 24>(6);
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  const [restoredDraft, setRestoredDraft] = useState(false);
   const [response, setResponse] = useState<PositionPlanResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -92,13 +98,47 @@ export function AquaWorkbench() {
   const [pollAttempt, setPollAttempt] = useState(0);
   const pending = useRef<AbortController | null>(null);
   const runRequest = useRef<AbortController | null>(null);
+  const initialDraftRead = useRef(false);
   const wallet = useNoriaWallet();
 
   useEffect(() => {
-    const fromReserve = new URLSearchParams(window.location.search).get(
-      "collateralUSDC",
-    );
-    if (fromReserve && parseUsdc(fromReserve)) setAmount(fromReserve);
+    if (!initialDraftRead.current) {
+      initialDraftRead.current = true;
+      try {
+        const saved = restorePlannerDraft(
+          sessionStorage.getItem(plannerDraftKey),
+        );
+        if (saved) {
+          setFundingAsset(saved.fundingAsset);
+          setAmount(saved.amount);
+          setSafetyHF(saved.safetyHF);
+          setComfortableHF(saved.comfortableHF);
+          setHours(saved.hours);
+          setRestoredDraft(true);
+        }
+      } catch {
+        /* Planning remains available without browser storage. */
+      }
+      const fromReserve = new URLSearchParams(window.location.search).get(
+        "collateralUSDC",
+      );
+      if (fromReserve && parseUsdc(fromReserve)) {
+        setFundingAsset("USDC");
+        setAmount(fromReserve);
+      }
+      // Consume the handoff once. Otherwise OAuth/reload would reapply an old
+      // query amount after the user edits the saved collateral or asset.
+      if (fromReserve !== null) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("collateralUSDC");
+        window.history.replaceState(
+          window.history.state,
+          "",
+          url.pathname + url.search + url.hash,
+        );
+      }
+      setDraftLoaded(true);
+    }
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     const controller = new AbortController();
     void fetch("/api/aqua/v1/local-rehearsal", {
@@ -121,6 +161,24 @@ export function AquaWorkbench() {
       runRequest.current?.abort();
     };
   }, []);
+
+  useEffect(() => {
+    if (!draftLoaded) return;
+    try {
+      sessionStorage.setItem(
+        plannerDraftKey,
+        JSON.stringify({
+          fundingAsset,
+          amount,
+          safetyHF,
+          comfortableHF,
+          hours,
+        }),
+      );
+    } catch {
+      /* Do not prevent analysis when storage is unavailable. */
+    }
+  }, [draftLoaded, fundingAsset, amount, safetyHF, comfortableHF, hours]);
 
   useEffect(() => {
     if (!run || run.status !== "running") return;
@@ -358,8 +416,8 @@ export function AquaWorkbench() {
           <NoriaLogo className={base.brandLogo} />
         </a>
         <nav className={base.navigation} aria-label="Aqua navigation">
-          <a href="/">Full discovery</a>
-          <a href="/reserve">USDC reserve</a>
+          <a href="/">Discover pools</a>
+          <a href="/reserve">Wallet & funds</a>
           <a href="/aqua/openapi.json">Graph API</a>
         </nav>
         <div className={s.headerActions}>
@@ -380,9 +438,9 @@ export function AquaWorkbench() {
             <span>A plan with evidence.</span>
           </h1>
           <p>
-            Choose your collateral and health-factor limits. Noria sizes a USDC
-            loan, then searches The Graph for a WETH/USDC source pool, range and
-            target inventory.
+            Use ETH or USDC as Aave collateral, borrow USDC and offer WETH/USDC
+            liquidity through Aqua. The Graph helps select a reference pool,
+            price range and token mix before you commit funds.
           </p>
           <p className={s.note}>
             Review the plan, then launch with your Privy wallet when the public
@@ -395,21 +453,21 @@ export function AquaWorkbench() {
             <span>01</span>
             <div>
               <strong>Your collateral</strong>
-              <small>ETH or USDC · your HF limits</small>
+              <small>Fund your wallet and set borrowing limits</small>
             </div>
           </li>
           <li>
             <span>02</span>
             <div>
-              <strong>A USDC loan</strong>
-              <small>Sized from current Aave evidence</small>
+              <strong>Review your plan</strong>
+              <small>Collateral, loan, pool and range</small>
             </div>
           </li>
           <li>
             <span>03</span>
             <div>
-              <strong>A pool and range</strong>
-              <small>Selected automatically from The Graph</small>
+              <strong>Launch and manage</strong>
+              <small>Confirm each step · repay before withdrawing</small>
             </div>
           </li>
         </ol>
@@ -421,6 +479,12 @@ export function AquaWorkbench() {
           >
             <span className={s.eyebrow}>01 · Your policy</span>
             <h2>Set your collateral</h2>
+            {restoredDraft && (
+              <p className={s.note} role="status">
+                Your saved inputs were restored. Run the analysis again for
+                current evidence.
+              </p>
+            )}
             <label htmlFor="collateral-asset">Collateral asset</label>
             <select
               id="collateral-asset"
@@ -449,8 +513,11 @@ export function AquaWorkbench() {
               }}
             />
             <p className={s.note} id="position-input-note">
-              Your collateral stays in Aave. The resulting USDC loan funds the
-              LP inventory; gas is paid separately.
+              At launch, your position supplies this collateral to Aave. The
+              USDC loan buys the liquidity inventory. Keep collateral in your
+              wallet until then; a separate Aave savings deposit is optional.
+              You also need ETH for network fees.{" "}
+              <a href="/reserve#fund-heading">Add funds</a>.
             </p>
             <div className={s.fieldRow}>
               <div>
@@ -467,7 +534,9 @@ export function AquaWorkbench() {
                   aria-describedby="safety-note"
                 />
                 <p className={s.note} id="safety-note">
-                  The threshold for defense.
+                  Your threshold for reducing debt. Protection is manual: you
+                  must review and confirm the action. Aave can liquidate below
+                  1.
                 </p>
               </div>
               <div>
@@ -486,7 +555,8 @@ export function AquaWorkbench() {
                   aria-describedby="comfortable-note"
                 />
                 <p className={s.note} id="comfortable-note">
-                  Required to open a cycle.
+                  Required to launch liquidity. A higher value reduces the
+                  borrowing budget. Interest continues until the debt is repaid.
                 </p>
               </div>
             </div>
@@ -534,8 +604,8 @@ export function AquaWorkbench() {
               </button>
             )}
             <p className={s.note}>
-              Analysis uses public data. Connecting a wallet is optional until
-              local rehearsal.
+              Analysis uses public data and moves no funds. A wallet is needed
+              for launch or local rehearsal.
             </p>
           </form>
           <section className={s.panel} aria-live="polite" aria-busy={loading}>
@@ -603,6 +673,25 @@ export function AquaWorkbench() {
                     {response.financing.headroomBps} bps of borrowing headroom.
                   </p>
                 </div>
+                <p className={s.note}>
+                  You supply{" "}
+                  {rawAmount(
+                    response.intent.collateralAmountUnits,
+                    response.intent.fundingAsset === "ETH" ? 18 : 6,
+                  )}{" "}
+                  {response.intent.fundingAsset}, then owe{" "}
+                  {rawAmount(response.financing.loanUSDCUnits, 6)} USDC plus
+                  variable interest. The loan funds WETH/USDC inventory in your
+                  position account; the reference pool below is used for
+                  research, not a Uniswap LP deposit. Fees require actual Aqua
+                  swaps. Market losses, borrowing costs and network fees can
+                  exceed earnings.
+                </p>
+                {ready && (
+                  <a className={s.reportLink} href="#launch-heading">
+                    Continue to launch review <ArrowUpRight size={14} />
+                  </a>
+                )}
                 <dl className={s.policy}>
                   <div>
                     <dt>Safety HF</dt>
