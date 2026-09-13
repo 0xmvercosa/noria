@@ -1,6 +1,6 @@
 # Architecture
 
-Noria is an informational Uniswap v3 discovery and analysis application. The web interface and a local MCP server share the same services. An external AI client supplies the language model; Noria contains no built-in LLM, wallet or execution loop.
+Noria is an informational Uniswap v3 discovery and analysis application. The web interface and HTTP and local MCP servers share the same services. An external AI client supplies the language model; Noria contains no built-in LLM, wallet or execution loop.
 
 ```mermaid
 flowchart TD
@@ -26,31 +26,31 @@ flowchart TD
 
 ## Source map
 
-| Path                                            | Responsibility                                                                          |
-| ----------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `src/app`                                       | Next.js pages, layout and HTTP routes                                                   |
-| `src/app/api/noria/route.ts`                    | Networks, search, discovery, explicit analysis and historical data                      |
-| `src/integrations/aqua`                         | Exact Arbitrum WETH/native-USDC contract, selection adapter and HTTP boundary           |
-| `src/components/AquaWorkbench.tsx`              | Focused preview at `/aqua`, input cancellation, source expiry and handoff inspection    |
-| `src/components/NoriaApp.tsx`                   | Workspace composition from focused controls, candidates, charts and evidence components |
-| `src/components/useNoriaWorkspace.ts`           | Requests, cancellation, selection and report lifecycle state                            |
-| `src/config/networks.ts`                        | Chain, subgraph, factory, RPC and explorer configuration                                |
-| `src/providers/graph.ts`                        | Graph MCP/gateway queries, request budgets and transient retries                        |
-| `src/providers/prices.ts`                       | USD references with exact-contract fallback and original timestamps                     |
-| `src/providers/snapshot.ts`                     | Pinned Graph/RPC collection, canonical identity checks and tick recovery                |
-| `src/services/discovery.ts`                     | Token universe, pool screening, ranking and up to four analysis attempts                |
-| `src/services/analysis.ts`                      | Input validation, snapshot reuse, report orchestration and historical loading           |
-| `src/domain/types.ts`                           | Shared input, evidence and report contracts                                             |
-| `src/domain/analysis-data.ts`                   | Strict schemas, snapshot shape, fee spacing and digest helpers                          |
-| `src/domain/report.ts`                          | Pure range construction, inventory, capacity, costs and report generation               |
-| `src/domain/uniswap.ts`                         | Public Uniswap SDK adapter and integer inventory sizing                                 |
-| `src/domain/ticks.ts`                           | Full-distribution validation, bitmap recovery and range liquidity                       |
-| `src/domain/price-mark.ts`                      | Pure price-reference validation and age policy                                          |
-| `src/domain/price-references.ts`                | Token/native quote assembly and relative-price consistency                              |
-| `src/mcp/server.ts`                             | Six read-only tools, session report storage and verification                            |
-| `scripts/call-tool.ts`                          | MCP command-line transport client                                                       |
-| `tests/unit`, `tests/browser`, `tests/fixtures` | Offline behavior, browser flows and curated inputs                                      |
-| `data/examples`                                 | Dated historical example and accounting ledger                                          |
+| Path                                            | Responsibility                                                                                      |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `src/app`                                       | Next.js pages, layout and HTTP routes                                                               |
+| `src/app/api/noria/route.ts`                    | Networks, search, discovery, explicit analysis and historical data                                  |
+| `src/integrations/aqua`                         | Exact Arbitrum WETH/native-USDC contract, selection adapter and HTTP boundary                       |
+| `src/components/AquaWorkbench.tsx`              | Focused preview at `/aqua`, input cancellation, source expiry and handoff inspection                |
+| `src/components/NoriaApp.tsx`                   | Workspace composition from focused controls, candidates, charts and evidence components             |
+| `src/components/useNoriaWorkspace.ts`           | Requests, cancellation, selection and report lifecycle state                                        |
+| `src/config/networks.ts`                        | Chain, subgraph, factory, RPC and explorer configuration                                            |
+| `src/providers/graph.ts`                        | Graph MCP/gateway queries, request budgets and transient retries                                    |
+| `src/providers/prices.ts`                       | USD references with exact-contract fallback and original timestamps                                 |
+| `src/providers/snapshot.ts`                     | Pinned Graph/RPC collection, canonical identity checks and tick recovery                            |
+| `src/services/discovery.ts`                     | Token universe, pool screening, ranking and up to four analysis attempts                            |
+| `src/services/analysis.ts`                      | Input validation, snapshot reuse, report orchestration and historical loading                       |
+| `src/domain/types.ts`                           | Shared input, evidence and report contracts                                                         |
+| `src/domain/analysis-data.ts`                   | Strict schemas, snapshot shape, fee spacing and digest helpers                                      |
+| `src/domain/report.ts`                          | Pure range construction, inventory, capacity, costs and report generation                           |
+| `src/domain/uniswap.ts`                         | Public Uniswap SDK adapter and integer inventory sizing                                             |
+| `src/domain/ticks.ts`                           | Full-distribution validation, bitmap recovery and range liquidity                                   |
+| `src/domain/price-mark.ts`                      | Pure price-reference validation and age policy                                                      |
+| `src/domain/price-references.ts`                | Token/native quote assembly and relative-price consistency                                          |
+| `src/mcp/`                                      | Shared tool validation/execution, official SDK protocol, stateless HTTP and local stdio entry point |
+| `scripts/call-tool.ts`                          | MCP command-line transport client                                                                   |
+| `tests/unit`, `tests/browser`, `tests/fixtures` | Offline behavior, browser flows and curated inputs                                                  |
+| `data/examples`                                 | Dated historical example and accounting ledger                                                      |
 
 ## Discovery
 
@@ -97,3 +97,7 @@ The dated historical example is loaded separately and never feeds live collectio
 The [Aqua reference API](aqua-integration.md) is implemented and shares the Graph-first pipeline. It accepts only native USDC funding on Arbitrum and exact WETH/native-USDC reference pools. It returns an informational handoff, never a signing payload. The full web application retains its four networks.
 
 All Aave borrowing, actual Aqua liquidity, surplus allocation and debt management are [planned](roadmap.md). The execution product must translate the economic range and target inventory into Aqua-specific strategy and execution semantics; a Uniswap pool address, tick interval or liquidity integer cannot be submitted directly to Aqua.
+
+## Hosted agent access
+
+`/api/mcp` uses a new official SDK server and Web-standard Streamable HTTP transport for every request, returning JSON before closing the server. `/agent` derives its connection URL from the current browser origin. HTTP verification receives the complete report; only stdio retains a bounded session cache for ID lookup. Verification checks unkeyed hash consistency, budget conservation and expiry, not issuer authenticity. Explicit Next.js output tracing includes runtime documents and historical data, and CI checks those manifests after the production build.

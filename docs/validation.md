@@ -52,7 +52,7 @@ The curated Arbitrum inputs were captured on **12 September 2026**. They cover 1
 | Explicit refusal for incomplete history            |             60 |
 | Total                                              |            420 |
 
-The 60 history refusals correspond to two pools with fewer than 168 required observations. These refusals are expected outputs, not successful recommendations. No capacity threshold was relaxed to increase passing results. The matrix is one component of the current 70-test suite; it is not 420 additional top-level unit tests.
+The 60 history refusals correspond to two pools with fewer than 168 required observations. These refusals are expected outputs, not successful recommendations. No capacity threshold was relaxed to increase passing results. The matrix is one component of the original 70-test publication suite; it is not 420 additional top-level unit tests.
 
 The public fixture set is limited to inputs needed for regression and browser coverage. It is not a complete market archive. Recorded snapshots and the [historical accounting example](../data/examples/historical-case.json) are different artifacts: the matrix tests current calculation behavior on dated inputs, while the example explains a supplied historical result.
 
@@ -100,3 +100,22 @@ Preserve source blocks, original quote timestamps, provider names, exclusions an
 ## Limits of the evidence
 
 The 1% capacity policy checks present modeled liquidity share. Neither that policy nor the 420-case matrix establishes net profitability, token safety or executable inventory. Report hashes check internal consistency; downloaded reports omit raw tick distributions and do not independently reproduce capacity. The historical example's compact ledger supports arithmetic inspection rather than a complete historical replay.
+
+## Hosted agent and Vercel checks — 13 September 2026
+
+The agent release adds 11 MCP regressions to the original suite: **81 unit tests passed**. The official SDK client exercised initialization and all six tools over both stdio and stateless Streamable HTTP, using explicitly injected offline services. Tests cover invalid inputs before provider calls, valid refusal results, verification in a new HTTP client, local-only report ID lookup, hash changes, independent budget violations, exact expiry boundaries, origin rules and byte-counted request limits. A production CLI call to `noria_networks` also passed using the actual stdio entry point.
+
+All **21 browser scenarios passed** against the production build using installed Chrome: the existing 16 discovery/Aqua scenarios plus five agent scenarios covering navigation, the deployed endpoint, real clipboard copying, manual fallback, downloads and mobile layout. Review found missing CORS headers on malformed/oversized requests from allowed origins; this was corrected and covered by a regression. No remaining actionable findings were recorded in the scoped agent review.
+
+The production build and runtime-asset check passed. The check finds the historical-case JSON in both relevant API functions, the agent guide in `/api/noria`, and the skill in `/agent/skill`. The skill frontmatter and structure passed the skill validator.
+
+An actual official-client HTTP call to `noria_find_opportunity` requested Arbitrum, $1,000, `earn-fees`, six hours and `WETH USDC`. The [complete dated response](../examples/agent/response.recorded.json) preserves its original hash and source evidence:
+
+- Discovery returned eight candidates at block **504,589,449**.
+- The selected WETH/native-USDC 0.05% pool was `0xc6962004f452be9203591991d15f6b388e09e8d0`.
+- Analysis used block **504,589,469**, received at **02:13:26.625 UTC**, with canonical RPC reconciliation and a complete RPC tick window after the indexed tick set failed validation.
+- Range ticks were **-198240 to -197970**; maximum modeled reference share was **0.049638081%**.
+- Full-report verification in a separate HTTP request returned `hashMatches: true`, `budgetConserved: true` and `expired: false` at capture. The report expired at **02:14:26 UTC** and is now only a recorded example.
+- The oldest USD reference was 716 seconds old and explicitly labeled aged; its timestamp was preserved. Economics remained `not-established`.
+
+This call ran against the local Next.js production server, not a deployed Vercel domain. Domain accessibility and hosting-account limits still require the documented post-deployment checks. It performed no wallet, Aave or Aqua execution and made no model API call.
