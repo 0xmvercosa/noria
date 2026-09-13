@@ -1,0 +1,74 @@
+[
+  {
+    "case": "integrated-eth",
+    "runId": "2026-09-13T03-04-28-574Z",
+    "forkBlock": "504601358",
+    "graphBlock": "504601337",
+    "sourceGitCommit": "17f1a5c490e196959a8abff5ea01b0a59b28c49c",
+    "sourceWorkingTreeDirty": false,
+    "operationCount": 46,
+    "fillRounds": 2,
+    "collateral": {
+      "fundingAsset": "ETH",
+      "collateralAmountUnits": "1000000000000000000",
+      "safetyHFWad": "1400000000000000000",
+      "comfortableHFWad": "2000000000000000000",
+      "financingMode": "aave_collateral_then_borrow_usdc"
+    },
+    "loanUSDCUnits": "1053660889",
+    "eligibleLPsurplusUSDCUnits": "0",
+    "principalAmortizationUSDCUnits": "0",
+    "nextPrincipalUSDCUnits": "1053502661",
+    "strategyGroupNetUSDCUnits": "-273826",
+    "organicDemandProven": false,
+    "allAssertionsPassed": true
+  },
+  {
+    "case": "integrated-usdc",
+    "runId": "2026-09-13T03-05-09-215Z",
+    "forkBlock": "504601516",
+    "graphBlock": "504601498",
+    "sourceGitCommit": "17f1a5c490e196959a8abff5ea01b0a59b28c49c",
+    "sourceWorkingTreeDirty": false,
+    "operationCount": 46,
+    "fillRounds": 2,
+    "collateral": {
+      "fundingAsset": "USDC",
+      "collateralAmountUnits": "2500000000",
+      "safetyHFWad": "1400000000000000000",
+      "comfortableHFWad": "2000000000000000000",
+      "financingMode": "aave_collateral_then_borrow_usdc"
+    },
+    "loanUSDCUnits": "970125000",
+    "eligibleLPsurplusUSDCUnits": "0",
+    "principalAmortizationUSDCUnits": "0",
+    "nextPrincipalUSDCUnits": "969984178",
+    "strategyGroupNetUSDCUnits": "-101562",
+    "organicDemandProven": false,
+    "allAssertionsPassed": true
+  },
+  {
+    "case": "integrated-usdc-turnover",
+    "runId": "2026-09-13T03-07-57-733Z",
+    "forkBlock": "504602174",
+    "graphBlock": "504602154",
+    "sourceGitCommit": "17f1a5c490e196959a8abff5ea01b0a59b28c49c",
+    "sourceWorkingTreeDirty": false,
+    "operationCount": 62,
+    "fillRounds": 10,
+    "collateral": {
+      "fundingAsset": "USDC",
+      "collateralAmountUnits": "2500000000",
+      "safetyHFWad": "1400000000000000000",
+      "comfortableHFWad": "2000000000000000000",
+      "financingMode": "aave_collateral_then_borrow_usdc"
+    },
+    "loanUSDCUnits": "970125000",
+    "eligibleLPsurplusUSDCUnits": "35625",
+    "principalAmortizationUSDCUnits": "17812",
+    "nextPrincipalUSDCUnits": "970142813",
+    "strategyGroupNetUSDCUnits": "-113160",
+    "organicDemandProven": false,
+    "allAssertionsPassed": true
+  }
+]
