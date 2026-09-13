@@ -1,0 +1,16 @@
+[
+  {
+    "pool": "0xc6962004f452be9203591991d15f6b388e09e8d0",
+    "chainId": 42161,
+    "token0": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+    "token1": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+    "feeTierPips": 500,
+    "liquidity": "10000000000000000",
+    "spotUSDCPerWethE6": "3000000000",
+    "blockNumber": "504576001",
+    "blockHash": "0x2222222222222222222222222222222222222222222222222222222222222222",
+    "timestamp": "2026-09-13T00:56:00.000Z",
+    "mode": "synthetic-example",
+    "canonicalFactoryPool": true
+  }
+]
