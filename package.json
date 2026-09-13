@@ -18,10 +18,12 @@
     "mcp": "node --env-file-if-exists=.env.local --import tsx src/mcp/server.ts",
     "validate:arbitrum": "node --env-file-if-exists=.env.local --import tsx scripts/validate-arbitrum.ts",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "agent:call": "node --env-file-if-exists=.env.local --import tsx scripts/call-tool.ts",
+    "check:runtime-assets": "node scripts/check-runtime-assets.mjs"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.17.5",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@noria/aqua": "file:integrations/aqua",
     "@privy-io/react-auth": "3.42.0",
     "@stripe/stripe-js": "1.54.2",
@@ -57,6 +59,6 @@
   },
   "description": "Inspectable liquidity discovery powered by The Graph",
   "engines": {
-    "node": ">=22.9.0"
+    "node": "22.x"
   }
 }

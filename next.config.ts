@@ -12,6 +12,14 @@ const nextConfig: NextConfig = {
     return config;
   },
   outputFileTracingRoot: process.cwd(),
+  outputFileTracingIncludes: {
+    "/api/noria": [
+      "./docs/agent-setup.md",
+      "./data/examples/historical-case.json",
+    ],
+    "/api/mcp": ["./data/examples/historical-case.json"],
+    "/agent/skill": ["./.agents/skills/noria-discovery/SKILL.md"],
+  },
 };
 
 export default nextConfig;

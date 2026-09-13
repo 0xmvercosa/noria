@@ -124,18 +124,13 @@ export default function NoriaApp() {
             <span className={s.miniEyebrow}>SAME DATA. YOUR OWN WORKFLOW.</span>
             <h2 id="agent-heading">Use with your AI agent.</h2>
             <p>
-              Connect the Noria MCP tools and skill to your agent. It can
+              Connect to this site's six read-only MCP tools. Your agent can
               inspect the pool, compare intentions, and explain the evidence in
               your own workflow.
             </p>
-            <code>npm run mcp</code>
+            <code>Streamable HTTP · /api/mcp</code>
           </div>
-          <a
-            className={s.agentLink}
-            href="/api/noria?doc=agent"
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a className={s.agentLink} href="/agent">
             Open agent setup <ArrowUpRight size={17} />
           </a>
         </section>

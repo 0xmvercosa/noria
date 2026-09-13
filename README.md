@@ -66,7 +66,7 @@ The required inventory is assumed already held. Fee-exposure ranges can be outsi
 
 ## Use an AI agent
 
-Connect an MCP client with the repository root as its working directory and the command `npm --silent run mcp`. No model API key is required by Noria. See [agent setup](docs/agent-setup.md) for configuration, accepted inputs and an example prompt.
+Open `/agent` on the deployed site and connect a Streamable HTTP MCP client to its `/api/mcp` URL. The page includes a copyable endpoint, example prompt and downloadable skill. Local clients can use `npm --silent run mcp` from the repository root. No model API key is required by Noria. See [agent setup](docs/agent-setup.md) for configuration and accepted inputs. Hosted report verification accepts the complete report, so it works across serverless instances.
 
 | MCP tool                 | Purpose                                                      |
 | ------------------------ | ------------------------------------------------------------ |
@@ -75,7 +75,7 @@ Connect an MCP client with the repository root as its working directory and the 
 | `noria_find_opportunity` | Discover and analyze candidates, or return no recommendation |
 | `noria_analyze_position` | Analyze a specified network and pool                         |
 | `noria_historical_case`  | Read the dated explanatory simulation                        |
-| `noria_verify_report`    | Check a same-session report's hash, budget and expiry        |
+| `noria_verify_report`    | Check a complete report's hash, budget and expiry            |
 
 You can inspect the tools without an AI client:
 
@@ -116,15 +116,15 @@ Read the [product and integration specification](docs/1inch/integration.md), [re
 
 ## Technology
 
-| Layer                | Tools                                                                                  |
-| -------------------- | -------------------------------------------------------------------------------------- |
-| Web                  | Next.js 15, React 19, TypeScript, CSS modules and SVG                                  |
-| Indexed market data  | The Graph Subgraph MCP; optional Graph gateway                                         |
-| Independent checks   | viem RPC reads, DeFiLlama prices, exact-contract CoinGecko fallback                    |
-| Position math        | Uniswap v3 SDK, SDK Core, Decimal.js and integer quantities                            |
-| Contracts and agents | Solidity 0.8.30, official Aqua/SwapVM SDKs, Aave, Foundry, Zod, HTTP and read-only MCP |
-| Wallet connection    | Privy external wallets, Arbitrum only in Aqua, no public transaction UI                |
-| Verification         | Node test runner with tsx, Playwright, TypeScript, Prettier and GitHub Actions         |
+| Layer                | Tools                                                                                                  |
+| -------------------- | ------------------------------------------------------------------------------------------------------ |
+| Web                  | Next.js 15, React 19, TypeScript, CSS modules and SVG                                                  |
+| Indexed market data  | The Graph Subgraph MCP; optional Graph gateway                                                         |
+| Independent checks   | viem RPC reads, DeFiLlama prices, exact-contract CoinGecko fallback                                    |
+| Position math        | Uniswap v3 SDK, SDK Core, Decimal.js and integer quantities                                            |
+| Contracts and agents | Solidity 0.8.30, official Aqua/SwapVM SDKs, Aave, Foundry, Zod, HTTP and read-only MCP over HTTP/stdio |
+| Wallet connection    | Privy external wallets, Arbitrum only in Aqua, no public transaction UI                                |
+| Verification         | Node test runner with tsx, Playwright, TypeScript, Prettier and GitHub Actions                         |
 
 ## Why The Graph matters
 
@@ -159,3 +159,5 @@ The Graph evidence includes a **420-configuration recorded Arbitrum matrix** and
 | [Hackathon guide](docs/hackathon.md)                                                    | Track fit, demo sequence and submission status                          |
 
 The [Aqua execution module](integrations/aqua) maps the economic range to official SwapVM and independently checks execution. [MIT licensed](LICENSE).
+
+Deployment is configured for Vercel in [`vercel.json`](vercel.json); follow the [deployment checklist](docs/deployment.md). The [Graph-to-Aqua handoff](docs/graph-integration-handoff.md) records the stable APIs and ownership used by the implemented financing/wallet integration.
