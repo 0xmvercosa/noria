@@ -66,7 +66,7 @@ The required inventory is assumed already held. Fee-exposure ranges can be outsi
 
 ## Use an AI agent
 
-Connect an MCP client with the repository root as its working directory and the command `npm --silent run mcp`. No model API key is required by Noria. See [agent setup](docs/agent-setup.md) for configuration, accepted inputs and an example prompt.
+Open `/agent` on the deployed site and connect a Streamable HTTP MCP client to its `/api/mcp` URL. The page includes a copyable endpoint, example prompt and downloadable skill. Local clients can use `npm --silent run mcp` from the repository root. No model API key is required by Noria. See [agent setup](docs/agent-setup.md) for configuration and accepted inputs. Hosted report verification accepts the complete report, so it works across serverless instances.
 
 | MCP tool                 | Purpose                                                      |
 | ------------------------ | ------------------------------------------------------------ |
@@ -75,7 +75,7 @@ Connect an MCP client with the repository root as its working directory and the 
 | `noria_find_opportunity` | Discover and analyze candidates, or return no recommendation |
 | `noria_analyze_position` | Analyze a specified network and pool                         |
 | `noria_historical_case`  | Read the dated explanatory simulation                        |
-| `noria_verify_report`    | Check a same-session report's hash, budget and expiry        |
+| `noria_verify_report`    | Check a complete report's hash, budget and expiry            |
 
 You can inspect the tools without an AI client:
 
@@ -108,7 +108,7 @@ The caller must map the economic range to a supported Aqua strategy, quote prepa
 | Indexed market data  | The Graph Subgraph MCP; optional Graph gateway                                 |
 | Independent checks   | viem RPC reads, DeFiLlama prices, exact-contract CoinGecko fallback            |
 | Position math        | Uniswap v3 SDK, SDK Core, Decimal.js and integer quantities                    |
-| Contracts and agents | Zod validation, versioned HTTP contract, read-only MCP stdio tools             |
+| Contracts and agents | Zod validation, versioned HTTP contract, read-only MCP over HTTP and stdio     |
 | Verification         | Node test runner with tsx, Playwright, TypeScript, Prettier and GitHub Actions |
 
 ## Why The Graph matters
@@ -144,3 +144,5 @@ The published checks include **70 unit tests**, **16 browser scenarios**, a **42
 | [Hackathon guide](docs/hackathon.md)                                                    | Track fit, demo sequence and submission status                         |
 
 The Aave/Aqua module needs its own execution adapter: a Uniswap v3 range is not directly executable on Aqua. [MIT licensed](LICENSE).
+
+Deployment is configured for Vercel in [`vercel.json`](vercel.json); follow the [deployment checklist](docs/deployment.md). The [Graph-to-Aqua handoff](docs/graph-integration-handoff.md) records the stable APIs and ownership for the final financing/wallet integration.

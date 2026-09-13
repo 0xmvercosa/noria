@@ -4,7 +4,17 @@ Your MCP client supplies the language model. Noria supplies six deterministic, r
 
 The external Aqua application uses the separate [versioned HTTP reference API](aqua-integration.md). Its raw-USDC budgets and exact-pair scope do not change the six MCP tools or their documented inputs below.
 
-## Connect the server
+## Connect to a hosted deployment
+
+Open `/agent` on the deployed Noria site and copy its MCP endpoint. Add a remote server to a client that supports **Streamable HTTP**, using `https://YOUR_DOMAIN/api/mcp` with no authentication. The endpoint is public and read-only; Noria does not implement OAuth. Configure a tool timeout of up to 300 seconds for live discovery. The hosting plan and provider limits can end a request earlier.
+
+The endpoint handles initialization, tool listing and calls through the official MCP SDK. It creates a new server for every request and returns JSON responses. GET and DELETE return 405 because there is no persistent SSE stream or server-side session. A browser visiting `/api/mcp` directly is not an MCP connection; use `/agent` for the setup page.
+
+For verification over HTTP, send the **complete unmodified report** as `report`. Do not send only an ID: a Vercel request can run in a different instance. No database is required for these tools.
+
+Download the optional skill from `/agent/skill`. Save it as `noria-discovery/SKILL.md` in your agent's supported skill directory; it is also included at `.agents/skills/noria-discovery/SKILL.md` in this repository. The skill explains how to use the connected tools and interpret their evidence. Installing it does not establish the MCP connection or supply a language model.
+
+## Connect the local server
 
 Install dependencies with `npm ci`. Configure your MCP client to launch:
 
@@ -28,7 +38,7 @@ The default Graph route needs no API key. Copy `.env.example` to `.env.local` on
 | `noria_find_opportunity` | Shared analysis fields, optional `query` | First passing result among up to four ranked attempts, or `report: null` |
 | `noria_analyze_position` | Shared analysis fields and `poolAddress` | Explicit-pool report; capacity or freshness can prevent a review plan    |
 | `noria_historical_case`  | `{}`                                     | Dated simulation with accounting bases; no current-market conclusion     |
-| `noria_verify_report`    | `reportId`                               | Same-session hash, budget conservation and expiry check                  |
+| `noria_verify_report`    | `report` or local-session `reportId`     | Internal hash, budget conservation and expiry check                      |
 
 Shared analysis fields:
 
@@ -56,7 +66,7 @@ For planned conversion, explain that `buy-token0` uses the pool's token1 to acqu
 - Treat `report: null` and `incomplete-history` as legitimate outcomes. Preserve exclusions; do not fill missing data or invent a selected pool.
 - Describe the 1% capacity threshold as a research policy. Keep `economics: not-established` visible; do not translate candidate scores or pool volume into APR, predicted fees or profitable fills.
 - State the inventory assumption and unpriced costs. No wallet has been inspected, and an `earn-fees` range can be outside spot.
-- Use `noria_verify_report` in the session that created the report. It checks internal integrity and expiry, not new provider data, transaction simulation or profitability.
+- Use `noria_verify_report` with the complete report object. Local stdio also supports `reportId` in the session that created it. Verification checks internal consistency and expiry; the unkeyed hash does not authenticate Noria or the source data, and anyone can recompute it. It performs no new provider reads or transaction simulation and does not establish profitability.
 - Keep historical simulation results dated and separate from live opportunities. Aave/Aqua actions are entirely planned and unavailable through these tools.
 
 ## Exercise the protocol without a model
@@ -68,4 +78,21 @@ node --env-file-if-exists=.env.local --import tsx scripts/call-tool.ts noria_fin
 node --env-file-if-exists=.env.local --import tsx scripts/call-tool.ts noria_historical_case '{}'
 ```
 
-The helper starts a server session, calls the requested tool and verifies a returned report in that same session. It then exits. This is a transport demonstration, not an AI agent. Compact CLI output can omit chart points, so it may not reproduce the full report hash from the printed JSON alone.
+The helper uses the official MCP client, calls the requested tool and verifies a returned report before exiting. It retains the complete report, including chart points, for digest reproduction. It exercises the transport without invoking a model.
+
+To exercise the deployed endpoint with the same client:
+
+```sh
+npm run agent:call -- --url https://YOUR_DOMAIN/api/mcp list
+npm run agent:call -- --url https://YOUR_DOMAIN/api/mcp noria_networks '{}'
+npm run agent:call -- --url https://YOUR_DOMAIN/api/mcp noria_historical_case '{}'
+npm run agent:call -- --url https://YOUR_DOMAIN/api/mcp noria_find_opportunity '{"network":"arbitrum","capitalUsd":1000,"intent":"earn-fees","horizonHours":6,"query":"WETH USDC"}'
+```
+
+Errors from tools are returned as MCP `isError` results, not successful analyses. Inputs are checked before calling providers. Requests are limited to 256 KiB; full normal reports fit within that limit. Preserve the original JSON report: changing key order or omitting fields changes its existing digest.
+
+## Client access and origins
+
+Native MCP clients normally do not send an Origin header. Browser calls from the Noria site are accepted; additional browser origins must be explicitly listed in the server-only `NORIA_MCP_ALLOWED_ORIGINS` setting. Requests from unlisted origins are rejected. Origin checks do not authenticate clients or prevent non-browser traffic. Vercel firewall controls and provider quotas govern public usage.
+
+If initialization returns an HTML sign-in page, the deployment is protected by Vercel. Make the intended judging domain publicly reachable before connecting an external agent. Do not paste a hosting access token into a public setup example.
