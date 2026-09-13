@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Noria · Local deployment</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <header>
+        <span class="eyebrow">NORIA / LOCAL DEPLOYMENT</span>
+        <h1>Deploy with Rabby.</h1>
+        <p>
+          Two contracts. Two wallet confirmations. Your private key stays in
+          Rabby.
+        </p>
+      </header>
+      <div class="network">
+        Arbitrum One <span>Chain 42161 · real network fees</span>
+      </div>
+      <section>
+        <h2>1. Connect the deployment wallet</h2>
+        <p id="owner" class="address">Loading deployment configuration…</p>
+        <p id="balance">Reading ETH balance…</p>
+        <p id="wallet">Rabby is not connected.</p>
+        <button id="connect">Connect Rabby</button>
+        <p class="note">
+          Use the browser where Rabby is installed. This local server prepares
+          unsigned contract creations; only your confirmation in Rabby sends a
+          transaction.
+        </p>
+      </section>
+      <ol id="steps" aria-label="Deployment progress">
+        <li id="adapter-step">Inventory adapter <span>Pending</span></li>
+        <li id="factory-step">Position factory <span>Pending</span></li>
+      </ol>
+      <section>
+        <h2 id="stage-title">2. Prepare the first contract</h2>
+        <p id="stage-copy">
+          Check official protocol identities and estimate the deployment fee.
+        </p>
+        <button id="prepare" disabled>Prepare deployment</button>
+        <div id="review" hidden>
+          <h3>Review before signing</h3>
+          <dl id="summary"></dl>
+          <p class="note">
+            The fee is a current estimate with a 20% gas-limit margin. Rabby
+            shows the final network fee. No collateral or USDC is transferred by
+            these deployments.
+          </p>
+          <details>
+            <summary>Constructor parameters and exact unsigned data</summary>
+            <pre id="payload"></pre>
+          </details>
+          <button id="sign" disabled>Confirm deployment in Rabby</button
+          ><button id="cancel" class="secondary">Cancel unsigned review</button>
+        </div>
+        <div id="recovery" hidden>
+          <h3>Saved operation — check before continuing</h3>
+          <p>
+            The signing request was saved before opening Rabby. If it was
+            submitted, paste its transaction hash from Rabby Activity. Verify
+            the receipt before repeating anything.
+          </p>
+          <label
+            >Arbitrum transaction hash<input
+              id="hash"
+              placeholder="0x…"
+              autocomplete="off"
+              spellcheck="false" /></label
+          ><button id="verify">Verify saved deployment</button
+          ><label class="ack"
+            ><input type="checkbox" id="ack" />I inspected Rabby Activity and
+            Arbiscan. This deployment is not pending or successfully
+            mined.</label
+          ><button id="reset" class="secondary" disabled>
+            Clear after my inspection
+          </button>
+        </div>
+      </section>
+      <section id="complete" hidden>
+        <h2>Contracts verified</h2>
+        <p>
+          Copy this server-side environment variable into Vercel, then redeploy
+          Noria:
+        </p>
+        <pre id="env"></pre>
+        <p>
+          No factory admin key is required. Each user owns their own position.
+          Publishing these contracts does not launch a user position or admit a
+          strategy to aggregator routing.
+        </p>
+      </section>
+      <section>
+        <h2>Deployment evidence</h2>
+        <div id="receipts"></div>
+        <a href="/report.json" download="noria-aqua-public-deployment.json"
+          >Download deployment report</a
+        >
+        <p id="report-path" class="note"></p>
+        <p class="note">
+          Receipt verification proves Arbitrum inclusion at the observed block,
+          not Ethereum settlement finality. Keep this terminal open until both
+          receipts have been checked.
+        </p>
+      </section>
+      <aside id="feedback" role="status" aria-live="polite">
+        <span id="spinner" hidden></span
+        ><span id="message">Loading local configuration…</span>
+      </aside>
+    </main>
+  </body>
+</html>
