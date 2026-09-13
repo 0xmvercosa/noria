@@ -37,7 +37,7 @@ export default function NoriaApp() {
             Workspace
           </a>
           <a href="#historical-case">Historical case</a>
-          <a href="/aqua">Aqua handoff</a>
+          <a href="/aqua">Aqua positions</a>
           <a href="#agent-toolkit">
             For agents <ArrowUpRight size={12} />
           </a>
@@ -145,10 +145,11 @@ export default function NoriaApp() {
           id="roadmap"
           aria-label="Product roadmap"
         >
-          <span>Planned next</span>
+          <span>Noria Aqua</span>
           <p>
-            Aave borrowing and 1inch Aqua execution are planned. Noria Discover
-            currently provides read-only discovery and position analysis.
+            Open Aqua positions to plan Aave collateral financing and rehearse a
+            WETH/USDC strategy on a local Arbitrum fork. Noria Discover provides
+            the market research used by that flow.
           </p>
         </section>
 
