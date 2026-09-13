@@ -14,3 +14,6 @@ integrations/aqua/contracts/out/
 integrations/aqua/contracts/cache/
 
 docs/1inch/evidence/
+
+# Preserve protocol evidence bytes and its SHA-256 digest.
+docs/privy/evidence/*.json

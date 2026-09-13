@@ -7,7 +7,23 @@
 - Correct receipt inclusion, chain, sender, destination, calldata and value. Successful approval/supply/withdrawal also requires the matching events from the official contracts. Similar-looking events or a successful but unrelated receipt cannot establish a financial effect.
 - Request size limits, rejection of extra executable fields, sanitized errors and read-only server behavior.
 - Review expiry and request binding. Reloaded history retains hashes and discards untrusted saved success labels. Approval/funding completion is not mislabeled as a qualifying flow.
-- Anvil execution of the actual official Aave and USDC contracts, using the same preparation and verification service as the web application. See the protocol-only evidence once recorded below.
+- Anvil execution of the actual official Aave and USDC contracts, using the same preparation and verification service as the web application. See the [recorded protocol-only evidence](evidence/README.md).
+
+## Recorded checks
+
+Validated from clean source `5fecb04b7521086e91a979555e38e6383bebf619`:
+
+| Check                                                       | Result                                                                          |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Root unit tests                                             | 123 passed, including 35 Privy policy/client tests                              |
+| Existing Aqua TypeScript                                    | 37 passed                                                                       |
+| Existing Aqua Solidity                                      | 51 passed, including the existing fuzz properties                               |
+| Production browser scenarios                                | 27 passed; unconfigured Privy, mobile and Aqua handoff included                 |
+| TypeScript, formatting, production build and runtime assets | Passed                                                                          |
+| Official Aave/USDC protocol fork                            | Five operations verified at fork block 504611699; zero final debt and allowance |
+| Real Privy session and financial action                     | Pending App ID, allowed origins and a user-confirmed transaction                |
+
+Production build retains optional upstream warnings for the unused Farcaster Solana adapter and viem Tempo dynamic dependency. Noria configures Ethereum wallets and Arbitrum only for this reserve. These warnings do not substitute for the pending configured wallet acceptance test.
 
 ## Protocol-only reproduction
 
