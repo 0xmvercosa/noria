@@ -1,0 +1,13 @@
+.equivalent {
+  font-size: 0.85em;
+  font-weight: 400;
+  color: #a7b5aa;
+  overflow-wrap: anywhere;
+}
+.note {
+  margin-block: 10px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #a7b5aa;
+  overflow-wrap: anywhere;
+}

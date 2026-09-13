@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import type { ReactNode } from "react";
 import { NoriaWalletProvider } from "../components/NoriaWalletProvider";
+import { EthUsdProvider } from "../components/EthUsd";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,7 +18,9 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body>
-        <NoriaWalletProvider nonce={nonce}>{children}</NoriaWalletProvider>
+        <EthUsdProvider>
+          <NoriaWalletProvider nonce={nonce}>{children}</NoriaWalletProvider>
+        </EthUsdProvider>
       </body>
     </html>
   );
