@@ -4,6 +4,8 @@
 
 **Discover liquidity. Coordinate capital.**
 
+Development, issues and pull requests belong to [rafaelzochling/noria](https://github.com/rafaelzochling/noria). The [0xmvercosa/noria fork](https://github.com/0xmvercosa/noria) supplies the existing Vercel deployment. After merging upstream, [synchronize the deployment fork](docs/deployment.md#repository-and-deployment-fork); GitHub forks do not update automatically.
+
 Noria connects a Privy wallet, The Graph's market research and an owner-controlled Aqua liquidity position. The intended journey is **fund in euros → hold USDC → review a pool and range → supply collateral to Aave → borrow USDC → provide WETH/USDC liquidity through Aqua/SwapVM → repay debt and reinvest eligible surplus → close and withdraw**. Each capital-moving step requires a wallet confirmation. A separate Aave savings route lets users earn variable supply interest without opening the leveraged Aqua position.
 
 People and AI agents can also use the research on its own: choose a network, capital and objective, then inspect the suggested pool, range, inventory, source evidence and capacity—or the reasons no candidate qualifies.
@@ -57,7 +59,7 @@ ETH/WETH amounts include adjacent [USD equivalents](docs/usd-equivalents.md) acr
 Use **Node.js 22.9 or later**; Node.js 22 LTS is recommended.
 
 ```sh
-git clone https://github.com/0xmvercosa/noria.git
+git clone https://github.com/rafaelzochling/noria.git
 cd noria
 npm ci
 npm run dev
