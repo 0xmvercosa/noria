@@ -259,6 +259,21 @@ test("Aqua HTTP returns structured refusal, validation, size, JSON and provider 
   assert.equal(failed.status, 503);
   assert.equal(failed.headers.get("retry-after"), "15");
   assert.equal((await failed.json()).message, "Unavailable [provider]");
+  for (const providerFailure of [
+    () => {
+      AquaRequestSchema.parse({});
+    },
+    () => {
+      JSON.parse("{");
+    },
+  ]) {
+    const invalidSource = await createAquaPostHandler(async () => {
+      providerFailure();
+      throw new Error("Unreachable");
+    })(request(JSON.stringify(AQUA_REQUEST_EXAMPLE)));
+    assert.equal(invalidSource.status, 503);
+    assert.equal((await invalidSource.json()).code, "source-unavailable");
+  }
 });
 
 test("published Aqua examples and OpenAPI preserve exact asset and raw-unit boundaries", () => {

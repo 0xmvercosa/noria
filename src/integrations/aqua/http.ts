@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AQUA_SCHEMA_VERSION } from "./contract";
+import { AQUA_SCHEMA_VERSION, AquaRequestSchema } from "./contract";
 import { recommendForAqua } from "./service";
 
 export const AQUA_NO_STORE = { "Cache-Control": "no-store" };
@@ -12,6 +12,7 @@ export function createAquaPostHandler(recommend = recommendForAqua) {
         status,
         headers: { ...AQUA_NO_STORE, ...headers },
       });
+    let inputValidated = false;
     try {
       if (
         request.headers
@@ -39,9 +40,13 @@ export function createAquaPostHandler(recommend = recommendForAqua) {
           },
           413,
         );
-      return respond(await recommend(JSON.parse(text)), 200);
+      const input = AquaRequestSchema.parse(JSON.parse(text));
+      inputValidated = true;
+      return respond(await recommend(input), 200);
     } catch (error) {
-      if (error instanceof z.ZodError)
+      // Provider payloads can also fail Zod/JSON parsing. Those are source
+      // failures, not invalid caller intent, and must retain retry semantics.
+      if (!inputValidated && error instanceof z.ZodError)
         return respond(
           {
             schemaVersion: AQUA_SCHEMA_VERSION,
@@ -54,7 +59,7 @@ export function createAquaPostHandler(recommend = recommendForAqua) {
           },
           400,
         );
-      if (error instanceof SyntaxError)
+      if (!inputValidated && error instanceof SyntaxError)
         return respond(
           {
             schemaVersion: AQUA_SCHEMA_VERSION,
