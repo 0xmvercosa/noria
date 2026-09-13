@@ -44,6 +44,7 @@
   border-radius: 12px;
   padding: 28px;
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 .panel h2 {
   font-size: 23px;
@@ -69,9 +70,12 @@
   color: #eef3ec;
   padding: 12px;
   width: 100%;
+  min-width: 0;
+  min-height: 44px;
 }
 .panel button {
   width: 100%;
+  min-height: 44px;
   margin-top: 20px;
   border: 0;
   border-radius: 6px;
@@ -80,6 +84,23 @@
   font-size: 13px;
   font-weight: 650;
   padding: 14px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.panel input[type="checkbox"] {
+  width: 24px;
+  min-height: 24px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  accent-color: #d3f78b;
+}
+.panel label:has(input[type="checkbox"]) {
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: start;
+  min-height: 44px;
+  padding-block: 10px;
+  cursor: pointer;
 }
 .panel .secondary {
   background: transparent;
@@ -113,17 +134,28 @@
 }
 .range i {
   flex: 1;
+  min-width: 24px;
   height: 5px;
   background: linear-gradient(90deg, #d3f78b, #78d9c1);
   border-radius: 2px;
 }
+.range > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.range > span:last-child {
+  text-align: right;
+}
 .metrics {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
   padding: 20px 0;
   border-top: 1px solid #2a352d;
   border-bottom: 1px solid #2a352d;
+}
+.metrics > div {
+  min-width: 0;
 }
 .metrics dt {
   font-size: 11px;
@@ -136,7 +168,11 @@
 }
 .panel .poolLink,
 .contract a {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   color: #d3f78b;
   margin-top: 10px;
   font-size: 12px;
@@ -151,6 +187,9 @@
   cursor: pointer;
   font-size: 12px;
   color: #b4c1b8;
+  min-height: 44px;
+  padding-block: 12px;
+  overflow-wrap: anywhere;
 }
 .panel pre {
   white-space: pre-wrap;
@@ -168,19 +207,22 @@
 }
 @media (max-width: 760px) {
   .main {
-    padding: 40px 20px;
+    padding: 32px max(16px, env(safe-area-inset-right))
+      max(32px, env(safe-area-inset-bottom))
+      max(16px, env(safe-area-inset-left));
   }
   .workspace {
     grid-template-columns: 1fr;
   }
   .panel {
-    padding: 22px;
+    padding: 20px;
   }
   .hero h1 {
     letter-spacing: -1.5px;
   }
   .range {
     font-size: 20px;
+    gap: 10px;
   }
 }
 
@@ -236,7 +278,7 @@
 }
 .fieldRow {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 15px;
 }
 .fieldRow > div {
@@ -440,6 +482,9 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  min-height: 44px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   padding: 11px 15px;
   margin-top: 10px;
   border: 1px solid #516047;
@@ -452,6 +497,7 @@
 }
 .wallet {
   position: relative;
+  min-width: 0;
   font-size: 12px;
 }
 .walletButton,
@@ -460,6 +506,8 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+  min-height: 44px;
+  max-width: 100%;
   border: 1px solid #46543d;
   border-radius: 6px;
   padding: 9px 12px;
@@ -467,7 +515,9 @@
   background: #182016;
   font-size: 12px;
   line-height: 1.5;
-  white-space: nowrap;
+  white-space: normal;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 .walletUnavailable {
   color: #a3afa7;
@@ -487,13 +537,21 @@
   height: 6px;
   background: #d3f78b;
   border-radius: 50%;
+  flex-shrink: 0;
 }
 .walletDropdown {
   position: absolute;
-  z-index: 30;
+  z-index: 20;
   right: 0;
   top: calc(100% + 10px);
   width: min(290px, calc(100vw - 40px));
+  box-sizing: border-box;
+  max-height: min(560px, calc(100vh - 120px));
+  max-height: min(560px, calc(100dvh - 120px - env(safe-area-inset-bottom)));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
+  scrollbar-gutter: stable;
   background: #141b17;
   border: 1px solid #35463b;
   border-radius: 8px;
@@ -518,8 +576,12 @@
   color: #b4c1b8;
 }
 .walletDropdown button {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
+  min-height: 44px;
   padding: 9px 12px;
   margin-top: 12px;
   border: 1px solid #35463b;
@@ -527,11 +589,21 @@
   background: #1c271a;
   color: #d3f78b;
   font-size: 12px;
+  white-space: normal;
+}
+.walletDropdown a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding-block: 10px;
+  color: #d3f78b;
+  overflow-wrap: anywhere;
 }
 .wallet .walletError {
   position: absolute;
   right: 0;
-  z-index: 25;
+  z-index: 20;
+  top: calc(100% + 10px);
   width: min(290px, calc(100vw - 40px));
   padding: 12px;
   background: #211f17;
@@ -540,8 +612,15 @@
   color: #e1d4b4;
   font-size: 11px;
   overflow-wrap: anywhere;
+  box-sizing: border-box;
+  max-height: min(320px, calc(100vh - 120px));
+  max-height: min(320px, calc(100dvh - 120px - env(safe-area-inset-bottom)));
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .walletError button {
+  min-height: 44px;
+  max-width: 100%;
   padding: 8px 12px;
   margin-top: 10px;
   border: 1px solid #665738;
@@ -575,6 +654,13 @@
   }
 }
 @media (max-width: 1000px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .panel input,
+  .panel select {
+    font-size: 16px;
+  }
   .networkBadge {
     display: none;
   }
@@ -622,6 +708,42 @@
   .simulation h2 {
     font-size: 20px;
   }
+  .walletDropdown,
+  .wallet .walletError {
+    position: fixed;
+    top: auto;
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: max(12px, env(safe-area-inset-left));
+    width: auto;
+    max-width: 360px;
+    margin-inline: auto;
+    max-height: 70vh;
+    max-height: min(
+      70dvh,
+      calc(
+        100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+      )
+    );
+  }
+}
+@media (max-width: 600px) {
+  .fieldRow {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .fieldRow label {
+    min-height: 0;
+  }
+}
+@media (max-width: 480px) {
+  .panel {
+    padding: 18px;
+  }
+  .metrics {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
 }
 @media (max-width: 390px) {
   .header > a svg {
@@ -636,8 +758,5 @@
   }
   .metrics {
     gap: 18px;
-  }
-  .metrics dd {
-    font-size: 14px;
   }
 }

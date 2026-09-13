@@ -4,6 +4,8 @@
   border: 1px solid #516047;
   border-radius: 8px;
   background: #0d1210;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .sections {
   display: flex;
@@ -12,6 +14,12 @@
   margin-bottom: 18px;
   color: #d3f78b;
   font-size: 13px;
+}
+.sections a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-block: 10px;
 }
 .sections + p {
   color: #b4c1b8;
@@ -22,12 +30,18 @@
 }
 .feedback {
   position: fixed;
-  z-index: 30;
-  right: 20px;
-  bottom: 20px;
-  max-width: min(520px, calc(100vw - 40px));
+  z-index: 10;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  max-width: min(
+    520px,
+    calc(100vw - 40px - env(safe-area-inset-left) - env(safe-area-inset-right))
+  );
   max-height: 45vh;
+  max-height: 45dvh;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
   padding: 16px 20px;
   border: 1px solid #516047;
   border-radius: 8px;
@@ -35,6 +49,15 @@
   box-shadow: 0 8px 32px #0008;
   font-size: 13px;
   line-height: 1.6;
+}
+.feedback button {
+  min-height: 44px;
+  padding: 10px 14px;
+  margin-top: 12px;
+  border: 1px solid #516047;
+  border-radius: 6px;
+  background: transparent;
+  color: #d3f78b;
 }
 .review > strong {
   color: #d3f78b;
@@ -90,6 +113,11 @@
   color: #b4c1b8;
 }
 .operations a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  max-width: 100%;
+  padding-block: 10px;
   font-size: 11px;
   overflow-wrap: anywhere;
   color: #78d9c1;
@@ -99,6 +127,13 @@
   flex-shrink: 0;
 }
 @media (max-width: 760px) {
+  .feedback {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    max-width: 100%;
+    margin-bottom: 24px;
+  }
   .operations li {
     flex-direction: column;
     align-items: stretch;
@@ -106,5 +141,10 @@
   }
   .operations button {
     max-width: none;
+  }
+}
+@media (max-width: 480px) {
+  .review {
+    padding: 16px;
   }
 }
