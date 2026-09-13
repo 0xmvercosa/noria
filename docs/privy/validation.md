@@ -25,6 +25,14 @@ Validated from clean source `5fecb04b7521086e91a979555e38e6383bebf619`:
 
 Production build retains optional upstream warnings for the unused Farcaster Solana adapter and viem Tempo dynamic dependency. Noria configures Ethereum wallets and Arbitrum only for this reserve. These warnings do not substitute for the pending configured wallet acceptance test.
 
+## Configured startup check — 13 September 2026
+
+The public App ID was configured in Vercel Production, Preview and Development, and in the ignored local environment. Production was rebuilt without the existing build cache from commit `483592213747218cfa480f2758e4ada5452c6792`. Deployment `FY3nE3SRhEFXuH5NiaHEQMsFc7uo` reached **Ready**, and [the production reserve](https://noria-blue.vercel.app/reserve) enabled **Create or open my Privy wallet** and opened the actual Privy email/wallet login modal. No authenticated session, funded wallet or financial transaction was used for this check. Preview domains and dashboard origin settings were not independently verified.
+
+The configured local build initially remained at **Loading wallet**. Follow-up commit `48f89360d0f632539e81e1ae42cce910bc9ff816` separates login availability from wallet initialization: unauthenticated users wait for Privy authentication readiness; authenticated users still wait for wallet readiness and any in-progress creation. After rebuilding, the local page enabled login and opened the actual modal; deposit review stayed disabled without a wallet. The configured production build and local follow-up build both passed TypeScript/build checks. An independent review found no newly reachable financial action before an authenticated embedded wallet is ready.
+
+These manual startup checks supplement the original automated checks above. They do not establish wallet creation, transaction signing or financial-flow eligibility.
+
 ## Protocol-only reproduction
 
 ```sh
@@ -49,6 +57,6 @@ The submission lifecycle also needs to distinguish explicit wallet cancellation 
 
 ## Evidence still required
 
-A real `NEXT_PUBLIC_PRIVY_APP_ID`, configured allowed origins and a user-controlled funded Privy wallet are needed to record the final session. The embedded login/create/fund/sign UI has not been accepted against a real Privy app in this environment. Browser fixtures cover the unconfigured page, mobile layout, API refusal and amount handoff only; they do not emulate a funded wallet or count toward eligibility.
+A user-controlled authenticated and funded Privy wallet is still needed to record the final session. The real login modal has been checked on the configured production origin; embedded-wallet creation, funding and signing remain unverified. Browser fixtures cover the unconfigured page, mobile layout, API refusal and amount handoff only; they do not emulate a funded wallet or count toward eligibility.
 
 The final submission must include at least one verified supply or withdrawal through the Privy wallet, its report and the demo showing Privy's involvement. No cards, onramp mock or protocol fork is used to fill that gap.
