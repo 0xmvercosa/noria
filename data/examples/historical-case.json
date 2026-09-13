@@ -1,0 +1,37 @@
+{
+  "id": "wbtc-weth-2026-08-26-6h",
+  "classification": "historical-simulation",
+  "title": "A range that waited, returned and earned",
+  "chain": "Ethereum",
+  "pool": "0x4585fe77225b41b697c938b018e2ac67ac5a20c0",
+  "start": "2026-08-26T00:05:00+00:00",
+  "end": "2026-08-26T06:05:00+00:00",
+  "nominalCapitalUsd": 10000,
+  "deployedUsd": 9952.644348144531,
+  "entryWalletUsd": 9952.651756349414,
+  "pnlFromDecisionUsd": 43.799522328230985,
+  "tickLower": 264770,
+  "tickUpper": 264950,
+  "lowerPrice": 31.494889932498836,
+  "upperPrice": 32.06690201644097,
+  "pnlUsd": 91.14776597881583,
+  "feesUsd": 1.3910223933055694,
+  "costsUsd": 0.3509479141030149,
+  "excessOriginalHoldUsd": 1.040074479202985,
+  "excessPreparedHoldUsd": 1.0400744792020111,
+  "activePercent": 37.666666666666664,
+  "maximumSharePercent": 0.5563345647644712,
+  "sourceFiles": [
+    {
+      "path": "data/examples/historical-ledger.json",
+      "sha256": "2fbd0142d0f4f92d43d640c3544f0b1e85d7e32d347c0dbdd47bb8e3f4439466"
+    }
+  ],
+  "explanation": "A WETH-funded position began above its range, entered after 2h 12m 47s and received fees in 74 transactions. Most of its USD gain came from token exposure; the incremental LP contribution was about $1.04.",
+  "limitations": [
+    "Dated historical simulation under observed flow; not an onchain trade by this application.",
+    "The positive case is an explanatory case study, not evidence of predictive selection or a current recommendation.",
+    "The complete market archive is not included. A curated retained-token accounting ledger is included for arithmetic checks; it cannot reproduce swap-level execution.",
+    "Gas is estimated and charged externally. Token marks are not guaranteed exit quotes."
+  ]
+}
