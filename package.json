@@ -15,10 +15,12 @@
     "mcp": "node --env-file-if-exists=.env.local --import tsx src/mcp/server.ts",
     "validate:arbitrum": "node --env-file-if-exists=.env.local --import tsx scripts/validate-arbitrum.ts",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "agent:call": "node --env-file-if-exists=.env.local --import tsx scripts/call-tool.ts",
+    "check:runtime-assets": "node scripts/check-runtime-assets.mjs"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.17.5",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@uniswap/sdk-core": "^7.19.2",
     "@uniswap/v3-sdk": "^3.31.3",
     "decimal.js": "^10.6.0",
@@ -36,9 +38,9 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "prettier": "3.6.2",
     "tsx": "4.23.0",
-    "typescript": "^5",
-    "prettier": "3.6.2"
+    "typescript": "^5"
   },
   "packageManager": "npm@10.8.2",
   "overrides": {
@@ -46,6 +48,6 @@
   },
   "description": "Inspectable liquidity discovery powered by The Graph",
   "engines": {
-    "node": ">=22.9.0"
+    "node": "22.x"
   }
 }
