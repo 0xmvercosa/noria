@@ -1063,7 +1063,7 @@ export function AquaWorkbench() {
             </p>
             <a
               className={s.poolLink}
-              href="https://github.com/0xmvercosa/noria/blob/main/docs/1inch/rehearsal.md"
+              href="https://github.com/rafaelzochling/noria/blob/main/docs/1inch/rehearsal.md"
               target="_blank"
               rel="noreferrer"
             >

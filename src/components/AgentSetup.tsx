@@ -102,7 +102,7 @@ export function AgentSetup() {
             <a href="/api/noria?doc=agent">
               Full setup &amp; tool reference <ArrowUpRight size={14} />
             </a>
-            <a href="https://github.com/0xmvercosa/noria">
+            <a href="https://github.com/rafaelzochling/noria">
               Repository <ArrowUpRight size={14} />
             </a>
           </div>
