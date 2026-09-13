@@ -188,9 +188,7 @@ test("collateral and HF inputs produce a position request, preserve asymmetric i
   expect(requests[0]).not.toHaveProperty("funding");
   expect(directResearchCalls).toBe(0);
   await expect(page.getByText("1,000 USDC", { exact: true })).toBeVisible();
-  await expect(
-    page.getByText("0.024445944561000366", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText(/^0\.024445944561000366 WETH/)).toBeVisible();
   await expect(page.getByText("938.263537", { exact: true })).toBeVisible();
   await expect(
     page.getByText("80.35% historical coverage", { exact: true }),
@@ -372,9 +370,7 @@ test("populated Aqua plans keep long inventory values and source evidence inside
   ).toBeVisible();
   for (const width of [320, 390, 768]) {
     await page.setViewportSize({ width, height: 844 });
-    await expect(
-      page.getByText("0.024445944561000366", { exact: true }),
-    ).toBeVisible();
+    await expect(page.getByText(/^0\.024445944561000366 WETH/)).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Download complete plan JSON" }),
     ).toBeVisible();

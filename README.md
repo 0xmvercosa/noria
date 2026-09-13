@@ -50,6 +50,8 @@ The [financial journey review](docs/financial-journey.md) maps each user action 
 
 All product pages share responsive navigation to Discover pools, Aqua positions, Wallet & funds, Buy with euros and For agents. The mobile Menu includes every destination, while the Privy wallet remains accessible in the header. See [responsive navigation](docs/responsive-navigation.md) for the integration map, viewport checks and validation limits.
 
+ETH/WETH amounts include adjacent [USD equivalents](docs/usd-equivalents.md) across balances, inputs, reviews and fees. Quotes retain their source time; missing prices remain explicit, and recorded plans keep their original valuation basis.
+
 ## Run locally
 
 Use **Node.js 22.9 or later**; Node.js 22 LTS is recommended.
