@@ -4,7 +4,7 @@ Noria is being prepared for **The Graph — Best AI Tooling or AI Use Case with 
 
 | Review item                         | Evidence or status                                                                                           |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Public repository                   | [github.com/0xmvercosa/noria](https://github.com/0xmvercosa/noria)                                           |
+| Public repository                   | [github.com/rafaelzochling/noria](https://github.com/rafaelzochling/noria)                                   |
 | Working scope                       | Full web interface, six MCP tools and a focused Arbitrum WETH/native-USDC reference API                      |
 | The Graph contribution              | Required pool discovery/history, indexed ticks, source metadata and reusable agent tools                     |
 | Local reproduction                  | [README](../README.md), [agent setup](agent-setup.md), [validation](validation.md)                           |

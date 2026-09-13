@@ -22,6 +22,27 @@ Deploy this repository as a Next.js application from its root. The Graph demo, A
 
 The repository includes `vercel.json`, a Node 22 runtime declaration and explicit tracing of the files needed by API handlers. Import the GitHub repository into Vercel, select Next.js and leave Root Directory at the repository root. Use Node.js 22.x, `npm ci` and `npm run build`; Output Directory stays at the framework default. The final custom domain is supplied by the project owner. Before giving judges the URL, verify access in a signed-out browser and ensure the production domain is not behind deployment protection. An immutable Vercel deployment URL can require authentication even when its build is successful.
 
+## Repository and deployment fork
+
+All development, issues, code review and merges stay in [rafaelzochling/noria](https://github.com/rafaelzochling/noria). Keep the local `origin` remote pointed there. The existing Vercel project `dev0xmvercosa/noria` is connected to the public [0xmvercosa/noria fork](https://github.com/0xmvercosa/noria), production branch `main`, and continues to serve [noria-blue.vercel.app](https://noria-blue.vercel.app). The fork is a deployment mirror; do not develop independent changes there.
+
+After the upstream pull request passes checks and is merged, a maintainer with write access to the fork runs:
+
+```sh
+gh repo sync 0xmvercosa/noria --source rafaelzochling/noria --branch main
+```
+
+This is an explicit publishing step, not a scheduled synchronization. A GitHub fork does not follow upstream automatically. The command performs a fast-forward and preserves the upstream commits; **do not add `--force`**. If the branches diverge, stop and inspect the extra commits rather than overwriting them. Verify that the following commands return the same SHA:
+
+```sh
+gh api repos/rafaelzochling/noria/commits/main --jq .sha
+gh api repos/0xmvercosa/noria/commits/main --jq .sha
+```
+
+An updated fork `main` triggers the connected Vercel project. Confirm the deployment is **Ready**, targets **Production**, and reports that SHA before treating the site as updated. Syncing an already-current branch does not create a new commit or guarantee a new build; use Vercel's deployment controls if a build must be started after connecting the repository. Environment variables and Privy settings belong to the existing services, not to the fork; credentials must never be committed or copied into Git.
+
+This arrangement satisfies Vercel's [personal-repository owner requirement](https://vercel.com/docs/git/vercel-for-github#personal-account-repositories) while preserving Rafael's repository as the source. See the official [fork synchronization command](https://cli.github.com/manual/gh_repo_sync) and [Vercel Git integration](https://vercel.com/docs/git/vercel-for-github).
+
 ## Environment and provider access
 
 The default Graph route connects to The Graph Subgraph MCP without an application-level Graph API key. For the optional gateway, configure `GRAPH_API_KEY` as a server-side secret. Optional RPC overrides are `ETHEREUM_RPC_URL`, `BASE_RPC_URL`, `ARBITRUM_RPC_URL` and `UNICHAIN_RPC_URL`. Blank RPC overrides fall back to the registry defaults.

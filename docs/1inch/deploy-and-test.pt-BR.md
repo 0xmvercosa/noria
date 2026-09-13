@@ -255,9 +255,17 @@ Se o explorer solicitar hexadecimal sem prefixo, remova apenas o `0x` inicial. N
 
 Na página local concluída, copie a linha `NORIA_AQUA_FACTORY_ADDRESS=0x...`. Abra o projeto Noria na Vercel, **Settings → Environment Variables**:
 
-O repositório foi transferido para `rafaelzochling/noria`, e o Rafael fará a publicação do frontend no ambiente dele. Entregue a ele os dois endereços verificados e o relatório de deployment. O deploy dos contratos continua sendo feito pela Rabby indicada neste guia; não depende da hospedagem do site.
+O código principal, os PRs e os merges continuam em `rafaelzochling/noria`. O projeto existente `dev0xmvercosa/noria` na Vercel está conectado ao fork `0xmvercosa/noria`, branch `main`, e mantém o endereço `https://noria-blue.vercel.app`. O fork serve para publicação; não faça alterações independentes nele. O deploy dos contratos continua sendo feito pela Rabby indicada neste guia; não depende da hospedagem do site.
 
-A Vercel exige que quem conecta um repositório de uma conta pessoal seja seu **proprietário**. Ser colaborador com escrita não basta, mesmo com a integração instalada. Essa é a causa da conexão antiga quebrada, segundo a [documentação oficial](https://vercel.com/docs/git/vercel-for-github#personal-account-repositories). Não é necessário transferir o repositório de volta, compartilhar senhas ou mudar de plano. O Rafael pode configurar a integração como proprietário no ambiente dele.
+A Vercel exige que quem conecta um repositório de uma conta pessoal seja seu **proprietário**. Ser colaborador com escrita não basta, segundo a [documentação oficial](https://vercel.com/docs/git/vercel-for-github#personal-account-repositories). O fork permite usar a integração da sua conta sem transferir o repositório do Rafael de volta.
+
+Depois de cada merge aprovado no repositório do Rafael, atualize o fork para publicar as alterações:
+
+```sh
+gh repo sync 0xmvercosa/noria --source rafaelzochling/noria --branch main
+```
+
+Essa sincronização é manual: o fork não acompanha a origem automaticamente. Não use `--force`. Confira que a Vercel terminou o deployment de **Production** com estado **Ready** e o mesmo commit da origem. Veja [publicação pelo fork](../deployment.md#repository-and-deployment-fork) para conferir os hashes e resolver divergências.
 
 | Nome                         | Valor / orientação                                                                               |
 | ---------------------------- | ------------------------------------------------------------------------------------------------ |
@@ -268,11 +276,11 @@ A Vercel exige que quem conecta um repositório de uma conta pessoal seja seu **
 
 O responsável pelo frontend deve salvar no ambiente **Production** e publicar o código atual. `NEXT_PUBLIC_PRIVY_APP_ID` é incorporado no build; mudar apenas a variável sem novo build não atualiza o cliente. Nenhuma seed, private key, senha Rabby ou signer deve ser colocada na Vercel.
 
-No painel Privy, preserve o plano gratuito e Google login habilitado. Autorize a origem exata do novo site publicado pelo Rafael e seu callback `/auth/callback`. A configuração anterior era `https://noria-blue.vercel.app` e `https://noria-blue.vercel.app/auth/callback`; ela não autoriza automaticamente um domínio novo. Para testar localmente, adicione também a origem de desenvolvimento `http://127.0.0.1:3100` e seu callback correspondente conforme o painel. O assistente Rabby na porta `3210` não utiliza Privy.
+No painel Privy, preserve o plano gratuito e Google login habilitado. Como o domínio continua o mesmo, mantenha a origem `https://noria-blue.vercel.app` e o callback `https://noria-blue.vercel.app/auth/callback` autorizados. Se publicar outro domínio, autorize também a nova origem exata e seu callback; a troca de repositório não faz isso automaticamente. Para testar localmente, adicione também a origem de desenvolvimento `http://127.0.0.1:3100` e seu callback correspondente conforme o painel. O assistente Rabby na porta `3210` não utiliza Privy.
 
 O app já tem CSP para os fluxos Privy; veja [setup](../privy/setup.md) e [configuração de segurança](../../next.config.ts). Se mudar provedor ou domínio, confira a [orientação oficial de CSP](https://docs.privy.io/security/implementation-guide/content-security-policy) e o [checklist oficial](https://docs.privy.io/security/implementation-guide/security-checklist). Não libere domínios arbitrários nem desative CSP para esconder um erro.
 
-Abra a rota `/aqua` no domínio publicado pelo Rafael, conecte a carteira **Privy do usuário** e confira que a indicação `deployment-required` desapareceu. Uma carteira sem posição pode corretamente ter `position: null`; isso não é erro.
+Depois de configurar a fábrica real e publicar o frontend, abra `https://noria-blue.vercel.app/aqua`, conecte a carteira **Privy do usuário** e confira que a indicação `deployment-required` desapareceu. Uma carteira sem posição pode corretamente ter `position: null`; isso não é erro.
 
 ## 12. Testar o fluxo público com Privy
 
