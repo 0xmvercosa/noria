@@ -1,5 +1,7 @@
 # Deploy the judging demonstration
 
+For contract deployment with Rabby, exact commands and the full terminal/UI test sequence, see the [Portuguese walkthrough](1inch/deploy-and-test.pt-BR.md) and [contract readiness review](1inch/contract-review.md).
+
 Deploy this repository as a Next.js application from its root. The Graph demo, Aqua collateral planning interface and Privy reserve are delivered by the same build; a custom domain does not require a separate application or code fork.
 
 | Setting                | Value                                  |

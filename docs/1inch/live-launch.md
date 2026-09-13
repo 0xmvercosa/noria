@@ -1,5 +1,7 @@
 # Owner-confirmed Aqua launch
 
+For the complete beginner workflow with local commands and Rabby signatures, use the [Portuguese deploy and test guide](deploy-and-test.pt-BR.md). Read the [contract review and remaining limits](contract-review.md) before deployment. `npm run deploy:aqua` opens a loopback-only deployment assistant; signing stays in the user's Rabby extension.
+
 The `/aqua` interface turns a reviewed Graph/Aave plan into individually confirmed Arbitrum transactions through the user's Privy embedded wallet. The HTTP API only reads, simulates and verifies. It has no private key, broadcast endpoint or arbitrary-call facility.
 
 ## Deployment boundary
@@ -62,6 +64,8 @@ The initial strategy is a concentrated WETH/USDC Aqua position. The selected Uni
 ## API and client boundaries
 
 `GET /api/aqua/v1/launch?owner=…&account=…` reads a registered account, or the owner's latest account when `account` is omitted. It returns deployment state, timestamped wallet balances and position collateral, debt, health factor, phase, inventory and allowances.
+
+`position.healthFactor` can be `null` when that Aave getter is unavailable. This never indicates healthy collateral. Open/convert/ship are blocked; owner stop/repayment/debt-free exit can still be reviewed if all mandatory reads and the exact transaction simulation succeed. Identity, balances and debt failures are not suppressed.
 
 `POST` accepts a strict discriminated request:
 

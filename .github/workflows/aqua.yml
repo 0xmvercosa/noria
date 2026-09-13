@@ -5,29 +5,31 @@ on:
       - "integrations/aqua/**"
       - "docs/1inch/**"
       - ".github/workflows/aqua.yml"
+      - "scripts/lib/aqua-artifacts.ts"
+      - "scripts/check-aqua-artifacts.ts"
+      - "public/aqua/*artifact.json"
   push:
     branches: [main]
     paths:
       - "integrations/aqua/**"
       - "docs/1inch/**"
       - ".github/workflows/aqua.yml"
+      - "scripts/lib/aqua-artifacts.ts"
+      - "scripts/check-aqua-artifacts.ts"
+      - "public/aqua/*artifact.json"
 permissions:
   contents: read
 jobs:
   typescript:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: integrations/aqua
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: corepack enable
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm check
-      - run: pnpm example:plan
+      - run: npm ci
+      - run: npm run --workspace @noria/aqua check
+      - run: npm run --workspace @noria/aqua example:plan
   solidity:
     runs-on: ubuntu-latest
     defaults:
@@ -39,3 +41,10 @@ jobs:
         with:
           version: v1.0.0
       - run: forge test
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+        working-directory: .
+      - run: npm run aqua:artifacts
+        working-directory: .

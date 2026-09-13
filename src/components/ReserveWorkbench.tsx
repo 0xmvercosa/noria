@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { OperationProgress } from "./OperationProgress";
 import { ArrowUpRight, Download, RefreshCw } from "lucide-react";
 import { formatUnits } from "viem";
 import { NoriaHeader } from "./NoriaHeader";
@@ -83,6 +84,7 @@ export function ReserveWorkbench() {
     useState(false);
   const [historyReady, setHistoryReady] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState("Checking saved wallet activity…");
   const [error, setError] = useState<string | null>(null);
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -308,6 +310,7 @@ export function ReserveWorkbench() {
     };
   }
   async function refresh() {
+    setProgress("Reading current wallet balances from Arbitrum…");
     if (!wallet.address) return;
     const owner = wallet.address;
     const state = await readReserve(owner);
@@ -317,6 +320,7 @@ export function ReserveWorkbench() {
     if (lock.current) return;
     lock.current = true;
     setBusy(true);
+    setProgress("Checking saved wallet activity…");
     setError(null);
     try {
       await fn();
@@ -332,6 +336,7 @@ export function ReserveWorkbench() {
     }
   }
   async function fund(asset: "USDC" | "ETH") {
+    setProgress("Complete funding in the Privy window…");
     const owner = wallet.address;
     if (!owner) return;
     await wallet.fund(asset);
@@ -355,6 +360,7 @@ export function ReserveWorkbench() {
     if (current(purchase.owner)) setFiatPurchases(next);
   }
   async function fundWithEuros() {
+    setProgress("Complete your purchase in the funding provider window…");
     if (!wallet.address) return;
     const owner = wallet.address;
     const purchase: FiatPurchase = {
@@ -399,6 +405,7 @@ export function ReserveWorkbench() {
     }
   }
   async function reviewTransfer() {
+    setProgress("Checking recipient, amount and estimated network fee…");
     if (!canAct || !wallet.address) return;
     const owner = wallet.address;
     const recipient = OwnerSchema.safeParse(transferRecipient.trim());
@@ -419,6 +426,7 @@ export function ReserveWorkbench() {
     }
   }
   async function review(revoke = false) {
+    setProgress("Checking balances and simulating the Aave action…");
     if (!canAct || !wallet.address || (!amountUnits && !revoke)) return;
     const owner = wallet.address;
     const fresh = await readReserve(owner);
@@ -441,6 +449,7 @@ export function ReserveWorkbench() {
     }
   }
   async function check(entry: ReserveRecord) {
+    setProgress("Verifying the receipt and actual token movements…");
     const result = await verifyReserve(entry);
     const owner = entry.prepared.action.owner;
     if (!current(owner)) return;
@@ -484,6 +493,7 @@ export function ReserveWorkbench() {
     await refresh();
   }
   async function confirm() {
+    setProgress("Refreshing the simulation before wallet confirmation…");
     if (!canAct || !prepared || !wallet.address) return;
     const owner = wallet.address;
     const reviewed = assertPrepared(prepared, prepared.action);
@@ -507,6 +517,7 @@ export function ReserveWorkbench() {
           attempt: intent,
           save: (value) => saveAttempt(owner, value),
           send: async () => {
+            setProgress("Awaiting your confirmation in Privy…");
             try {
               return await wallet.sendReserveAction(fresh);
             } catch (failure) {
@@ -726,7 +737,7 @@ export function ReserveWorkbench() {
       <main className={s.main}>
         {(busy || error || storageWarning || notice) && (
           <aside className={r.feedback} aria-label="Wallet operation status">
-            {busy && <p role="status">Waiting for wallet or chain response…</p>}
+            {busy && <OperationProgress label={progress} />}
             {error && (
               <p role="alert" className={s.inputError}>
                 {error}

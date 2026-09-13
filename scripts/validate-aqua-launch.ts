@@ -1,5 +1,5 @@
 /** Process-owned fork validation only. Never accepts a destination RPC or a private key. */
-import { spawn, execFileSync } from "node:child_process";
+import { spawn, execFile } from "node:child_process";
 import { createServer } from "node:net";
 import { readFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -38,6 +38,9 @@ import {
   reserveTransaction,
   type ReserveAction,
 } from "../src/integrations/privy/reserve";
+import { DemoTerminal } from "../integrations/aqua/scripts/terminal";
+
+const demo = new DemoTerminal("Aqua launch validation");
 
 async function validateCase(fundingAsset: "USDC" | "ETH") {
   const upstream =
@@ -56,9 +59,7 @@ async function validateCase(fundingAsset: "USDC" | "ETH") {
       comfortableHFWad: "2000000000000000000",
       financingMode: "aave_collateral_then_borrow_usdc",
     };
-    console.log(
-      `Capturing current Graph research for ${fundingAsset} before fixing the fork block…`,
-    );
+    demo.stage(`${fundingAsset}: capture current Graph research`);
     const plan = await planPosition({
       schemaVersion: "noria.aqua.position.v1",
       requestId: `launch-validation-${fundingAsset}-${Date.now()}`,
@@ -69,6 +70,7 @@ async function validateCase(fundingAsset: "USDC" | "ETH") {
       throw new Error(plan.reasons.join(" "));
     plannedCases.push({ fundingAsset, intent, plan });
   }
+  demo.stage(`${fundingAsset}: start and verify the owned fork`);
   const forkBlock = await upstreamClient.getBlockNumber();
   const socket = createServer();
   await new Promise<void>((resolve) => socket.listen(0, "127.0.0.1", resolve));
@@ -93,6 +95,10 @@ async function validateCase(fundingAsset: "USDC" | "ETH") {
     ],
     { stdio: ["ignore", "ignore", "ignore"] },
   );
+  let spawnFailure: Error | undefined;
+  anvil.once("error", (error) => {
+    spawnFailure = error;
+  });
   const url = `http://127.0.0.1:${port}`;
   const transport = http(url, {
     timeout: 60_000,
@@ -166,6 +172,7 @@ async function validateCase(fundingAsset: "USDC" | "ETH") {
   async function send(address: Address, to: Address, data: Hex, value = 0n) {
     const hash = await wallet(address).sendTransaction({ to, data, value });
     const receipt = await client.waitForTransactionReceipt({ hash });
+    demo.receipt("Owned-fork transaction", receipt);
     assert(
       receipt.status === "success",
       `Fixture transaction reverted at ${stage}`,
@@ -187,6 +194,7 @@ async function validateCase(fundingAsset: "USDC" | "ETH") {
     fixtures.push({ kind: stage, from: address, to, method: name, args, hash });
   }
   async function deploy(name: string, args: readonly unknown[]) {
+    demo.activity(`Deploy ${name} on the owned fork`);
     const artifact = JSON.parse(
       readFileSync(
         `integrations/aqua/contracts/out/${name}.sol/${name}.json`,
@@ -199,6 +207,7 @@ async function validateCase(fundingAsset: "USDC" | "ETH") {
       args,
     });
     const receipt = await client.waitForTransactionReceipt({ hash });
+    demo.receipt(`Deploy ${name}`, receipt);
     assert(
       receipt.status === "success" && receipt.contractAddress,
       "Local deployment failed",
@@ -222,7 +231,8 @@ async function validateCase(fundingAsset: "USDC" | "ETH") {
     advanceBeforeSend = 0,
   ) {
     stage = `${request.owner}:${request.kind}`;
-    console.log(`Checking ${request.kind} on the owned fork…`);
+    demo.stage(`${fundingAsset}: ${request.kind.replaceAll("-", " ")}`);
+    demo.activity("Prepare and check the exact transaction");
     await alignClock();
     const prepared = await launch.prepare(request, plan);
     assertPreparedLaunch(prepared, request, plan);
@@ -234,17 +244,20 @@ async function validateCase(fundingAsset: "USDC" | "ETH") {
     }
     const tx = launchTransaction(prepared),
       hash = await send(request.owner, tx.to, tx.data, tx.value);
+    demo.activity("Verify receipt, balances and protocol effects");
     const verified = await launch.verify(prepared, hash);
     operations.push({ kind: request.kind, prepared, verification: verified });
     assert(
       verified.status === "verified",
       `${request.kind} receipt effect was ${verified.status}`,
     );
+    demo.check(`${request.kind}: onchain effect verified`, true);
     return verified.after;
   }
   try {
     let ready = false;
     for (let i = 0; i < 80; i++) {
+      if (spawnFailure) throw spawnFailure;
       if (anvil.exitCode !== null)
         throw new Error("Owned Anvil process exited during startup");
       try {
@@ -260,6 +273,8 @@ async function validateCase(fundingAsset: "USDC" | "ETH") {
     const info = (await raw("anvil_nodeInfo")) as { forkConfig?: unknown };
     assert(info.forkConfig, "Refusing mutations without an active owned fork");
     assert((await client.getChainId()) === 42161, "Wrong fork chain");
+    demo.info(`Fork source block: ${forkBlock}`);
+    demo.stage(`${fundingAsset}: prepare explicit local fixture funds`);
     for (const actor of actors) {
       await raw("anvil_setBalance", [actor, toHex(100n * 10n ** 18n)]);
       await raw("anvil_impersonateAccount", [actor]);
@@ -294,10 +309,19 @@ async function validateCase(fundingAsset: "USDC" | "ETH") {
       );
     }
     stage = "compile reviewed deployment artifacts";
-    execFileSync("forge", ["build", "--skip", "test"], {
-      cwd: "integrations/aqua/contracts",
-      stdio: "pipe",
-      timeout: 90_000,
+    demo.stage(
+      `${fundingAsset}: compile and deploy reviewed contracts locally`,
+    );
+    await new Promise<void>((resolve, reject) => {
+      execFile(
+        "forge",
+        ["build", "--skip", "test"],
+        {
+          cwd: "integrations/aqua/contracts",
+          timeout: 90_000,
+        },
+        (error) => (error ? reject(error) : resolve()),
+      );
     });
     const adapter = await deploy("UniswapInventoryAdapter", [
       LAUNCH.uniswapRouter,
@@ -432,6 +456,7 @@ async function validateCase(fundingAsset: "USDC" | "ETH") {
     const reserve = createReserveService(client as ReserveClient);
     for (const kind of ["transfer-usdc", "transfer-eth"] as const) {
       stage = kind;
+      demo.stage(`${fundingAsset}: ${kind.replaceAll("-", " ")}`);
       await alignClock();
       const action: ReserveAction = {
         owner: actors[0]!,
@@ -445,11 +470,12 @@ async function validateCase(fundingAsset: "USDC" | "ETH") {
         verification = await reserve.verify(action, hash);
       operations.push({ kind, prepared, verification });
       assert(verification.status === "verified", `${kind} did not verify`);
+      demo.check(`${kind}: recipient balance effect verified`, true);
     }
     report.status = "passed";
     report.finishedAt = new Date().toISOString();
-    console.log(
-      `Validated ${operations.length} owner operations against the official protocols on an isolated fork.`,
+    demo.info(
+      `${operations.length} owner operations verified for ${fundingAsset} on the isolated fork.`,
     );
   } catch (error) {
     report.status = "failed";
@@ -457,9 +483,12 @@ async function validateCase(fundingAsset: "USDC" | "ETH") {
     report.error = (error instanceof Error ? error.message : String(error))
       .replaceAll(upstream, "[upstream RPC]")
       .slice(0, 1200);
-    console.error(`Fork validation failed at ${stage}: ${report.error}`);
+    demo.fail(error);
+    demo.info(`Failed stage: ${stage}`);
     process.exitCode = 1;
   } finally {
+    if (report.status === "passed")
+      demo.stage(`${fundingAsset}: save evidence and stop the fork`);
     await mkdir(".runtime", { recursive: true });
     await writeFile(
       `.runtime/aqua-launch-validation-${fundingAsset.toLowerCase()}.json`,
@@ -468,6 +497,9 @@ async function validateCase(fundingAsset: "USDC" | "ETH") {
         (_, value) => (typeof value === "bigint" ? String(value) : value),
         2,
       ) + "\n",
+    );
+    demo.report(
+      `.runtime/aqua-launch-validation-${fundingAsset.toLowerCase()}.json`,
     );
     anvil.kill("SIGTERM");
     await Promise.race([
@@ -514,10 +546,16 @@ async function main() {
       2,
     ) + "\n",
   );
+  demo.report(".runtime/aqua-launch-validation.json");
+  if (
+    cases.length === assets.length &&
+    cases.every((result) => result.status === "passed")
+  )
+    demo.complete(
+      `${cases.length} collateral case(s) passed. Evidence covers local protocol execution only.`,
+    );
 }
 void main().catch((error) => {
-  console.error(
-    `Fork validation setup failed: ${(error instanceof Error ? error.message : "unknown error").replaceAll(process.env.ARBITRUM_RPC_URL?.trim() || "https://arb1.arbitrum.io/rpc", "[upstream RPC]").slice(0, 1200)}`,
-  );
+  demo.fail(error);
   process.exitCode = 1;
 });

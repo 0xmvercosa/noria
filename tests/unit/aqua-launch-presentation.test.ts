@@ -37,6 +37,36 @@ function position(overrides: Partial<LaunchPosition> = {}) {
 }
 const wallet = { wethUnits: "0" };
 
+test("unavailable health guides recovery without claiming healthy exposure", () => {
+  for (const phase of [1, 2, 4]) {
+    const journey = describeLaunchJourney(
+      position({ phase, debtUSDCUnits: "1000000", healthFactor: null }),
+      wallet,
+    );
+    assert.equal(journey.next, "defend");
+    assert.equal(journey.closing, true);
+    assert.equal(journey.canRefreshResearch, false);
+    assert.match(journey.title, /Health factor unavailable/);
+  }
+  assert.equal(
+    describeLaunchJourney(position({ healthFactor: null }), wallet, intent)
+      .next,
+    null,
+  );
+  assert.equal(
+    describeLaunchJourney(
+      position({ phase: 5, healthFactor: null, debtUSDCUnits: "1000000" }),
+      wallet,
+    ).next,
+    "repayment",
+  );
+  assert.equal(
+    describeLaunchJourney(position({ phase: 5, healthFactor: null }), wallet)
+      .next,
+    "exit",
+  );
+});
+
 test("setup has one next action and wraps only the missing WETH before approving", () => {
   assert.equal(
     describeLaunchJourney(position(), wallet, intent).next,

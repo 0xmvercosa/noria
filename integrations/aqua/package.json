@@ -10,7 +10,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test test/*.test.ts",
-    "check": "pnpm typecheck && pnpm test",
+    "check": "npm run typecheck && npm test",
     "example:plan": "tsx src/cli.ts plan examples/discovery-response.json",
     "contracts:test": "forge test --root contracts",
     "fork:rehearse": "tsx scripts/rehearse.ts",

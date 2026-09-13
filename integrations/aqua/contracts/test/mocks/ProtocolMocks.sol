@@ -60,6 +60,7 @@ contract MockAavePool {
     uint256 public configuredHF = 2e18;
     bool public failBorrow;
     bool public failWithdraw;
+    bool public failHealthRead;
     uint256 public withdrawCalls;
     constructor(MockToken w, MockToken u) {
         weth = w; usdc = u;
@@ -71,6 +72,7 @@ contract MockAavePool {
     function setHF(uint256 value) external { configuredHF = value; }
     function setFailBorrow(bool value) external { failBorrow = value; }
     function setFailWithdraw(bool value) external { failWithdraw = value; }
+    function setFailHealthRead(bool value) external { failHealthRead = value; }
     function getReserveNormalizedVariableDebt(address asset) external view returns (uint256) {
         require(asset == address(usdc), "wrong debt asset"); return index;
     }
@@ -97,6 +99,7 @@ contract MockAavePool {
         withdrawCalls++; receipt.burn(msg.sender, amount); IERC20(asset).transfer(to, amount); return amount;
     }
     function getUserAccountData(address account) external view returns (uint256,uint256,uint256,uint256,uint256,uint256) {
+        require(!failHealthRead, "health unavailable");
         uint256 owed = debt.balanceOf(account);
         return (0, owed, 0, 0, 0, owed == 0 ? type(uint256).max : configuredHF);
     }

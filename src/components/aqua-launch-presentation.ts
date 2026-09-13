@@ -52,13 +52,17 @@ export function describeLaunchJourney(
   intent?: LaunchIntent,
 ): LaunchJourney {
   const debt = BigInt(position.debtUSDCUnits);
+  const healthUnavailable = position.healthFactor === null;
   const safetyReached =
-    debt > 0n && BigInt(position.healthFactor) <= BigInt(position.safetyHF);
+    debt > 0n &&
+    position.healthFactor !== null &&
+    BigInt(position.healthFactor) <= BigInt(position.safetyHF);
   const inventoryShortfall =
     [1, 4].includes(position.phase) &&
     BigInt(position.lpWethUnits) === 0n &&
     BigInt(position.lpUsdcUnits) < BigInt(position.principal);
   const closing =
+    (healthUnavailable && [1, 2, 4].includes(position.phase)) ||
     [3, 5, 6].includes(position.phase) ||
     ([1, 4].includes(position.phase) &&
       (debt === 0n ||
@@ -95,6 +99,11 @@ export function describeLaunchJourney(
     title = "Finish stopping this position";
     description =
       "Apply available position USDC to repayment and finish stopping before returning collateral.";
+  } else if (healthUnavailable) {
+    next = position.phase === 0 ? null : "defend";
+    title = "Health factor unavailable — refresh or review recovery";
+    description =
+      "Aave health could not be read. Opening, converting and launching are blocked. For an opened position, you can still review stopping and repayment; each transaction must pass simulation.";
   } else if (position.phase === 0) {
     title = "Account created — collateral is still in your wallet";
     description =
@@ -201,6 +210,7 @@ export function describeLaunchJourney(
     closing,
     steps,
     canRefreshResearch:
+      !healthUnavailable &&
       [0, 1, 4].includes(position.phase) &&
       (position.phase === 0 || (debt > 0n && BigInt(position.principal) > 0n)),
     canStop: [1, 2, 3, 4].includes(position.phase),

@@ -130,6 +130,7 @@ function harness() {
     protocolUsdc: LAUNCH.usdc as Address,
     existing: false,
     failCall: false,
+    failRead: "",
   };
   let transaction: Record<string, unknown> = {},
     receipt: Record<string, unknown> = {};
@@ -164,6 +165,7 @@ function harness() {
       args?: readonly unknown[];
     }) => {
       calls.push(functionName);
+      if (functionName === data.failRead) throw new Error("Read unavailable");
       if (functionName === "protocols")
         return {
           weth: LAUNCH.weth,
@@ -703,11 +705,16 @@ test("CycleShipped alone never labels a non-Active position Active", async () =>
   h.data.virtualCount = 0;
   await assert.rejects(h.service.verify(p, hash), /without matching Aqua/);
 });
-test("defense, verified Quoter sale, external repayment and exit enforce stage progression", async () => {
+test("owner recovery remains verifiable when health is unavailable; stage and simulation gates remain", async () => {
   const h = harness();
+  h.data.failRead = "healthFactor";
   h.data.phase = 1;
   h.data.debt = 20_000_000n;
+  h.data.failCall = true;
+  await assert.rejects(h.service.prepare(request("defend")));
+  h.data.failCall = false;
   const defense = await h.service.prepare(request("defend"));
+  assert.equal(defense.before.position!.healthFactor, null);
   h.mined(defense, [
     event(account, "Defended", {
       cycleId: 0n,
@@ -773,6 +780,27 @@ test("defense, verified Quoter sale, external repayment and exit enforce stage p
   assert.ok(
     (await h.service.prepare(request("unwrap", "1"))).request.kind === "unwrap",
   );
+});
+test("unavailable health blocks new exposure without masking mandatory read failures", async () => {
+  const h = harness();
+  h.data.failRead = "healthFactor";
+  for (const kind of ["open", "convert", "ship"] as const) {
+    await assert.rejects(
+      h.service.prepare(request(kind), await h.plan()),
+      /Health factor is unavailable/,
+    );
+  }
+  for (const field of [
+    "owner",
+    "phase",
+    "balanceOf",
+    "isPosition",
+    "rawBalances",
+  ]) {
+    h.data.failRead = field;
+    h.data.phase = 2;
+    await assert.rejects(h.service.snapshot(owner), /Read unavailable/);
+  }
 });
 test("HTTP bounds input, exposes pending deployment and redacts raw provider failures", async () => {
   const h = harness(),
