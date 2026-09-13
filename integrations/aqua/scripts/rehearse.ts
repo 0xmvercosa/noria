@@ -21,13 +21,24 @@ import { arbitrum } from "viem/chains";
 import { TakerTraits } from "@1inch/swap-vm-sdk";
 import { DEPLOYMENTS as D, buildOfficialOrder } from "../src/official.js";
 import { quoteFinancing } from "../src/financing.js";
-import { priceFromSqrt } from "../src/verifier.js";
+import { parseRehearsalPlan } from "../src/rehearsal-plan.js";
+import { priceFromSqrt, verifySourcePool } from "../src/verifier.js";
 import { PositionIntentSchema } from "../src/boundary.js";
 import { writeReports } from "../src/rehearsal-report.js";
 
 const encode = (v: unknown) =>
   JSON.stringify(v, (_k, x) => (typeof x === "bigint" ? x.toString() : x), 2);
-const rpc = process.env.ARBITRUM_RPC_URL ?? "https://arb1.arbitrum.io/rpc";
+const downloadedPlan = process.env.NORIA_PLAN_FILE
+  ? parseRehearsalPlan(
+      JSON.parse(await readFile(process.env.NORIA_PLAN_FILE, "utf8")),
+    )
+  : null;
+function requireFreshPlan(stage: string) {
+  if (downloadedPlan && Date.parse(downloadedPlan.validUntil) <= Date.now())
+    throw new Error(`position_plan_expired_before_${stage}`);
+}
+const rpc =
+  process.env.ARBITRUM_RPC_URL?.trim() || "https://arb1.arbitrum.io/rpc";
 const forkBlock = process.env.NORIA_FORK_BLOCK
   ? BigInt(process.env.NORIA_FORK_BLOCK)
   : await createPublicClient({ transport: http(rpc) }).getBlockNumber();
@@ -44,18 +55,20 @@ if (
   new Set([owner, taker, keeper].map((a) => a.toLowerCase())).size !== 3
 )
   throw new Error("distinct_valid_fixture_wallets_required");
-const intent = PositionIntentSchema.parse({
-  fundingAsset: process.env.NORIA_FUNDING_ASSET ?? "ETH",
-  collateralAmountUnits:
-    process.env.NORIA_COLLATERAL_UNITS ??
-    (process.env.NORIA_FUNDING_ASSET === "USDC"
-      ? "20000000000"
-      : "10000000000000000000"),
-  safetyHFWad: process.env.NORIA_SAFETY_HF_WAD ?? "1400000000000000000",
-  comfortableHFWad:
-    process.env.NORIA_COMFORTABLE_HF_WAD ?? "2000000000000000000",
-  financingMode: "aave_collateral_then_borrow_usdc",
-});
+const intent =
+  downloadedPlan?.intent ??
+  PositionIntentSchema.parse({
+    fundingAsset: process.env.NORIA_FUNDING_ASSET ?? "ETH",
+    collateralAmountUnits:
+      process.env.NORIA_COLLATERAL_UNITS ??
+      (process.env.NORIA_FUNDING_ASSET === "USDC"
+        ? "20000000000"
+        : "10000000000000000000"),
+    safetyHFWad: process.env.NORIA_SAFETY_HF_WAD ?? "1400000000000000000",
+    comfortableHFWad:
+      process.env.NORIA_COMFORTABLE_HF_WAD ?? "2000000000000000000",
+    financingMode: "aave_collateral_then_borrow_usdc",
+  });
 const fillRounds = Number(process.env.NORIA_FILL_ROUNDS ?? "2");
 if (!Number.isInteger(fillRounds) || fillRounds < 1 || fillRounds > 10)
   throw new Error("fill_rounds_out_of_bounds");
@@ -392,6 +405,9 @@ async function swapInventory(wethIn: boolean, amount: bigint) {
   );
 }
 let failure: string | undefined;
+process.once("SIGTERM", () => {
+  anvil.kill("SIGTERM");
+});
 try {
   let ready = false;
   for (let i = 0; i < 120; i++) {
@@ -456,16 +472,29 @@ try {
         "--",
         "integrations/aqua",
         ".github/workflows/aqua.yml",
+        "src/integrations/aqua",
+        "src/app/api/aqua",
+        "package.json",
+        "package-lock.json",
       ],
       { cwd: resolve("../.."), encoding: "utf8" },
     ).trim().length > 0;
   manifest.sdkVersions = { aqua: "0.3.4", swapVM: "0.4.4", viem: "2.38.6" };
   manifest.swapABI =
     "swap((address,uint256,bytes),address,address,uint256,bytes)";
+  // Explicit fixture capital grows with collateral; it is never counted as LP revenue.
+  const ownerWethFixture =
+    20n * 10n ** 18n +
+    (intent.fundingAsset === "ETH" ? BigInt(intent.collateralAmountUnits) : 0n);
+  const ownerUsdcFixture =
+    100_000n * 10n ** 6n +
+    (intent.fundingAsset === "USDC"
+      ? BigInt(intent.collateralAmountUnits)
+      : 0n);
   for (const actor of actors) {
     await fixture("Local native gas fixture", "anvil_setBalance", [
       actor,
-      toHex(100n * 10n ** 18n),
+      toHex(100n * 10n ** 18n + (actor === owner ? ownerWethFixture : 0n)),
     ]);
     await fixture("Local wallet impersonation", "anvil_impersonateAccount", [
       actor,
@@ -492,7 +521,7 @@ try {
     D.usdc,
     parseAbi(["function configureMinter(address,uint256) returns(bool)"]),
     "configureMinter",
-    [owner, 1_000_000n * 10n ** 6n],
+    [owner, ownerUsdcFixture + 100_000n * 10n ** 6n],
   );
   await tx(
     "Fixture: mint owner USDC (external capital)",
@@ -500,7 +529,7 @@ try {
     D.usdc,
     parseAbi(["function mint(address,uint256) returns(bool)"]),
     "mint",
-    [owner, 100_000n * 10n ** 6n],
+    [owner, ownerUsdcFixture],
   );
   await tx(
     "Fixture: mint related taker USDC (external capital)",
@@ -517,7 +546,7 @@ try {
     parseAbi(["function deposit() payable"]),
     "deposit",
     [],
-    20n * 10n ** 18n,
+    ownerWethFixture,
   );
   await tx(
     "Wrap taker fixture ETH into official WETH",
@@ -531,6 +560,8 @@ try {
   execFileSync("forge", ["build", "--skip", "test"], {
     cwd: resolve("contracts"),
     stdio: "pipe",
+    timeout: 90_000,
+    killSignal: "SIGKILL",
   });
   const adapter = await deploy(
     "Deploy fixed inventory adapter",
@@ -538,6 +569,60 @@ try {
     [D.uniswapRouter, D.weth, D.usdc, 500],
   );
   const financing = await quoteFinancing(intent, url);
+  if (downloadedPlan) {
+    if (Date.parse(downloadedPlan.validUntil) <= Date.now())
+      throw new Error("position_plan_expired_during_setup");
+    if (
+      downloadedPlan.financing.collateralAsset.toLowerCase() !==
+        financing.asset.toLowerCase() ||
+      BigInt(downloadedPlan.financing.loanUSDCUnits) > financing.loanUSDCUnits
+    )
+      throw new Error("financing_changed_replan_required");
+    financing.loanUSDCUnits = BigInt(downloadedPlan.financing.loanUSDCUnits);
+    const e = downloadedPlan.execution;
+    const source = await verifySourcePool(
+      rpc,
+      e.sourcePool as Address,
+      BigInt(e.graphIndexedBlock),
+    );
+    if (
+      source.blockHash.toLowerCase() !==
+        e.graphIndexedBlockHash.toLowerCase() ||
+      !source.canonicalFactoryPool ||
+      source.liquidity !== e.canonicalSourceLiquidity
+    )
+      throw new Error("graph_source_block_mismatch");
+    const evidence = await verifySourcePool(
+      url,
+      e.sourcePool as Address,
+      await client.getBlockNumber(),
+    );
+    if (
+      !evidence.canonicalFactoryPool ||
+      evidence.token0.toLowerCase() !== D.weth ||
+      evidence.token1.toLowerCase() !== D.usdc ||
+      evidence.feeTierPips !== e.sourceFeeTierPips ||
+      BigInt(evidence.liquidity) === 0n ||
+      BigInt(evidence.spotUSDCPerWethE6) <= BigInt(e.lowerPriceE6) ||
+      BigInt(evidence.spotUSDCPerWethE6) >= BigInt(e.upperPriceE6)
+    )
+      throw new Error("graph_reference_no_longer_executable");
+    const currentPrice = BigInt(evidence.spotUSDCPerWethE6),
+      oldPrice = BigInt(source.spotUSDCPerWethE6);
+    if (
+      oldPrice <= 0n ||
+      (currentPrice > oldPrice
+        ? currentPrice - oldPrice
+        : oldPrice - currentPrice) *
+        10000n >
+        oldPrice * 100n
+    )
+      throw new Error("graph_price_moved_replan_required");
+    manifest.downloadedPlan = downloadedPlan;
+    manifest.graphCanonicalEvidence = evidence;
+    manifest.graphCanonicalSourceEvidence = source;
+    requireFreshPlan("completed_source_verification");
+  }
   manifest.financing = financing;
   const manifestHash = keccak256(toHex(encode(manifest)));
   account = await deploy("Deploy owner position account", "PositionAccount", [
@@ -576,6 +661,7 @@ try {
     [account, BigInt(intent.collateralAmountUnits)],
   );
   manifest.economicStart = await snapshot();
+  requireFreshPlan("opening");
   await tx(
     "Supply collateral and borrow USDC on official Aave",
     owner,
@@ -584,7 +670,21 @@ try {
     "openPosition",
     [BigInt(intent.collateralAmountUnits), financing.loanUSDCUnits],
   );
-  await swapInventory(false, financing.loanUSDCUnits / 2n);
+  await swapInventory(
+    false,
+    downloadedPlan
+      ? BigInt(downloadedPlan.execution.convertUsdcUnits)
+      : financing.loanUSDCUnits / 2n,
+  );
+  if (downloadedPlan) {
+    const preparedWeth = await read(account, accountABI, "lpWeth");
+    const target = BigInt(downloadedPlan.execution.targetWethUnits);
+    check(
+      "Prepared inventory matches the automatic asymmetric target within 1%",
+      preparedWeth * 100n >= target * 99n &&
+        preparedWeth * 100n <= target * 101n,
+    );
+  }
   const slot = await read(
     D.sourcePool500,
     parseAbi([
@@ -602,20 +702,30 @@ try {
   };
   const order = buildOfficialOrder({
     maker: account,
-    lowerPriceE6: (spot * 85n) / 100n,
-    upperPriceE6: (spot * 115n) / 100n,
-    lpFeeBps: 30,
+    lowerPriceE6: downloadedPlan
+      ? BigInt(downloadedPlan.execution.lowerPriceE6)
+      : (spot * 85n) / 100n,
+    upperPriceE6: downloadedPlan
+      ? BigInt(downloadedPlan.execution.upperPriceE6)
+      : (spot * 115n) / 100n,
+    lpFeeBps: downloadedPlan?.execution.lpFeeBps ?? 30,
     salt: 1n,
   });
-  manifest.rangeOrigin =
-    "explicit fork fixture; Graph selection is validated by the separate integration test";
+  manifest.rangeOrigin = downloadedPlan
+    ? "unsigned downloaded Graph position plan; internal consistency and canonical source reverified, provider authorship not authenticated"
+    : "explicit fork fixture; Graph selection is validated by the separate integration test";
   manifest.order = {
     ...order.order.build(),
     bytes: order.bytes,
     strategyHash: order.strategyHash,
-    lowerPriceE6: (spot * 85n) / 100n,
-    upperPriceE6: (spot * 115n) / 100n,
+    lowerPriceE6: downloadedPlan
+      ? BigInt(downloadedPlan.execution.lowerPriceE6)
+      : (spot * 85n) / 100n,
+    upperPriceE6: downloadedPlan
+      ? BigInt(downloadedPlan.execution.upperPriceE6)
+      : (spot * 115n) / 100n,
   };
+  requireFreshPlan("shipment");
   await tx(
     "Ship concentrated liquidity on official Aqua",
     owner,
@@ -674,12 +784,21 @@ try {
     "mint",
     [taker, 100_000n],
   );
+  const activeWeth = await read(account, accountABI, "lpWeth");
+  const activeUsdc = await read(account, accountABI, "lpUsdc");
+  const roundUSDC = [
+    1000n * 10n ** 6n,
+    financing.loanUSDCUnits / 10n,
+    (activeWeth * spot) / 10n ** 18n / 4n,
+    activeUsdc / 4n,
+  ].reduce((a, b) => (a < b ? a : b));
+  if (roundUSDC === 0n) throw new Error("inventory_too_small_for_rehearsal");
   for (const [tokenIn, tokenOut, amount] of Array.from(
     { length: fillRounds },
     () =>
       [
-        [D.usdc, D.weth, 1_000n * 10n ** 6n],
-        [D.weth, D.usdc, 4n * 10n ** 17n],
+        [D.usdc, D.weth, roundUSDC],
+        [D.weth, D.usdc, (roundUSDC * 10n ** 18n) / spot],
       ] as const,
   ).flat()) {
     const quote = await client.simulateContract({
@@ -815,14 +934,25 @@ try {
   );
   const nextPrincipal = await read(account, accountABI, "principal");
   if (nextPrincipal > 0n) {
-    await swapInventory(false, nextPrincipal / 2n);
+    await swapInventory(
+      false,
+      downloadedPlan
+        ? (nextPrincipal * BigInt(downloadedPlan.execution.convertUsdcUnits)) /
+            financing.loanUSDCUnits
+        : nextPrincipal / 2n,
+    );
     const nextOrder = buildOfficialOrder({
       maker: account,
-      lowerPriceE6: (spot * 85n) / 100n,
-      upperPriceE6: (spot * 115n) / 100n,
-      lpFeeBps: 30,
+      lowerPriceE6: downloadedPlan
+        ? BigInt(downloadedPlan.execution.lowerPriceE6)
+        : (spot * 85n) / 100n,
+      upperPriceE6: downloadedPlan
+        ? BigInt(downloadedPlan.execution.upperPriceE6)
+        : (spot * 115n) / 100n,
+      lpFeeBps: downloadedPlan?.execution.lpFeeBps ?? 30,
       salt: 2n,
     });
+    requireFreshPlan("subsequent_shipment");
     await tx(
       "Ship subsequent cycle without reborrowing",
       owner,
