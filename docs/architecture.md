@@ -88,7 +88,7 @@ The source block has a **120-second** age limit. Report expiry is the earliest o
 
 Gas uses an observed native gas price, a separate native-token USD mark and fixed illustrative lifecycle units. It is outside the modeled inventory budget. Preparation/exit swaps and L2 data fees are unpriced; USD marks are not executable proceeds.
 
-Reports contain source identifiers, block/hash/time, query/response digests, inventory and checks. `noria_verify_report` checks an existing same-session report's internal hash, budget conservation and expiry. It neither refreshes providers nor signs provenance, independently replays capacity or verifies a transaction. The report ID covers the report, not the surrounding discovery candidates and exclusions. Downloads omit raw ticks; a compact CLI presentation can also omit history points.
+Reports contain source identifiers, block/hash/time, query/response digests, inventory and checks. `noria_verify_report` checks the complete report supplied by the client for internal hash consistency, budget conservation and expiry. HTTP is stateless; lookup by `reportId` is available only within the local stdio session that created the report. It neither refreshes providers nor signs provenance, independently replays capacity or verifies a transaction. The report ID covers the report, not the surrounding discovery candidates and exclusions. Downloads omit raw ticks. The CLI retains the complete serialized report, including history points, so its existing digest can be reproduced.
 
 The dated historical example is loaded separately and never feeds live collection. Its supplied ledger supports arithmetic inspection, not independent replay of the complete historical market.
 

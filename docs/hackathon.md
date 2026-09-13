@@ -27,7 +27,7 @@ The [Graph guide](the-graph.md) maps each indexed input to the resulting behavio
 | --------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | 0:00–0:25 | Show the empty workspace and choose a network, $1,000, fee exposure and six-hour review | The user supplies an objective, not a preselected pool                                    |
 | 0:25–1:00 | Run discovery and inspect the actual result                                             | Candidate bounds, token identity, source age and valid refusal reasons                    |
-| 1:00–1:40 | Show an external agent calling discovery, then same-session verification                | Live Graph dependency, reusable MCP tools and internal-verification limits                |
+| 1:00–1:40 | Show an external agent calling discovery, then verifying the complete report            | Live Graph dependency, reusable MCP tools and internal-verification limits                |
 | 1:40–2:15 | Analyze the same pool with another supported capital amount or conversion objective     | Required inventory, capacity changes, token1 → token0 semantics and reversible conversion |
 | 2:15–2:40 | Open evidence and download the report                                                   | Canonical block, providers, timestamps, expiry and `not-established` economics            |
 | 2:40–3:00 | Summarize the working scope and show the roadmap                                        | Aave/Aqua execution remains planned and needs a separate adapter                          |
