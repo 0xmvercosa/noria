@@ -2,16 +2,16 @@
 
 Noria is being prepared for **The Graph — Best AI Tooling or AI Use Case with The Graph**, in the **From Scratch** category. Its current deliverable is informational Uniswap v3 discovery for people and external AI agents.
 
-| Review item                         | Evidence or status                                                                                |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Public repository                   | [github.com/0xmvercosa/noria](https://github.com/0xmvercosa/noria)                                |
-| Working scope                       | Full web interface, six MCP tools and a focused Arbitrum WETH/native-USDC reference API           |
-| The Graph contribution              | Required pool discovery/history, indexed ticks, source metadata and reusable agent tools          |
-| Local reproduction                  | [README](../README.md), [agent setup](agent-setup.md), [validation](validation.md)                |
-| Hosted application                  | Vercel builds verified; the final judging domain is to be supplied. Local routes: `/` and `/aqua` |
-| Public demo video                   | No URL published                                                                                  |
-| Submission and organizer acceptance | Not established by this repository                                                                |
-| 1inch integration status            | Reference-selection API implemented; Aqua execution and Aave/accounting remain planned            |
+| Review item                         | Evidence or status                                                                                           |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Public repository                   | [github.com/0xmvercosa/noria](https://github.com/0xmvercosa/noria)                                           |
+| Working scope                       | Full web interface, six MCP tools and a focused Arbitrum WETH/native-USDC reference API                      |
+| The Graph contribution              | Required pool discovery/history, indexed ticks, source metadata and reusable agent tools                     |
+| Local reproduction                  | [README](../README.md), [agent setup](agent-setup.md), [validation](validation.md)                           |
+| Hosted application                  | Vercel builds verified; the final judging domain is to be supplied. Local routes: `/` and `/aqua`            |
+| Public demo video                   | No URL published                                                                                             |
+| Submission and organizer acceptance | Not established by this repository                                                                           |
+| 1inch integration status            | [Separate implemented Aqua/Aave module](1inch/README.md), real Graph adapter and official local-fork reports |
 
 ## What judges can inspect
 
@@ -30,7 +30,7 @@ The [Graph guide](the-graph.md) maps each indexed input to the resulting behavio
 | 1:00–1:40 | Show an external agent calling discovery, then same-session verification                | Live Graph dependency, reusable MCP tools and internal-verification limits                |
 | 1:40–2:15 | Analyze the same pool with another supported capital amount or conversion objective     | Required inventory, capacity changes, token1 → token0 semantics and reversible conversion |
 | 2:15–2:40 | Open evidence and download the report                                                   | Canonical block, providers, timestamps, expiry and `not-established` economics            |
-| 2:40–3:00 | Summarize the working scope and show the roadmap                                        | Aave/Aqua execution remains planned and needs a separate adapter                          |
+| 2:40–3:00 | Summarize the working scope and show the roadmap                                        | Point to the separately evaluated Aqua product and its local-fork evidence                |
 
 Show what providers actually return. If discovery refuses a candidate, explain the evidence and try another supported input if useful. A saved response must appear with its original date; it cannot stand in for a current opportunity.
 
@@ -40,6 +40,10 @@ The optional historical tool reads a dated **26 August 2026 WBTC/WETH simulation
 
 The project does not present the dated simulation, public dependencies or captured market inputs as newly generated hackathon outcomes. The From Scratch category remains subject to the organizer's current rules and review of implementation dates and disclosed materials; a repository title or targeting statement does not establish eligibility.
 
-The proposed 1inch effort has an implemented [reference-selection handoff](aqua-integration.md) and a separate [execution roadmap](roadmap.md): Aave ETH collateral, bounded USDC borrowing, Aqua liquidity, owner-authorized checkpoints and a 50/50 split of eligible realized net surplus after interest, cost provisions and loss recovery. None of those capital-moving actions is implemented in the current product. The Aqua application starts the combined flow and calls Noria for a reference pool/range; it must supply its own strategy mapping and execution checks.
+The **1inch Build an Aqua App** effort has a separate [judge entry point](1inch/README.md), [product specification](1inch/integration.md) and [execution evidence](1inch/evidence/README.md). Its UI starts with collateral and health limits, consumes the real Graph recommendation, prepares asymmetric inventory and executes official Aqua/SwapVM plus Aave on a local fork. Capital accounting requires direct owner provenance checkpoints. LP surplus allocation is before wallet-paid gas; consolidated reports include gas and related takers. Public deployment and aggregator admission are not claimed.
+
+For 1inch judging, show the selected program, actual token-transfer receipts, health/debt transitions, allocation and final reconciliation. Preserve the incremental Git history. Official contracts and local-fork execution correspond to the published track requirements; final eligibility and submission acceptance remain the organizer's decision.
 
 Official reference: [ETHOnline 2026 prize page](https://ethglobal.com/events/ethonline2026/prizes/#the-graph).
+
+1inch reference: [Build an Aqua App](https://ethglobal.com/events/ethonline2026/prizes/#1inch).

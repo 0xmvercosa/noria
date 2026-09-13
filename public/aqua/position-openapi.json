@@ -1,0 +1,486 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Noria Aqua position and local rehearsal API",
+    "version": "1.0.0",
+    "description": "Unsigned planning plus opt-in isolated fork execution. The legacy Graph research contract remains separate."
+  },
+  "paths": {
+    "/api/aqua/v1/position": {
+      "get": {
+        "summary": "Read position-planning capabilities",
+        "responses": {
+          "200": {
+            "description": "Planning capability; no transaction authorization."
+          }
+        }
+      },
+      "post": {
+        "summary": "Finance collateral and obtain a real Graph-backed Aqua plan",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PositionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ready plan or explicit refusal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PositionPlanResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid intent or JSON"
+          },
+          "413": {
+            "description": "Body exceeds 4096 bytes"
+          },
+          "415": {
+            "description": "Requires application/json"
+          },
+          "503": {
+            "description": "Financing or source provider unavailable"
+          }
+        }
+      }
+    },
+    "/api/aqua/v1/local-rehearsal": {
+      "get": {
+        "summary": "Read local capability or job status",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Capability or job status"
+          },
+          "404": {
+            "description": "Unknown run"
+          }
+        }
+      },
+      "post": {
+        "summary": "Run an unexpired plan on an isolated local Arbitrum fork",
+        "description": "Requires NORIA_ENABLE_LOCAL_FORK=1, loopback host and same-origin browser request. Disabled on Vercel. Never broadcasts upstream. One job at a time.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["owner", "plan"],
+                "properties": {
+                  "owner": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "plan": {
+                    "$ref": "#/components/schemas/PositionPlanResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Local job started"
+          },
+          "400": {
+            "description": "Invalid envelope"
+          },
+          "403": {
+            "description": "Disabled host or cross-origin request"
+          },
+          "409": {
+            "description": "Invalid/expired plan or runner conflict"
+          },
+          "413": {
+            "description": "Body exceeds 1500000 bytes"
+          },
+          "415": {
+            "description": "Requires application/json"
+          }
+        }
+      }
+    },
+    "/api/aqua/v1/local-rehearsal/report": {
+      "get": {
+        "summary": "Open completed or partial local HTML report",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Standalone report",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local reports disabled"
+          },
+          "404": {
+            "description": "Report unavailable"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PositionIntent": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "fundingAsset",
+          "collateralAmountUnits",
+          "safetyHFWad",
+          "comfortableHFWad",
+          "financingMode"
+        ],
+        "properties": {
+          "fundingAsset": {
+            "enum": ["ETH", "USDC"]
+          },
+          "collateralAmountUnits": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$",
+            "description": "Integer base units; must fit uint256."
+          },
+          "safetyHFWad": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$",
+            "description": "Integer base units; must fit uint256."
+          },
+          "comfortableHFWad": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$",
+            "description": "Integer base units; must fit uint256."
+          },
+          "financingMode": {
+            "const": "aave_collateral_then_borrow_usdc"
+          }
+        },
+        "description": "Positive collateral. HF uses 18 decimals; require 1 < safety < comfortable <= 10. ETH is wrapped; both assets are supplied as Aave collateral before USDC borrowing."
+      },
+      "PositionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["schemaVersion", "requestId", "intent"],
+        "properties": {
+          "schemaVersion": {
+            "const": "noria.aqua.position.v1"
+          },
+          "requestId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,64}$"
+          },
+          "intent": {
+            "$ref": "#/components/schemas/PositionIntent"
+          },
+          "reviewAfterHours": {
+            "type": "integer",
+            "enum": [6, 24],
+            "default": 6
+          }
+        }
+      },
+      "PositionFinancing": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "collateralAmountUnits",
+          "loanUSDCUnits",
+          "collateralPriceBase",
+          "usdcPriceBase",
+          "ltvBps",
+          "liquidationThresholdBps",
+          "blockNumber",
+          "collateralAsset",
+          "blockHash",
+          "timestamp",
+          "headroomBps"
+        ],
+        "properties": {
+          "collateralAmountUnits": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$",
+            "description": "Integer base units; must fit uint256."
+          },
+          "loanUSDCUnits": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$",
+            "description": "Integer base units; must fit uint256."
+          },
+          "collateralPriceBase": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$",
+            "description": "Integer base units; must fit uint256."
+          },
+          "usdcPriceBase": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$",
+            "description": "Integer base units; must fit uint256."
+          },
+          "ltvBps": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$",
+            "description": "Integer base units; must fit uint256."
+          },
+          "liquidationThresholdBps": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$",
+            "description": "Integer base units; must fit uint256."
+          },
+          "blockNumber": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$",
+            "description": "Integer base units; must fit uint256."
+          },
+          "collateralAsset": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "blockHash": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "headroomBps": {
+            "const": 50
+          }
+        }
+      },
+      "PositionExecutionPlan": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "lowerPriceE6",
+          "upperPriceE6",
+          "targetWethUnits",
+          "targetUsdcUnits",
+          "convertUsdcUnits",
+          "graphIndexedBlock",
+          "canonicalSourceLiquidity",
+          "canonicalCurrentBlock",
+          "chainId",
+          "sourcePool",
+          "sourceFeeTierPips",
+          "lpFeeBps",
+          "selectionMethod",
+          "observationCount",
+          "inRangeObservations",
+          "coverageBps",
+          "observedWindowStart",
+          "observedWindowEnd",
+          "graphQueryHash",
+          "graphResponseHash",
+          "graphHashAlgorithm",
+          "graphIndexedBlockHash",
+          "programBuilder"
+        ],
+        "properties": {
+          "lowerPriceE6": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$",
+            "description": "Integer base units; must fit uint256."
+          },
+          "upperPriceE6": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$",
+            "description": "Integer base units; must fit uint256."
+          },
+          "targetWethUnits": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$",
+            "description": "Integer base units; must fit uint256."
+          },
+          "targetUsdcUnits": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$",
+            "description": "Integer base units; must fit uint256."
+          },
+          "convertUsdcUnits": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$",
+            "description": "Integer base units; must fit uint256."
+          },
+          "graphIndexedBlock": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$",
+            "description": "Integer base units; must fit uint256."
+          },
+          "canonicalSourceLiquidity": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$",
+            "description": "Integer base units; must fit uint256."
+          },
+          "canonicalCurrentBlock": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$",
+            "description": "Integer base units; must fit uint256."
+          },
+          "chainId": {
+            "const": 42161
+          },
+          "sourcePool": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "sourceFeeTierPips": {
+            "enum": [100, 500, 3000, 10000]
+          },
+          "lpFeeBps": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "selectionMethod": {
+            "const": "highest-ranked-passing-reference-pool"
+          },
+          "observationCount": {
+            "type": "integer"
+          },
+          "inRangeObservations": {
+            "type": "integer"
+          },
+          "coverageBps": {
+            "type": "integer",
+            "minimum": 8000,
+            "maximum": 10000
+          },
+          "observedWindowStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "observedWindowEnd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "graphQueryHash": {
+            "type": "string"
+          },
+          "graphResponseHash": {
+            "type": "string"
+          },
+          "graphHashAlgorithm": {
+            "const": "sha256"
+          },
+          "graphIndexedBlockHash": {
+            "type": "string"
+          },
+          "programBuilder": {
+            "const": "@1inch/swap-vm-sdk@0.4.4"
+          }
+        }
+      },
+      "PositionPlanResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "status",
+          "evaluatedAt",
+          "validUntil",
+          "intent",
+          "financing",
+          "graph",
+          "execution",
+          "reasons",
+          "routingStatus",
+          "economics"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "const": "noria.aqua.position.v1"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "status": {
+            "enum": ["ready-for-local-rehearsal", "refused"]
+          },
+          "evaluatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "intent": {
+            "$ref": "#/components/schemas/PositionIntent"
+          },
+          "financing": {
+            "$ref": "#/components/schemas/PositionFinancing"
+          },
+          "graph": {
+            "anyOf": [
+              {
+                "$ref": "openapi.json#/components/schemas/AquaResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "execution": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PositionExecutionPlan"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "routingStatus": {
+            "const": "not_validated"
+          },
+          "economics": {
+            "const": "not-established"
+          }
+        }
+      }
+    }
+  }
+}

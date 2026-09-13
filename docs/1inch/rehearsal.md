@@ -1,13 +1,12 @@
 # Reproduce the Aqua demo
 
-Requirements: Node 22+, Corepack/pnpm, Foundry with Solidity 0.8.30 and an Arbitrum RPC that retains the selected state. Run from the repository root:
+Requirements: Node 22+, Foundry with Solidity 0.8.30 and an Arbitrum RPC that retains the selected state. For the integrated app, run from the repository root:
 
 ```sh
-cd integrations/aqua
-pnpm install --frozen-lockfile
-pnpm check
-pnpm contracts:test
-pnpm fork:rehearse
+npm ci
+npm --prefix integrations/aqua run check
+npm --prefix integrations/aqua run contracts:test
+npm --prefix integrations/aqua run fork:rehearse
 ```
 
 The runner starts its own Anvil on a free loopback port, verifies its fork metadata and chain ID, and shuts it down afterward. It never attaches to an existing wallet RPC and never broadcasts to the upstream. The upstream is used only to read fork state.
@@ -15,7 +14,8 @@ The runner starts its own Anvil on a free loopback port, verifies its fork metad
 ETH is the default collateral. To test USDC collateral:
 
 ```sh
-NORIA_FUNDING_ASSET=USDC NORIA_COLLATERAL_UNITS=20000000000 pnpm fork:rehearse
+NORIA_FUNDING_ASSET=USDC NORIA_COLLATERAL_UNITS=20000000000 \
+  npm --prefix integrations/aqua run fork:rehearse
 ```
 
 To impersonate your own public wallet addresses locally, set `NORIA_OWNER` and `NORIA_TAKER`. They must be different valid addresses. No private keys are required. Fixture native balances are reset on the local fork, fixture USDC is minted through the official token's actual minter functions, WETH is wrapped through the official contract and a test taker access credential is minted through the real NFT contract using local admin impersonation. The journal identifies these actions. No assets are removed from Aave or the reference Uniswap pool to fund the fixture.
@@ -33,7 +33,18 @@ A source block is resolved and fixed before startup. Set `NORIA_FORK_BLOCK` to r
 - Realize inventory, apply interest/loss/surplus allocation and open another cycle without reborrowing.
 - Defend, realize residual inventory, explicitly classify any owner loss coverage and exit only after debt is zero.
 
-The fork's reference range is an explicit fixture. The application integration separately tests automatic selection from the Graph module. This separation allows judges to reproduce official execution independently of Graph credentials or a live indexer's availability.
+Without a downloaded plan, the reference range and opening inventory are explicit fixtures. This mode reproduces official execution independently of Graph availability. With `NORIA_PLAN_FILE`, the runner uses the actual position plan's selected range, fee and asymmetric inventory. It checks the embedded Graph/envelope consistency, canonical source block, fresh financing, current price and actual prepared inventory. Unsigned JSON cannot authenticate provider authorship.
+
+For the integrated path, open `/aqua`, enter collateral and health limits and download an unexpired plan. Then, from the repository root:
+
+```sh
+NORIA_PLAN_FILE=/absolute/path/to/position-plan.json \
+  npm --prefix integrations/aqua run fork:rehearse
+```
+
+Alternatively, configure the public Privy App ID and enable `NORIA_ENABLE_LOCAL_FORK=1` on the loopback app. Connect an external wallet and request the rehearsal in the UI. The API uses that public address for local impersonation and provides the resulting report, including a partial report if execution stops. No signing or upstream mutation occurs.
+
+A standalone checkout can use `pnpm install --frozen-lockfile` inside the module instead of root `npm ci`. Avoid mixing the two dependency installations in one tree.
 
 ## Reports and accounting
 
