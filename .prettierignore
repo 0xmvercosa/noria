@@ -1,0 +1,10 @@
+node_modules/
+.next/
+.runtime/
+coverage/
+playwright-report/
+test-results/
+package-lock.json
+# Recorded fixtures and the example ledger retain their published bytes.
+tests/fixtures/
+data/examples/
