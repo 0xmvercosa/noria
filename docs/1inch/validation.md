@@ -1,5 +1,15 @@
 # Aqua validation and review
 
+## Wallet launch extension — 13 September 2026
+
+The extension adds the registered owner-controlled factory, deployment verification, strict public prepare/verify API, Privy signing frontend and close/repay/exit flow. The factory test suite raises Solidity coverage to **63 passing tests**. Root tests now include **15 launch API/policy tests**, and the full root suite passes **157 tests** after the wallet-change recovery regression was added.
+
+The [wallet launch reports](evidence/wallet-launch/README.md) record **29 verified owner operations** on two isolated forks: 13 for USDC and 16 for ETH. Both end with no debt, collateral receipts or stranded inventory; ETH also unwraps the returned WETH. These flows test actual protocol bytecode and the same preparation/receipt service used by the frontend, without a public signature.
+
+Independent review found and resolved two browser recovery issues: wrong-owner in-memory history could survive a wallet change when disk history was empty, and a saved intent could be hidden until reload if the subsequent shared-marker write failed. The guard now checks both disk and memory ownership; both interfaces expose an intent as soon as it is persisted. The reviewer confirmed the fixes and reported no remaining must-fix findings in the reviewed UI/journal scope. This is an engineering review, not a formal audit.
+
+## Earlier cycle validation
+
 The execution module has **37 passing TypeScript tests and 51 passing Solidity tests**, including four Solidity fuzz properties at 256 cases each. Foundry 1.0.0, Solidity 0.8.30, Aqua SDK 0.3.4, SwapVM SDK 0.4.4 and viem 2.38.6 are the tested toolchain. Ordinary CI runs deterministic tests; the official fork script exercises public upstream state separately.
 
 ## Independent findings resolved

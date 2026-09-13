@@ -2,6 +2,8 @@
 
 The standalone runs below execute unchanged official protocol bytecode on isolated Arbitrum forks. Fixture funds and access credentials are synthetic and explicitly recorded; related takers are not independent customers. These reports prove execution and accounting, not market demand or expected profitability.
 
+The newer [wallet launch evidence](wallet-launch/README.md) records **29 verified owner operations** through the frontend's prepare/verify backend, including factory creation, both collateral paths, Aqua shipment, repayment after accrued interest, exit, unwrap and USDC/ETH transfers. It is separate from the cycle-accounting demonstrations below and is not live Privy signing evidence.
+
 | Collateral/report | Source block | Journal operations | Eligible LP surplus (USDC, before wallet gas) | Consolidated strategy group result (USDC) |
 | --- | --- | --- | --- | --- |
 | [ETH](eth/report.md) | 504589079 | 46 | 5.894270 | -11.015355 |

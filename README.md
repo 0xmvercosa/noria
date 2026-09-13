@@ -172,6 +172,8 @@ See [validation](docs/validation.md) for fixture scope, recorded results and opt
 
 The Graph evidence includes a **420-configuration recorded Arbitrum matrix** and dated live reference HTTP checks. The [Aqua validation guide](docs/1inch/validation.md) separately records unit/fuzz tests, integration checks and actual local-fork execution. GitHub Actions builds the application. Dependency installation requires no funded wallet or model API key.
 
+The [wallet launch evidence](docs/1inch/evidence/wallet-launch/README.md) adds **29 verified operations** across USDC and ETH collateral: create, supply/borrow, convert, ship, stop, repay accrued debt, exit and transfer. Each report includes exact requests, transaction receipts, balances and fees. Reproduce with `npm run validate:aqua-launch`; these are isolated-fork results, not public Privy signing evidence.
+
 | Start here                                                                              | What it contains                                                        |
 | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | [Discovery service](src/services/discovery.ts)                                          | Candidate universe, screening, ranking and analysis attempts            |
