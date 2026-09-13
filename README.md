@@ -48,6 +48,8 @@ The strategy targets users willing to manage collateral-backed WETH/USDC liquidi
 
 The [financial journey review](docs/financial-journey.md) maps each user action to its financial effect and source files. The [Privy security guide](docs/privy/security.md) covers exact origins, OAuth return, per-request CSP nonces and acceptance limits. Planner inputs survive funding/login navigation; transaction evidence must always be refreshed.
 
+All product pages share responsive navigation to Discover pools, Aqua positions, Wallet & funds, Buy with euros and For agents. The mobile Menu includes every destination, while the Privy wallet remains accessible in the header. See [responsive navigation](docs/responsive-navigation.md) for the integration map, viewport checks and validation limits.
+
 ## Run locally
 
 Use **Node.js 22.9 or later**; Node.js 22 LTS is recommended.
