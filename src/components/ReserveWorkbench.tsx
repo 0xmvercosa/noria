@@ -5,6 +5,7 @@ import { ArrowUpRight, Download, RefreshCw } from "lucide-react";
 import { formatUnits } from "viem";
 import { NoriaLogo } from "./NoriaLogo";
 import { NoriaWallet } from "./NoriaWallet";
+import { AmountInput, IdentifierInput } from "./FinancialInput";
 import { useNoriaWallet } from "./NoriaWalletProvider";
 import {
   RESERVE,
@@ -848,12 +849,16 @@ export function ReserveWorkbench() {
                   </div>
                 </dl>
                 <label htmlFor="fund-eur">Pay in euros (EUR)</label>
-                <input
+                <AmountInput
                   id="fund-eur"
-                  inputMode="decimal"
+                  decimals={2}
                   value={euroAmount}
                   disabled={busy}
-                  onChange={(event) => setEuroAmount(event.target.value)}
+                  aria-invalid={
+                    Boolean(euroAmount) &&
+                    !EuroAmountSchema.safeParse(euroAmount).success
+                  }
+                  onValueChange={setEuroAmount}
                 />
                 <button
                   disabled={
@@ -934,13 +939,14 @@ export function ReserveWorkbench() {
               </div>
               <div>
                 <label htmlFor="reserve-amount">Amount (USDC)</label>
-                <input
+                <AmountInput
                   id="reserve-amount"
-                  inputMode="decimal"
+                  decimals={6}
                   value={amount}
                   disabled={busy}
-                  onChange={(e) => {
-                    setAmount(e.target.value);
+                  aria-invalid={Boolean(amount) && !parseUsdc(amount)}
+                  onValueChange={(value) => {
+                    setAmount(value);
                     setPrepared(null);
                   }}
                   aria-describedby="reserve-amount-help"
@@ -1027,28 +1033,31 @@ export function ReserveWorkbench() {
               <label htmlFor="transfer-amount">
                 Amount to send ({transferAsset})
               </label>
-              <input
+              <AmountInput
                 id="transfer-amount"
                 value={transferAmount}
-                inputMode="decimal"
+                decimals={transferAsset === "USDC" ? 6 : 18}
                 disabled={busy}
-                onChange={(event) => {
-                  setTransferAmount(event.target.value);
+                aria-invalid={
+                  Boolean(transferAmount) &&
+                  !parseTransferAmount(transferAmount, transferAsset)
+                }
+                onValueChange={(value) => {
+                  setTransferAmount(value);
                   setPrepared(null);
                 }}
               />
             </div>
           </div>
           <label htmlFor="transfer-recipient">Recipient address</label>
-          <input
+          <IdentifierInput
             id="transfer-recipient"
+            kind="address"
+            valid={OwnerSchema.safeParse(transferRecipient).success}
             value={transferRecipient}
-            placeholder="0x…"
-            autoComplete="off"
-            spellCheck={false}
             disabled={busy}
-            onChange={(event) => {
-              setTransferRecipient(event.target.value);
+            onValueChange={(value) => {
+              setTransferRecipient(value);
               setPrepared(null);
             }}
           />
@@ -1120,12 +1129,13 @@ export function ReserveWorkbench() {
                 wallet, amount and operation.
               </p>
               <label htmlFor="reserve-recovery-hash">Transaction hash</label>
-              <input
+              <IdentifierInput
                 id="reserve-recovery-hash"
+                kind="hash"
+                valid={/^0x[0-9a-fA-F]{64}$/.test(recoveryHash)}
                 value={recoveryHash}
-                onChange={(event) => setRecoveryHash(event.target.value)}
+                onValueChange={setRecoveryHash}
                 disabled={busy}
-                placeholder="0x…"
               />
               <button
                 disabled={

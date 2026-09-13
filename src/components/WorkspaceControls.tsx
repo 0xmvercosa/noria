@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import type { NetworkId } from "../domain/types";
 import { number } from "./format";
+import { AmountInput } from "./FinancialInput";
 import { NETWORK_CHOICES, type NoriaWorkspace } from "./useNoriaWorkspace";
 import s from "./NoriaApp.module.css";
 
@@ -114,6 +115,9 @@ export function WorkspaceControls({
             ref={queryInput}
             id="noria-query"
             type="search"
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
             value={query}
             maxLength={80}
             placeholder="Symbol, pair, or pool address"
@@ -193,16 +197,13 @@ export function WorkspaceControls({
             <span>BASIS POINTS</span>
           </legend>
           <div className={s.discountInput}>
-            <input
+            <AmountInput
               id="noria-discount"
-              type="number"
-              min="25"
-              max="1000"
-              step="1"
+              decimals={0}
               value={discount}
               aria-invalid={!discountValid}
               aria-describedby="noria-discount-help"
-              onChange={(event) => setDiscount(event.target.value)}
+              onValueChange={setDiscount}
             />
             <span>bps</span>
           </div>
