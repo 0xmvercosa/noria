@@ -439,6 +439,34 @@ contract PositionAccountTest is TestBase {
         assertEq(pool.withdrawCalls(), 0);
     }
 
+    function test_ownerRecoveryDoesNotRequireAHealthRead() public {
+        _readyMixed(); _ship(); pool.setFailHealthRead(true);
+        vm.prank(KEEPER); vm.expectRevert(); account.defend();
+        account.defend(); _assertPhase(PositionAccount.Phase.Defended);
+        assertEq(weth.allowance(address(account), address(aqua)), 0);
+        assertEq(usdc.allowance(address(account), address(aqua)), 0);
+        account.realizeDefense(500e6, block.timestamp + 60);
+        account.exit(); _assertPhase(PositionAccount.Phase.Closed);
+    }
+
+    function test_ownerExternalRepaymentSurvivesHealthReadFailure() public {
+        _readyMixed(); pool.setFailHealthRead(true);
+        account.defend(); account.repayExternal(500e6);
+        assertEq(pool.debt().balanceOf(address(account)), 0);
+        account.exit(); _assertPhase(PositionAccount.Phase.Closed);
+    }
+
+    function test_newExposureRevertsWhenHealthCannotBeRead() public {
+        pool.setFailHealthRead(true);
+        vm.expectRevert(); _open(); _assertPhase(PositionAccount.Phase.Unfunded);
+        pool.setFailHealthRead(false); _open(); pool.setFailHealthRead(true);
+        uint256 amount = account.lpUsdc() / 2;
+        vm.expectRevert(); account.swapInventory(false, amount, 1, block.timestamp + 60);
+        pool.setFailHealthRead(false); _mix(); pool.setFailHealthRead(true);
+        bytes memory order = _order();
+        vm.expectRevert(); account.shipCycle(order); _assertPhase(PositionAccount.Phase.Ready);
+    }
+
     function test_realWithdrawalFailureKeepsPositionAndFundsRecoverable() public {
         _open(); account.defend(); pool.setFailWithdraw(true);
         usdc.mint(address(account), 5e6);

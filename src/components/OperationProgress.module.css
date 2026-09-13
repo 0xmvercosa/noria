@@ -1,0 +1,35 @@
+.progress {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  padding: 4px 0;
+}
+.progress p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.progress small {
+  color: #a4b79c;
+  font-variant-numeric: tabular-nums;
+}
+.spinner {
+  flex-shrink: 0;
+  margin-top: 4px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #526445;
+  border-top-color: #d3f78b;
+  border-radius: 50%;
+  animation: rotate 0.9s linear infinite;
+}
+@keyframes rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}

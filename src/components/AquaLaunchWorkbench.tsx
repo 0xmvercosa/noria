@@ -5,6 +5,7 @@ import { formatUnits, toHex } from "viem";
 import { useNoriaWallet } from "./NoriaWalletProvider";
 import { AmountInput, IdentifierInput } from "./FinancialInput";
 import { EthAmount, EthUsdEquivalent, EthUsdNote } from "./EthUsd";
+import { OperationProgress } from "./OperationProgress";
 import {
   LAUNCH,
   LaunchAddressSchema,
@@ -95,6 +96,7 @@ export function AquaLaunchWorkbench({
   const [prepared, setPrepared] = useState<LaunchPrepared | null>(null);
   const [historyReady, setHistoryReady] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState("Checking saved position activity…");
   const busyRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -161,6 +163,7 @@ export function AquaLaunchWorkbench({
   const belowComfortable =
     journey?.next === "ship" &&
     !!position &&
+    position.healthFactor !== null &&
     BigInt(position.healthFactor) < BigInt(position.comfortableHF);
   const repayment =
     position && live
@@ -267,6 +270,7 @@ export function AquaLaunchWorkbench({
     if (busyRef.current) return;
     busyRef.current = true;
     setBusy(true);
+    setProgress("Checking saved position activity…");
     setError(null);
     setNotice(null);
     try {
@@ -283,6 +287,7 @@ export function AquaLaunchWorkbench({
     }
   }
   async function refresh(account = selectedAccount.current) {
+    setProgress("Reading current balances and position state…");
     const owner = wallet.address;
     if (!owner) return;
     const next = await readLaunch(owner, account);
@@ -329,6 +334,7 @@ export function AquaLaunchWorkbench({
     );
   }
   async function check(entry: LaunchRecord) {
+    setProgress("Verifying the transaction receipt and onchain effect…");
     const result = await verifyLaunch(entry);
     const owner = entry.prepared.request.owner;
     if (!current(owner)) return;
@@ -385,6 +391,7 @@ export function AquaLaunchWorkbench({
   }
   async function review(request: LaunchRequest) {
     if (!canAct) return;
+    setProgress(`Simulating: ${labels[request.kind]}…`);
     const value = await prepareLaunch(request, plan);
     if (current(request.owner)) {
       setPrepared(value);
@@ -393,6 +400,7 @@ export function AquaLaunchWorkbench({
   }
   async function confirm() {
     if (!canAct || !prepared || !wallet.address) return;
+    setProgress("Refreshing the simulation before wallet confirmation…");
     const owner = wallet.address;
     const reviewed = assertPreparedLaunch(prepared, prepared.request, plan);
     await withWalletLock(owner, navigator.locks, async () => {
@@ -439,7 +447,10 @@ export function AquaLaunchWorkbench({
           });
           window.dispatchEvent(new Event(walletOperationEvent));
         },
-        send: () => wallet.sendLaunchAction(fresh, plan),
+        send: () => {
+          setProgress("Awaiting your confirmation in Privy…");
+          return wallet.sendLaunchAction(fresh, plan);
+        },
         record: (submitted) => {
           if (current(owner)) setRecoveryHash(submitted.hash);
           const entries = new Map(priorRecords.map((v) => [v.hash, v]));
@@ -955,7 +966,9 @@ export function AquaLaunchWorkbench({
                   <dd>
                     {BigInt(position.debtUSDCUnits) === 0n
                       ? "No debt"
-                      : Number(units(position.healthFactor, 18)).toFixed(4)}
+                      : position.healthFactor === null
+                        ? "Unavailable — refresh or review recovery"
+                        : Number(units(position.healthFactor, 18)).toFixed(4)}
                   </dd>
                 </div>
                 <div>
@@ -969,6 +982,13 @@ export function AquaLaunchWorkbench({
                   <dd>{units(position.usdcUnits)}</dd>
                 </div>
               </dl>
+              {position.healthFactor === null && (
+                <p className={s.inputError} role="status">
+                  Aave health could not be read. New exposure is blocked. Stop,
+                  repayment and debt-free exit remain available for review if
+                  their transaction simulation succeeds.
+                </p>
+              )}
               {position.phase !== 6 && (
                 <p className={s.note}>
                   Borrowing interest accrues even without trades. Collateral can
@@ -1414,7 +1434,7 @@ export function AquaLaunchWorkbench({
       )}
       {(busy || error || notice) && (
         <div className={r.review}>
-          {busy && <p role="status">Waiting for wallet or chain response…</p>}
+          {busy && <OperationProgress label={progress} />}
           {error && (
             <p className={s.inputError} role="alert">
               {error}

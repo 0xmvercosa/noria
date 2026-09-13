@@ -97,7 +97,7 @@ const factoryExpected = {
   aqua: LAUNCH.aqua,
   swapVM: LAUNCH.swapVm,
 };
-const officialRuntimeHashes: Record<string, Hash> = {
+export const officialRuntimeHashes: Record<string, Hash> = {
   [LAUNCH.aqua]:
     "0x720bc02d220db318164dc3bade86eec1f3655bdc00fc1174de7d816a95c341f8",
   [LAUNCH.swapVm]:
@@ -366,14 +366,20 @@ export function createLaunchService(overrides: Partial<LaunchRuntime> = {}) {
         "strategyHash",
       ] as const;
       const values = await Promise.all(
-        names.map((functionName) =>
-          client.readContract({
+        names.map(async (functionName) => {
+          const read = client.readContract({
             address: account,
             abi: launchAccountAbi,
             functionName,
             blockNumber,
-          }),
-        ),
+          });
+          // An unavailable Aave health read must not hide owner recovery actions.
+          // Every identity, balance and phase read remains mandatory. Preparation
+          // still simulates the exact transaction, including downstream Aave calls.
+          return functionName === "healthFactor"
+            ? read.catch(() => null)
+            : read;
+        }),
       );
       const fields = Object.fromEntries(
         names.map((key, i) => [key, values[i]]),
@@ -462,7 +468,8 @@ export function createLaunchService(overrides: Partial<LaunchRuntime> = {}) {
         collateral,
         receiptToken,
         phase,
-        healthFactor: uint("healthFactor"),
+        healthFactor:
+          fields.healthFactor === null ? null : uint("healthFactor"),
         safetyHF: uint("safetyHF"),
         comfortableHF: uint("comfortableHF"),
         manifestHash: LaunchHashSchema.parse(fields.manifestHash),
@@ -623,6 +630,11 @@ export function createLaunchService(overrides: Partial<LaunchRuntime> = {}) {
       "stale-review",
     );
     const needsPlan = ["open", "convert", "ship"].includes(request.kind);
+    fail(
+      !needsPlan || before.position?.healthFactor !== null,
+      "Health factor is unavailable. Refresh before opening, converting or launching. Owner stop and repayment actions remain available for review.",
+      "invalid-state",
+    );
     if (needsPlan && rawPlan === undefined)
       throw new LaunchError(
         "plan-required",

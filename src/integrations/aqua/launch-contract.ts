@@ -227,7 +227,7 @@ export const LaunchPositionSchema = z
     collateral: LaunchAddressSchema,
     receiptToken: LaunchAddressSchema,
     phase: z.number().int().min(0).max(6),
-    healthFactor: LaunchUintSchema,
+    healthFactor: LaunchUintSchema.nullable(),
     safetyHF: positive,
     comfortableHF: positive,
     manifestHash: nonzeroHash,
@@ -412,6 +412,10 @@ export function assertLaunchState(
     if (!condition) throw new LaunchError("invalid-state", message);
   };
   if (["open", "convert", "ship"].includes(request.kind)) {
+    need(
+      p.healthFactor !== null,
+      "Health factor is unavailable. Refresh before opening, converting or launching. Owner stop and repayment actions remain available for review.",
+    );
     need(!!plan, "Request a fresh position plan before continuing.");
     if (!plan) return;
     need(
@@ -501,6 +505,7 @@ export function assertLaunchState(
       );
       need(
         BigInt(p.debtUSDCUnits) > 0n &&
+          p.healthFactor !== null &&
           BigInt(p.healthFactor) > BigInt(p.safetyHF),
         "The position must be above its safety health factor with outstanding debt.",
       );
@@ -509,6 +514,7 @@ export function assertLaunchState(
       need(
         [1, 4].includes(p.phase) &&
           BigInt(p.debtUSDCUnits) > 0n &&
+          p.healthFactor !== null &&
           BigInt(p.healthFactor) >= BigInt(p.comfortableHF),
         "Launching requires a ready position at or above its comfortable health factor.",
       );
