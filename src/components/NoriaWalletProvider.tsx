@@ -152,7 +152,8 @@ function ConnectedWalletProvider({ children }: { children: ReactNode }) {
     <NoriaWalletContext.Provider
       value={{
         configured: true,
-        ready: privyReady && walletsReady && !creating,
+        // Opening login must not wait for the embedded wallet iframe.
+        ready: privyReady && !creating && (!authenticated || walletsReady),
         address: wallet?.address ?? null,
         chainId: wallet?.chainId ?? null,
         error,
