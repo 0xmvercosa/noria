@@ -11,7 +11,7 @@ export function NoriaWallet() {
       {!wallet.configured ? (
         <span
           className={s.walletUnavailable}
-          title="Wallet connection has not been configured for this deployment."
+          title="Privy wallet access has not been configured for this deployment."
         >
           <Wallet size={14} aria-hidden="true" /> Wallet unavailable
         </span>
@@ -23,7 +23,7 @@ export function NoriaWallet() {
           onClick={wallet.connect}
         >
           <Wallet size={14} aria-hidden="true" />
-          {wallet.ready ? "Connect wallet" : "Loading wallet…"}
+          {wallet.ready ? "Create or open wallet" : "Loading wallet…"}
         </button>
       ) : (
         <details className={s.walletMenu}>
@@ -36,7 +36,7 @@ export function NoriaWallet() {
             <span className={s.srOnly}>Connected wallet settings</span>
           </summary>
           <div className={s.walletDropdown}>
-            <strong>Connected external wallet</strong>
+            <strong>Your Privy wallet</strong>
             <code>{wallet.address}</code>
             <p>
               {wallet.chainId === "eip155:42161"
@@ -52,7 +52,7 @@ export function NoriaWallet() {
               </button>
             )}
             <button type="button" onClick={() => void wallet.disconnect()}>
-              Disconnect wallet
+              Sign out
             </button>
           </div>
         </details>

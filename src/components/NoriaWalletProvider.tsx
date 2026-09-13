@@ -1,13 +1,29 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   PrivyProvider,
-  useConnectWallet,
+  getEmbeddedConnectedWallet,
+  useCreateWallet,
+  useFundWallet,
   usePrivy,
+  useSendTransaction,
   useWallets,
 } from "@privy-io/react-auth";
 import { arbitrum } from "viem/chains";
+import { formatUnits, type Hash } from "viem";
+import {
+  PreparedSchema,
+  assertReserveAction,
+  reserveTransaction,
+  type PreparedReserveAction,
+} from "../integrations/privy/reserve";
 
 type WalletContext = {
   configured: boolean;
@@ -18,6 +34,8 @@ type WalletContext = {
   connect: () => void;
   disconnect: () => Promise<void>;
   switchToArbitrum: () => Promise<void>;
+  fund: (asset: "USDC" | "ETH") => Promise<void>;
+  sendReserveAction: (prepared: PreparedReserveAction) => Promise<Hash>;
 };
 const unavailable: WalletContext = {
   configured: false,
@@ -28,6 +46,12 @@ const unavailable: WalletContext = {
   connect: () => {},
   disconnect: async () => {},
   switchToArbitrum: async () => {},
+  fund: async () => {
+    throw new Error("Privy is not configured.");
+  },
+  sendReserveAction: async () => {
+    throw new Error("Privy is not configured.");
+  },
 };
 const NoriaWalletContext = createContext<WalletContext>(unavailable);
 export function useNoriaWallet() {
@@ -35,69 +59,108 @@ export function useNoriaWallet() {
 }
 
 function ConnectedWalletProvider({ children }: { children: ReactNode }) {
-  const { ready: privyReady } = usePrivy();
+  const { ready: privyReady, authenticated, login, logout } = usePrivy();
   const { wallets, ready: walletsReady } = useWallets();
+  const { createWallet } = useCreateWallet();
+  const { fundWallet } = useFundWallet();
+  const { sendTransaction } = useSendTransaction();
   const [error, setError] = useState<string | null>(null);
-  const { connectWallet } = useConnectWallet({
-    onSuccess: () => setError(null),
-    onError: () =>
-      setError("The wallet connection was not completed. You can try again."),
-  });
-  const wallet = wallets.find(
-    (candidate) =>
-      !String(candidate.walletClientType).startsWith("privy") &&
-      candidate.connectorType !== "embedded",
-  );
-  // Use the external connection flow, without login, signing, or transactions.
+  const [creating, setCreating] = useState(false);
+  const wallet = authenticated
+    ? getEmbeddedConnectedWallet(wallets)
+    : undefined;
+  const activeAddress = useRef(wallet?.address);
+  activeAddress.current = wallet?.address;
+
   function connect() {
     setError(null);
-    try {
-      connectWallet();
-    } catch (failure) {
-      setError(
-        failure instanceof Error
-          ? failure.message
-          : "Wallet connection is unavailable.",
-      );
+    if (!authenticated) {
+      login();
+      return;
     }
+    if (wallet || creating) return;
+    setCreating(true);
+    void createWallet()
+      .catch(() =>
+        setError("Wallet creation was not completed. Please try again."),
+      )
+      .finally(() => setCreating(false));
   }
   async function disconnect() {
     setError(null);
     try {
-      await wallet?.disconnect();
-      if (await wallet?.isConnected())
-        setError("Disconnect this site in your wallet to end the connection.");
-    } catch (failure) {
-      setError(
-        failure instanceof Error
-          ? failure.message
-          : "The wallet could not be disconnected.",
-      );
+      await logout();
+    } catch {
+      setError("Sign-out was not completed. Please try again.");
     }
   }
   async function switchToArbitrum() {
     setError(null);
     try {
       await wallet?.switchChain(arbitrum.id);
-    } catch (failure) {
-      setError(
-        failure instanceof Error
-          ? failure.message
-          : "The wallet network could not be changed.",
-      );
+    } catch {
+      setError("The wallet network could not be changed.");
     }
+  }
+  async function fund(asset: "USDC" | "ETH") {
+    if (!wallet) throw new Error("Create your Privy wallet first.");
+    // Established funding hook in pinned SDK 3.42.0. The newer useAddFunds is experimental.
+    // Dismissal or completion here never proves that funds arrived on Arbitrum.
+    await fundWallet({
+      address: wallet.address,
+      options: {
+        chain: arbitrum,
+        asset: asset === "USDC" ? "USDC" : "native-currency",
+        amount: asset === "USDC" ? "10" : "0.001",
+        defaultFundingMethod: "wallet",
+      },
+    });
+  }
+  async function sendReserveAction(
+    input: PreparedReserveAction,
+  ): Promise<Hash> {
+    const prepared = PreparedSchema.parse(input);
+    const owner = prepared.action.owner;
+    const isCurrent = () =>
+      activeAddress.current?.toLowerCase() === owner.toLowerCase();
+    if (!wallet || !isCurrent())
+      throw new Error("The wallet changed. Review this operation again.");
+    assertReserveAction(prepared.action, prepared.before);
+    await wallet.switchChain(arbitrum.id);
+    if (!isCurrent() || Date.now() >= prepared.expiresAt)
+      throw new Error("This review expired. Refresh it before signing.");
+    const tx = reserveTransaction(prepared.action);
+    const amount = formatUnits(BigInt(prepared.action.amountUnits), 6);
+    const { hash } = await sendTransaction(
+      { ...tx, from: owner },
+      {
+        address: owner,
+        uiOptions: {
+          showWalletUIs: true,
+          isCancellable: true,
+          description:
+            prepared.action.kind === "revoke"
+              ? "Remove Aave's USDC allowance on Arbitrum"
+              : `${prepared.action.kind} ${amount} USDC on Arbitrum. The reserve belongs to your Privy wallet.`,
+          buttonText: "Confirm operation",
+        },
+      },
+    );
+    return hash;
   }
   return (
     <NoriaWalletContext.Provider
       value={{
         configured: true,
-        ready: privyReady && walletsReady,
+        ready: privyReady && walletsReady && !creating,
         address: wallet?.address ?? null,
         chainId: wallet?.chainId ?? null,
         error,
         connect,
         disconnect,
         switchToArbitrum,
+        fund,
+        sendReserveAction,
       }}
     >
       {children}
@@ -119,21 +182,16 @@ export function NoriaWalletProvider({ children }: { children: ReactNode }) {
       config={{
         defaultChain: arbitrum,
         supportedChains: [arbitrum],
-        loginMethods: ["wallet"],
+        loginMethods: ["email", "wallet"],
         embeddedWallets: {
-          ethereum: { createOnLogin: "off" },
+          ethereum: { createOnLogin: "all-users" },
           solana: { createOnLogin: "off" },
+          showWalletUIs: true,
         },
         appearance: {
           theme: "dark",
           accentColor: "#d3f78b",
           walletChainType: "ethereum-only",
-          walletList: [
-            "detected_wallets",
-            "metamask",
-            "coinbase_wallet",
-            "wallet_connect",
-          ],
         },
       }}
     >
