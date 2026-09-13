@@ -1,0 +1,13 @@
+{
+  "classification": "curated-historical-simulation-ledger",
+  "caseId": "wbtc-weth-2026-08-26-6h",
+  "nominalCapitalUsd": 10000,
+  "entryWalletUsd": 9952.651756349414,
+  "lpGrossExitValueUsd": 10044.150470242334,
+  "lpExternalCostsUsd": 0.3509479141030149,
+  "lpNetExitValueUsd": 10043.79952232823,
+  "originalHoldNetExitValueUsd": 10042.759447849028,
+  "preparedHoldNetExitValueUsd": 10042.759447849028,
+  "feesMarkedAtExitUsd": 1.3910223933055694,
+  "scope": "Retained-token terminal only. Compact arithmetic record, not a complete swap replay or evidence of a transaction by Noria."
+}
