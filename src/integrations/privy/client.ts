@@ -10,6 +10,7 @@ import {
   type PreparedReserveAction,
 } from "./reserve";
 import type { ReserveVerification } from "./service";
+import { assertOtherRouteClear, type WalletPending } from "./coordination";
 
 export const endpoint = "/api/privy/v1/reserve";
 export const RecordSchema = z.object({
@@ -215,6 +216,7 @@ export async function withCheckedReserveHistory<T>(options: {
     saved: string | null;
     attempt: ReserveAttempt | null;
     savedAttempt: string | null;
+    sharedPending?: WalletPending | null;
   };
   run: (records: ReserveRecord[], attempt: ReserveAttempt | null) => Promise<T>;
 }): Promise<T> {
@@ -229,6 +231,7 @@ export async function withCheckedReserveHistory<T>(options: {
       if (!held)
         throw new Error("This wallet has an operation open in another tab.");
       const state = options.read();
+      assertOtherRouteClear(state.sharedPending ?? null, "reserve");
       if (
         state.activeOwner?.toLowerCase() !== options.owner.toLowerCase() ||
         state.records.some(
