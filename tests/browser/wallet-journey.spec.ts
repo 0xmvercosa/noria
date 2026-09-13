@@ -118,6 +118,12 @@ test("a failed Privy initialization offers recovery without erasing saved operat
     exact: true,
   });
   await expect(retry).toBeVisible({ timeout: 25_000 });
+  await page
+    .getByRole("button", { name: "Dismiss message", exact: true })
+    .click();
+  // Closing the mobile error sheet must leave recovery available in the header.
+  await expect(retry).toBeVisible();
+  await expect(retry).toBeEnabled();
   await retry.click();
   expect(
     await page.evaluate(() => localStorage.getItem("noria.test.preserved")),

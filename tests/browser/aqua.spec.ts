@@ -358,6 +358,34 @@ test("unconfigured Privy stays honest and cannot start a local run even with a r
   );
 });
 
+test("populated Aqua plans keep long inventory values and source evidence inside phone viewports", async ({
+  page,
+}) => {
+  await page.clock.install({ time: new Date(at) });
+  await localAvailability(page, false);
+  await mockPosition(page, []);
+  await page.setViewportSize({ width: 320, height: 667 });
+  await page.goto("/aqua");
+  await page.getByRole("button", { name: "Find my pool and range" }).click();
+  await expect(
+    page.getByRole("heading", { name: "WETH / USDC", exact: true }),
+  ).toBeVisible();
+  for (const width of [320, 390, 768]) {
+    await page.setViewportSize({ width, height: 844 });
+    await expect(
+      page.getByText("0.024445944561000366", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Download complete plan JSON" }),
+    ).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+  }
+});
+
 test("mobile position analysis shows source errors and stays within the viewport", async ({
   page,
 }) => {

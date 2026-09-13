@@ -5,12 +5,11 @@ import {
   ArrowUpRight,
   Database,
   Fingerprint,
-  Globe2,
   Layers,
   Terminal,
 } from "lucide-react";
 import { HistoricalStudy } from "./HistoricalStudy";
-import { NoriaLogo } from "./NoriaLogo";
+import { NoriaHeader } from "./NoriaHeader";
 import { WorkspaceControls } from "./WorkspaceControls";
 import { WorkspaceResults } from "./WorkspaceResults";
 import { GraphMark } from "./ui";
@@ -28,26 +27,10 @@ export default function NoriaApp() {
   } = workspace;
   return (
     <div className={s.app}>
-      <header className={s.header}>
-        <a href="/" className={s.brand} aria-label="Noria home">
-          <NoriaLogo className={s.brandLogo} />
-        </a>
-        <nav className={s.navigation} aria-label="Workspace navigation">
-          <a href="#workspace" className={s.activeNav}>
-            Workspace
-          </a>
-          <a href="#historical-case">Historical case</a>
-          <a href="/aqua">Aqua positions</a>
-          <a href="/reserve">USDC reserve</a>
-          <a href="#agent-toolkit">
-            For agents <ArrowUpRight size={12} />
-          </a>
-        </nav>
-        <span className={s.chainBadge}>
-          <Globe2 size={13} />
-          {networkLabel}
-        </span>
-      </header>
+      <NoriaHeader
+        current="discover"
+        context={`Research network: ${networkLabel}`}
+      />
 
       <main className={s.main}>
         <section className={s.hero}>

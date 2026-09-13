@@ -7,6 +7,9 @@
 .field .input {
   box-sizing: border-box;
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  min-height: 44px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -27,4 +30,10 @@
 
 .field .error {
   color: #e9b19e;
+}
+
+@media (max-width: 1000px), (pointer: coarse) {
+  .field .input {
+    font-size: 16px;
+  }
 }
