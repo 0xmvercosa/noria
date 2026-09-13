@@ -29,7 +29,9 @@ The provider explicitly sets `embeddedWallets.showWalletUIs: true` and each send
 - Savings: requires no existing Aave debt. Aave's official simulation also enforces caps, pauses and withdrawal liquidity.
 - Approval: exactly the selected deposit amount, consumed by supply. A cancelled/failed supply can leave allowance; explicit revocation remains available even if the account later has debt.
 - Transaction preflight: fresh state, exact request, balance/allowance rules, estimated gas, then another simulation before Privy's confirmation. Protocol state can change while the wallet prompt is open; Aave enforces its own rules during execution.
-- History: public addresses, amounts, hashes and reports are stored locally. No access tokens or private keys are stored by this feature. Preserve exported hashes before clearing browser storage.
+- Browser coordination: a current browser with the Web Locks API is required for sends and history clearing. The app refuses to send when another tab owns the lock or has an unchecked hash.
+- History: public addresses, amounts, hashes and reports are stored locally. No access tokens or private keys are stored by this feature. Preserve exported hashes before clearing browser storage. After all receipts have been checked, the explicit download-and-clear action starts a new history session; pending/unverified records cannot be cleared through the app.
+- Interrupted submission: a durable intent is saved before the wallet request. A definite user rejection may be retried; ambiguous errors and reloads require recovery. A user-supplied transaction hash must match the original operation. Clearing an uncertain request without a hash requires explicit acknowledgment after inspecting wallet activity and can cause a duplicate if that assertion is wrong.
 - Finality: receipt checks verify current Arbitrum sequencer inclusion and the canonical receipt block. They do not claim Ethereum settlement finality.
 
 ## Read-only API

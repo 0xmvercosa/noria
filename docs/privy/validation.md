@@ -25,7 +25,11 @@ This is **not Privy authentication, funding or signing evidence**, and is not a 
 
 An independent test review found that malformed numeric strings could reach `BigInt` in a Zod refinement. Explicit lexical guards now reject decimal/exponent inputs without throwing outside validation. A regression test covers this.
 
-Public signing is intentionally constrained to the recipe and always prompts in Privy. The app rechecks balances/simulation before submitting. A local in-flight guard and Web Locks, where supported, prevent duplicate concurrent sends in the same origin; submitted hashes survive a verification failure. Cross-device activity and changes while a wallet prompt is open remain outside this local coordination.
+Public signing is intentionally constrained to the recipe and always prompts in Privy. The app rechecks balances/simulation before submitting. A local in-flight guard and required Web Locks coordinate concurrent sends in the same origin. Wallet identity, pending records and fresh stored history are rechecked after acquiring the lock; browsers without Web Locks refuse to submit. Submitted hashes survive a verification failure. Receipt checking updates in-memory evidence without rewriting another tab's stored history. An explicit download-and-clear action permits a new session at the 100-record limit, but only after every record has a terminal verified/reverted receipt. Cross-device activity and changes while a wallet prompt is open remain outside this local coordination.
+
+The review also found an async gap between preparation and signing: a storage event could make another tab's pending hash appear known without preventing the send. The lock-scoped guard and regression tests now cover both delivered and undelivered storage events, account changes and unresolved receipts.
+
+The submission lifecycle also needs to distinguish explicit wallet cancellation from an ambiguous SDK/RPC error after submission. The browser stores an intent before asking Privy to send; an interrupted or uncertain attempt blocks another send until it is reconciled. Recovery must use a matching receipt or an explicit user acknowledgment after inspecting wallet activity; no timeout automatically retries a financial operation.
 
 ## Evidence still required
 
